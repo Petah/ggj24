@@ -7,6 +7,16 @@ export interface GameState {
     }[];
     turn: number;
     currentPlayer?: string;
+    tiles?: TileType[][];
+}
+
+export enum TileType {
+    ROAD = 'R',
+    GRASS = 'G',
+    WATER = 'W',
+    RIVER = '~',
+    MOUNTAIN = 'M',
+    FOREST = 'F',
 }
 
 export class GameListRequest implements IEvent {
