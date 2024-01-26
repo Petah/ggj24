@@ -7,7 +7,6 @@ export default {
         mode: Phaser.Scale.HEIGHT_CONTROLS_WIDTH,
         parent: 'parent',
         width: '100%',
-        height: '100%'
+        height: '100%',
     },
 };
-

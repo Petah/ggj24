@@ -2,6 +2,8 @@ import { Client } from './client';
 import { IEvent } from '../../common/event';
 import { logInfo } from '../../common/log';
 import { Player } from './player';
+import { GameState } from './events/game-list';
+import { GameStateUpdate } from '../../common/events/turn';
 
 export class Game {
     public players: Player[] = [];
@@ -33,5 +35,19 @@ export class Game {
         for (const player of this.players) {
             player.client.send(event);
         }
+    }
+
+    public broadcastGameState(): void {
+        this.broadcast(new GameStateUpdate(this.serialize()));
+    }
+
+    public serialize(): GameState {
+        return {
+            name: this.name,
+            players: this.players.map(player => ({
+                name: player.name,
+            })),
+            turn: this.turn,
+        };
     }
 }
