@@ -88,9 +88,9 @@ export class Server {
         }
     }
 
-    private handleStartGame(client: Client, event: StartGame) {
+    private async handleStartGame(client: Client, event: StartGame) {
         const game = this.getGameByClient(client);
-        game?.start();
+        await game?.start();
         game.broadcastGameState();
     }
 
