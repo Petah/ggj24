@@ -25,7 +25,7 @@ export class InGame extends Phaser.Scene {
         this.load.image('logo', 'assets/red_boxCross.png');
         this.load.image('grid', 'assets/uv-grid-4096-ian-maclachlan.png');
         this.load.image('tiles', 'assets/tilemap_packed.png');
-        this.load.tilemapTiledJSON('map', 'assets/test2playermap.json');
+        this.load.tilemapTiledJSON('map', 'assets/test3.json');
     }
 
     create() {
