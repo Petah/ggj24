@@ -28,6 +28,7 @@ export class InGame extends Phaser.Scene {
         this.load.image('logo', 'assets/red_boxCross.png');
         this.load.image('grid', 'assets/uv-grid-4096-ian-maclachlan.png');
         this.load.image('tiles', 'assets/tilemap_packed.png');
+        this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
     }
 
@@ -46,11 +47,15 @@ export class InGame extends Phaser.Scene {
             map.createLayer('Trees', tileset)
             // map.createLayer('Data', tileset)
 
-            const townsLayer = map.getObjectLayer('Towns')
-            const cities = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "City"})
-            const factories = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Factory"})
-            const docks = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Dock"})
-            const airPorts = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Airport"})
+            // const townsLayer = map.getObjectLayer('Towns')
+            const cities = map.createFromObjects('Towns', {
+                type: 'Dock',
+                frame: 12,
+                key: 'tiles2',
+            })
+            // const factories = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Factory"})
+            // const docks = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Dock"})
+            // const airPorts = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Airport"})
 
 
             console.log(tileset)
