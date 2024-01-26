@@ -37,7 +37,6 @@ export class InGame extends Phaser.Scene {
     create() {
 
         // create the Tilemap
-        this.cursorLayer = this.add.layer();
         const map = this.make.tilemap({ key: 'map' })
         const tilesetName = map.tilesets[0].name
         // add the tileset image we are using
@@ -48,7 +47,6 @@ export class InGame extends Phaser.Scene {
             map.createLayer('Road', tileset)
             map.createLayer('Mountains', tileset)
             map.createLayer('Trees', tileset)
-            map.createBlankLayer('Cursor', tileset)
             
             // map.createLayer('Data', tileset)
 
@@ -81,28 +79,33 @@ export class InGame extends Phaser.Scene {
 
             gameobjects.forEach((gameObject: Phaser.GameObjects.GameObject) => {
                 const owner = gameObject.getData('owner')
+                console.log(owner)
                 const currentFrame = gameObject.body?.gameObject?.frame
-                if (owner === 'Red') {
+                if (owner === 'green') {
                     gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 1));
-                } else if (owner === 'Blue') {
+                } else if (owner === 'blue') {
                     gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 2));
-                } else if (owner === 'Green') {
+                } else if (owner === 'red') {
                     gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 3));
-                } else if (owner === 'Yellow') {
+                } else if (owner === 'yello') {
                     gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 4));
                 }
             })
             
 
-            console.log(tileset)
+            console.log(gameobjects)
         }
 
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
             const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
             const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
+        });
+
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+            const tileX = Math.floor(pointer.worldX / TILE_SIZE);
+            const tileY = Math.floor(pointer.worldY / TILE_SIZE);
 
             this.placeCursorAtPosition(tileX, tileY);
-            console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
         });
 
         const cursors = this.input.keyboard!.createCursorKeys();
@@ -139,6 +142,8 @@ export class InGame extends Phaser.Scene {
                 fill: true,
             },
         });
+
+        this.cursorLayer = this.add.layer();
     }
 
     update(delta: number) {
@@ -183,8 +188,9 @@ export class InGame extends Phaser.Scene {
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
+        console.log("TileX: " + tileX + " TileY: " + tileY + " placedPositionX: " + tileX * TILE_SIZE + " placedPositionY: " + tileY * TILE_SIZE)
         this.cursorSprite?.destroy();
-        this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE);
+        this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
     }
 }
