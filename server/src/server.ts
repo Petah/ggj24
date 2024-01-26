@@ -23,22 +23,22 @@ export class Server {
             const client = new Client(ws);
             this.clients.push(client);
 
-            ws.on('message', (eventString: string) => {
+            ws.on('message', async (eventString: string) => {
                 const event = JSON.parse(eventString) as IEvent;
                 logInfo('Received message', event);
                 try {
                     switch (event.type) {
                         case EventType.GAME_LIST_REQUEST:
-                            this.handleGameListRequest(client, event as GameListRequest);
+                            await this.handleGameListRequest(client, event as GameListRequest);
                             break;
                         case EventType.JOIN_GAME_REQUEST:
-                            this.handleJoinGameRequest(client, event as JoinGameRequest);
+                            await this.handleJoinGameRequest(client, event as JoinGameRequest);
                             break;
                         case EventType.START_GAME:
-                            this.handleStartGame(client, event as StartGame);
+                            await this.handleStartGame(client, event as StartGame);
                             break;
                         case EventType.END_TURN:
-                            this.handleEndTurn(client, event as EndTurn);
+                            await this.handleEndTurn(client, event as EndTurn);
                             break;
                         default:
                             logInfo('Unknown event type', event.type);
@@ -74,11 +74,11 @@ export class Server {
         return game;
     }
 
-    private handleGameListRequest(client: Client, event: GameListRequest) {
+    private async handleGameListRequest(client: Client, event: GameListRequest) {
         client.send(new GameListResponse(this.gameList.games.map(g => g.serialize())));
     }
 
-    private handleJoinGameRequest(client: Client, event: JoinGameRequest) {
+    private async handleJoinGameRequest(client: Client, event: JoinGameRequest) {
         const game = this.gameList.games.find(g => g.name === event.gameName);
         if (game) {
             game.addPlayer(event.playerName, client);
@@ -94,7 +94,7 @@ export class Server {
         game.broadcastGameState();
     }
 
-    private handleEndTurn(client: Client, event: EndTurn) {
+    private async handleEndTurn(client: Client, event: EndTurn) {
         const game = this.getGameByClient(client);
         game?.endTurn();
         game.broadcastGameState();

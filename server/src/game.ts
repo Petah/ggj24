@@ -45,33 +45,40 @@ export class Game {
             throw new Error('Map layer not found');
         }
         const tiles: TileType[][] = [];
-        for (let y = 0; y < tileMap.height!; y++) {
+        for (let y = 0; y < tileMap.height; y++) {
             const row = [];
-            for (let x = 0; x < tileMap.width!; x++) {
-                const tile = layer.data[y * tileMap.width! + x];
+            for (let x = 0; x < tileMap.width; x++) {
+                const tile = layer.data[y * tileMap.width + x];
                 switch (tile) {
                     case 0:
                         row.push(TileType.WATER);
-                        break;
-                    case 180:
-                        row.push(TileType.ROAD);
+                        // row.push(`${TileType.WATER}:${tile}:${x}x${y}:${y * tileMap.width + x}`);
                         break;
                     case 181:
-                        row.push(TileType.GRASS);
+                        row.push(TileType.ROAD);
+                        // row.push(`${TileType.ROAD}:${tile}:${x}x${y}:${y * tileMap.width + x}`);
                         break;
                     case 182:
-                        row.push(TileType.MOUNTAIN);
+                        row.push(TileType.GRASS);
+                        // row.push(`${TileType.GRASS}:${tile}:${x}x${y}:${y * tileMap.width + x}`);
                         break;
                     case 183:
-                        row.push(TileType.RIVER);
+                        row.push(TileType.MOUNTAIN);
+                        // row.push(`${TileType.MOUNTAIN}:${tile}:${x}x${y}:${y * tileMap.width + x}`);
                         break;
                     case 184:
+                        row.push(TileType.RIVER);
+                        // row.push(`${TileType.RIVER}:${tile}:${x}x${y}:${y * tileMap.width + x}`);
+                        break;
+                    case 185:
                         row.push(TileType.FOREST);
+                        // row.push(`${TileType.FOREST}:${tile}:${x}x${y}:${y * tileMap.width + x}`);
                         break;
                     default:
                         logError('Tile not found', x, y, tile);
                 }
             }
+            // @ts-ignore
             tiles.push(row);
         }
         this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);

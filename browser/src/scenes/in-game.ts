@@ -4,6 +4,9 @@ import { GameState } from '../../../common/events/game-list';
 import { EndTurn, StartGame } from '../../../common/events/turn';
 import { GameButton } from '../button';
 
+const TILE_SIZE = 16;
+const TILE_SCALE = 1;
+
 export class InGame extends Phaser.Scene {
     private client: Client;
     private text!: Phaser.GameObjects.Text;
@@ -41,6 +44,7 @@ export class InGame extends Phaser.Scene {
             map.createLayer('Road', tileset)
             map.createLayer('Mountains', tileset)
             map.createLayer('Trees', tileset)
+            // map.createLayer('Data', tileset)
 
             const townsLayer = map.getObjectLayer('Towns')
             const cities = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "City"})
@@ -59,7 +63,7 @@ export class InGame extends Phaser.Scene {
 
             //         //I do this check because createFromObjects will
             //         //have already created objects once I use the same gid.
-            //         if (!gids[gid]) { 
+            //         if (!gids[gid]) {
             //           const objects = map.createFromObjects(name, gid)
             //           objects.reduce((group, sprite) => {
             //             group.add(sprite)
@@ -72,6 +76,12 @@ export class InGame extends Phaser.Scene {
             // }
 
         }
+
+        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+            const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
+            const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
+            console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
+        });
 
         const cursors = this.input.keyboard!.createCursorKeys();
 

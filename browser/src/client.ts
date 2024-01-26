@@ -50,7 +50,7 @@ export class Client {
         }
 
         this.ws.onclose = () => {
-            logInfo('Disconnected from server');
+            logError('Disconnected from server');
             setTimeout(() => {
                 window.location.reload();
             }, 3000);
