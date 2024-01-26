@@ -15,5 +15,8 @@ export class Menu extends Phaser.Scene {
         button.on('pointerdown', () => {
             this.scene.start('InGame');
         });
+
+        // @todo remove, jump straight to in-game for testing
+        this.scene.start('InGame');
     }
 }

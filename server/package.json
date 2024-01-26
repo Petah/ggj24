@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "@faker-js/faker": "^8.4.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
     "ws": "^8.16.0"
@@ -8,7 +9,9 @@
     "@types/ws": "^8.5.10",
     "@typescript-eslint/eslint-plugin": "^6.19.1",
     "@typescript-eslint/parser": "^6.19.1",
-    "eslint": "^8.56.0"
+    "eslint": "^8.56.0",
+    "nodemon": "^3.0.3",
+    "common": "../common"
   },
   "scripts": {
     "lint": "eslint \"src/**/*.ts\" --fix"
