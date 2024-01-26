@@ -33,15 +33,44 @@ export class InGame extends Phaser.Scene {
         // create the Tilemap
         const map = this.make.tilemap({ key: 'map' })
         const tilesetName = map.tilesets[0].name
-        console.log(map.tilesets[0].name)
-        console.log(map.tilesets[0])
         // add the tileset image we are using
         const tileset = map.addTilesetImage(tilesetName, 'tiles')
 
         if (tileset) {
-            map.createLayer('Map', tileset)?.setScale(1.5)
-            map.createLayer('Road', tileset)?.setScale(1.5)
-            map.createLayer('Mountains', tileset)?.setScale(1.5)
+            map.createLayer('Map', tileset)
+            map.createLayer('Road', tileset)
+            map.createLayer('Mountains', tileset)
+            map.createLayer('Trees', tileset)
+
+            const townsLayer = map.getObjectLayer('Towns')
+            const cities = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "City"})
+            const factories = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Factory"})
+            const docks = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Dock"})
+            const airPorts = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Airport"})
+
+
+            console.log(tileset)
+            // console.log(ob)
+            // if (ob) {
+            //     const gids = {}
+            //     ob.objects.forEach(object => {
+            //         const {gid, id} = object
+            //         map.createFromObjects('To')
+
+            //         //I do this check because createFromObjects will
+            //         //have already created objects once I use the same gid.
+            //         if (!gids[gid]) { 
+            //           const objects = map.createFromObjects(name, gid)
+            //           objects.reduce((group, sprite) => {
+            //             group.add(sprite)
+            //             this.physics.world.enable(sprite)
+            //             sprite.body.setImmovable()
+            //             return group
+            //           }, group)
+            //         }
+            //       })
+            // }
+
         }
 
         const cursors = this.input.keyboard!.createCursorKeys();
