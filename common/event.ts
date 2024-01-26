@@ -8,6 +8,8 @@ export enum EventType {
     GAME_STATE_UPDATE = 'game_state_update',
     START_GAME = 'start_game',
     ERROR = 'error',
+    MOVE_UNIT_REQUEST = 'move_unit_request',
+    MOVE_UNIT_RESPONSE = 'move_unit_response',
 
     // Client only events
     GAME_STATE_CHANGE = 'game_state_change',

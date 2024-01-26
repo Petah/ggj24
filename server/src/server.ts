@@ -6,7 +6,7 @@ import { Client } from './client';
 import { EventType, IEvent } from '../../common/event';
 import { GameListRequest, GameListResponse } from '../../common/events/game-list';
 import { JoinGameRequest, PlayerJoinedEvent } from '../../common/events/join-game';
-import { EndTurn, StartGame } from '../../common/events/turn';
+import { EndTurn, MoveUnitRequest, StartGame } from '../../common/events/turn';
 import { GameError } from './error';
 import { ErrorEvent } from '../../common/events/error';
 
@@ -39,6 +39,9 @@ export class Server {
                             break;
                         case EventType.END_TURN:
                             await this.handleEndTurn(client, event as EndTurn);
+                            break;
+                        case EventType.MOVE_UNIT_REQUEST:
+                            await this.handleMoveUnitRequest(client, event as MoveUnitRequest);
                             break;
                         default:
                             logInfo('Unknown event type', event.type);
@@ -97,6 +100,12 @@ export class Server {
     private async handleEndTurn(client: Client, event: EndTurn) {
         const game = this.getGameByClient(client);
         game?.endTurn();
+        game.broadcastGameState();
+    }
+
+    private async handleMoveUnitRequest(client: Client, event: MoveUnitRequest) {
+        const game = this.getGameByClient(client);
+        game?.moveUnit(event.unitId, event.x, event.y);
         game.broadcastGameState();
     }
 }

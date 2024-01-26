@@ -81,6 +81,9 @@ export class Game {
             // @ts-ignore
             tiles.push(row);
         }
+        const objectLayer = tileMap.layers.find(layer => layer.name === 'Towns');
+        console.log(objectLayer);
+
         this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
     }
 
@@ -92,6 +95,9 @@ export class Game {
         } else {
             this.currentPlayer = this.players[currentPlayerIndex + 1];
         }
+    }
+
+    public moveUnit(unitId: string, x: number, y: number) {
     }
 
     public broadcast(event: IEvent) {
