@@ -20,14 +20,27 @@ export class InGame extends Phaser.Scene {
     }
 
     preload() {
-
         this.load.image('logo', 'assets/red_boxCross.png');
         this.load.image('grid', 'assets/uv-grid-4096-ian-maclachlan.png');
+        this.load.image('tiles', 'assets/tilemap_packed.png');
+        this.load.tilemapTiledJSON('map', 'assets/test2playermap.json');
     }
 
     create() {
-        this.add.image(0, 0, 'grid')
-            .setOrigin(0);
+
+        // create the Tilemap
+        const map = this.make.tilemap({ key: 'map' })
+        const tilesetName = map.tilesets[0].name
+        console.log(map.tilesets[0].name)
+        console.log(map.tilesets[0])
+        // add the tileset image we are using
+        const tileset = map.addTilesetImage(tilesetName, 'tiles')
+
+        if (tileset) {
+            map.createLayer('Map', tileset)
+            map.createLayer('Road', tileset)
+            map.createLayer('Mountains', tileset)
+        }
 
         const cursors = this.input.keyboard!.createCursorKeys();
 
