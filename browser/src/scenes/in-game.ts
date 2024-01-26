@@ -173,11 +173,24 @@ export class InGame extends Phaser.Scene {
     }
 
 
-    findObjectAtPosition(tileX: number, tileY: number) {
-
+    findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
+        const objectLayer = map.getObjectLayer('Towns');
+        const objects = objectLayer?.objects;
+        if (!objects) {
+            return null;
+        }
+        for (let i = 0; i < objects.length; i++) {
+            const object = objects[i];
+            if (object.x === tileX && object.y === tileY) {
+                return object;
+            }
+        }
+        return null;
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
-        this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE);
+        this.cursorSprite?.destroy();
+        this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE);
+        this.cursorLayer.add(this.cursorSprite);
     }
 }
