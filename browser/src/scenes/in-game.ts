@@ -14,7 +14,8 @@ export class InGame extends Phaser.Scene {
     private endTurnButton!: GameButton;
     private gameState!: GameState;
     private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
-    private selectedUnit?: Phaser.GameObjects.Sprite;
+    private cursorLayer!: Phaser.GameObjects.Layer;
+    private cursorSprite!: Phaser.GameObjects.Sprite;
 
     constructor() {
         super('InGame');
@@ -36,6 +37,7 @@ export class InGame extends Phaser.Scene {
     create() {
 
         // create the Tilemap
+        this.cursorLayer = this.add.layer();
         const map = this.make.tilemap({ key: 'map' })
         const tilesetName = map.tilesets[0].name
         // add the tileset image we are using
@@ -46,6 +48,8 @@ export class InGame extends Phaser.Scene {
             map.createLayer('Road', tileset)
             map.createLayer('Mountains', tileset)
             map.createLayer('Trees', tileset)
+            map.createBlankLayer('Cursor', tileset)
+            
             // map.createLayer('Data', tileset)
 
             // const townsLayer = map.getObjectLayer('Towns')
@@ -79,13 +83,13 @@ export class InGame extends Phaser.Scene {
                 const owner = gameObject.getData('owner')
                 const currentFrame = gameObject.body?.gameObject?.frame
                 if (owner === 'Red') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 1))
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 1));
                 } else if (owner === 'Blue') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 2))
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 2));
                 } else if (owner === 'Green') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 3))
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 3));
                 } else if (owner === 'Yellow') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 4))
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 4));
                 }
             })
             
@@ -96,6 +100,8 @@ export class InGame extends Phaser.Scene {
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
             const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
             const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
+
+            this.placeCursorAtPosition(tileX, tileY);
             console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
         });
 
@@ -161,4 +167,11 @@ export class InGame extends Phaser.Scene {
     }
 
 
+    findObjectAtPosition(tileX: number, tileY:number) {
+
+    }
+
+    placeCursorAtPosition(tileX: number, tileY: number) {
+        this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE);
+    }
 }
