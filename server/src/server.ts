@@ -6,7 +6,9 @@ import { Client } from './client';
 import { EventType, IEvent } from '../../common/event';
 import { GameListRequest, GameListResponse } from '../../common/events/game-list';
 import { JoinGameRequest, PlayerJoinedEvent } from '../../common/events/join-game';
-import { EndTurn } from '../../common/events/turn';
+import { EndTurn, StartGame } from '../../common/events/turn';
+import { GameError } from './error';
+import { ErrorEvent } from '../../common/events/error';
 
 export class Server {
     private wss: WebSocket.Server;
@@ -32,6 +34,9 @@ export class Server {
                         case EventType.JOIN_GAME_REQUEST:
                             this.handleJoinGameRequest(client, event as JoinGameRequest);
                             break;
+                        case EventType.START_GAME:
+                            this.handleStartGame(client, event as StartGame);
+                            break;
                         case EventType.END_TURN:
                             this.handleEndTurn(client, event as EndTurn);
                             break;
@@ -40,6 +45,9 @@ export class Server {
                     }
                 } catch (error) {
                     logError('Error handling event', event, error);
+                    if (error instanceof GameError) {
+                        client.send(new ErrorEvent(error.message || 'Unknown error'));
+                    }
                 }
             });
 
@@ -78,6 +86,12 @@ export class Server {
         } else {
             logInfo('Game not found', event.gameName);
         }
+    }
+
+    private handleStartGame(client: Client, event: StartGame) {
+        const game = this.getGameByClient(client);
+        game?.start();
+        game.broadcastGameState();
     }
 
     private handleEndTurn(client: Client, event: EndTurn) {

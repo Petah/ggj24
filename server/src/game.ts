@@ -4,13 +4,17 @@ import { logInfo } from '../../common/log';
 import { Player } from './player';
 import { GameState } from './events/game-list';
 import { GameStateUpdate } from '../../common/events/turn';
+import { GameError } from './error';
 
 export class Game {
     public players: Player[] = [];
     public started: boolean = false;
     public turn: number = 0;
+    public currentPlayer?: Player;
 
-    constructor(public name: string) {
+    constructor(
+        public name: string,
+    ) {
     }
 
     public addPlayer(playerName: string, client: Client): void {
@@ -23,11 +27,22 @@ export class Game {
     }
 
     public start(): void {
+        if (this.started) {
+            throw new GameError('Game already started');
+        }
         this.started = true;
+        this.turn = 1;
+        this.currentPlayer = this.players[0];
     }
 
     public endTurn(): void {
-        this.turn++;
+        const currentPlayerIndex = this.players.indexOf(this.currentPlayer!);
+        if (currentPlayerIndex === this.players.length - 1) {
+            this.turn++;
+            this.currentPlayer = this.players[0];
+        } else {
+            this.currentPlayer = this.players[currentPlayerIndex + 1];
+        }
     }
 
     public broadcast(event: IEvent): void {
@@ -48,6 +63,7 @@ export class Game {
                 name: player.name,
             })),
             turn: this.turn,
+            currentPlayer: this.currentPlayer?.name,
         };
     }
 }

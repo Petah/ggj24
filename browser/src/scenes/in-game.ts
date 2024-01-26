@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 import { Client } from '../client';
 import { GameState } from '../../../common/events/game-list';
-import { EndTurn } from '../../../common/events/turn';
+import { EndTurn, StartGame } from '../../../common/events/turn';
+import { GameButton } from '../button';
 
 export class InGame extends Phaser.Scene {
     private client: Client;
     private text!: Phaser.GameObjects.Text;
-    private button!: Phaser.GameObjects.Image;
+    private startGameButton!: GameButton;
+    private endTurnButton!: GameButton;
     private gameState!: GameState;
     private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
 
@@ -20,7 +22,6 @@ export class InGame extends Phaser.Scene {
     }
 
     preload() {
-
         this.load.image('logo', 'assets/red_boxCross.png');
         this.load.image('grid', 'assets/uv-grid-4096-ian-maclachlan.png');
     }
@@ -44,11 +45,10 @@ export class InGame extends Phaser.Scene {
 
         this.cameras.main.setBounds(0, 0, 4096, 4096).setZoom(1);
 
-        this.button = this.add.image(10, 10, 'button')
-            .setOrigin(0);
-
-        this.button.setInteractive();
-        this.button.on('pointerdown', () => {
+        this.startGameButton = new GameButton(this, 'Start Game', 10, 10, () => {
+            this.client.send(new StartGame());
+        });
+        this.endTurnButton = new GameButton(this, 'End Turn', 10, 70, () => {
             this.client.send(new EndTurn());
         });
 
@@ -69,26 +69,26 @@ export class InGame extends Phaser.Scene {
     update(delta: number) {
         this.controls.update(delta);
 
-        if (this.gameState) {
-            const debugText = [
-                `Players: ${this.gameState.players.length} - ${this.gameState.players.map(player => player.name).join(', ')}`,
-                `Turn: ${this.gameState.turn}`,
-            ];
-            this.text.setText(debugText.join('\n'));
-        }
-
         // Hack to make the camera position update properly
         this.cameras.main.preRender(1);
 
-        this.text.setPosition(
-            this.cameras.main.worldView.x + this.cameras.main.worldView.width - this.text.width - 10,
-            this.cameras.main.worldView.y + 10,
-        );
+        // Render debug info
+        if (this.gameState) {
+            const debugText = [
+                `Players: ${this.gameState.players.length} - ${this.gameState.players.map(player => player.name).join(', ')}`,
+                `Current player: ${this.gameState.currentPlayer}`,
+                `Turn: ${this.gameState.turn}`,
+            ];
+            this.text.setText(debugText.join('\n'));
+            this.text.setPosition(
+                this.cameras.main.worldView.x + this.cameras.main.worldView.width - this.text.width - 10,
+                this.cameras.main.worldView.y + 10,
+            );
+        }
 
-        this.button.setPosition(
-            this.cameras.main.worldView.x + 10,
-            this.cameras.main.worldView.y + 10,
-        );
+        // Render UI
+        this.startGameButton.update();
+        this.endTurnButton.update();
     }
 
 
