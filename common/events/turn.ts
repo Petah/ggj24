@@ -17,3 +17,8 @@ export class GameStateUpdate implements IEvent {
     public type = EventType.GAME_STATE_UPDATE;
     constructor(public game: GameState) { }
 }
+
+export class MoveUnitRequest implements IEvent {
+    public type = EventType.MOVE_UNIT_REQUEST;
+    constructor(public unitId: string, public x: number, public y: number) { }
+}
