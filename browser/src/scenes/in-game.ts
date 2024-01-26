@@ -16,6 +16,7 @@ export class InGame extends Phaser.Scene {
     private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
     private cursorLayer!: Phaser.GameObjects.Layer;
     private cursorSprite!: Phaser.GameObjects.Sprite;
+    private gameObjects!: Phaser.GameObjects.Sprite[];
 
     constructor() {
         super('InGame');
@@ -40,72 +41,73 @@ export class InGame extends Phaser.Scene {
         const map = this.make.tilemap({ key: 'map' })
         const tilesetName = map.tilesets[0].name
         // add the tileset image we are using
-        const tileset = map.addTilesetImage(tilesetName, 'tiles')
+        const tileset = map.addTilesetImage(tilesetName, 'tiles') as Phaser.Tilemaps.Tileset;
 
-        if (tileset) {
-            map.createLayer('Map', tileset)
-            map.createLayer('Road', tileset)
-            map.createLayer('Mountains', tileset)
-            map.createLayer('Trees', tileset)
-            
-            // map.createLayer('Data', tileset)
+        map.createLayer('Map', tileset)?.setScale(TILE_SCALE)
+        map.createLayer('Road', tileset)?.setScale(TILE_SCALE)
+        map.createLayer('Mountains', tileset)?.setScale(TILE_SCALE)
+        map.createLayer('Trees', tileset)?.setScale(TILE_SCALE)
+        map.createBlankLayer('Cursor', tileset)?.setScale(TILE_SCALE)
 
-            // const townsLayer = map.getObjectLayer('Towns')
-            const gameobjects = map.createFromObjects('Towns', [{
-                type: 'City',
-                frame: 8,
-                key: 'tiles2',
-            }, {
-                type: 'Dock',
-                frame: 12,
-                key: 'tiles2',
-            }, {
-                type: 'Factory',
-                frame: 11,
-                key: 'tiles2',
-            }, {
-                type: 'Airport',
-                frame: 15,
-                key: 'tiles2',
-            }, {
-                type: 'HQ',
-                frame: 9,
-                key: 'tiles2',
-            }, {
-                type: 'Infantry',
-                frame: 106,
-                key: 'tiles2',
-            }])
+        // map.createLayer('Data', tileset)
 
-            gameobjects.forEach((gameObject: Phaser.GameObjects.GameObject) => {
-                const owner = gameObject.getData('owner')
-                console.log(owner)
-                const currentFrame = gameObject.body?.gameObject?.frame
-                if (owner === 'green') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 1));
-                } else if (owner === 'blue') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 2));
-                } else if (owner === 'red') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 3));
-                } else if (owner === 'yello') {
-                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 4));
-                }
-            })
-            
+        // const townsLayer = map.getObjectLayer('Towns')
+        this.gameObjects = map.createFromObjects('Towns', [{
+            type: 'City',
+            // frame: 8,
+            key: 'tiles2',
+        }, {
+            type: 'Dock',
+            frame: 12,
+            key: 'tiles2',
+        }, {
+            type: 'Factory',
+            frame: 11,
+            key: 'tiles2',
+        }, {
+            type: 'Airport',
+            frame: 15,
+            key: 'tiles2',
+        }, {
+            type: 'HQ',
+            frame: 9,
+            key: 'tiles2',
+        }, {
+            type: 'Infantry',
+            frame: 106,
+            key: 'tiles2',
+        }]) as Phaser.GameObjects.Sprite[]
 
-            console.log(gameobjects)
+        for (const sprite of this.gameObjects) {
+            // console.log(gameObject);
+            const owner = sprite.getData('owner')
+            let currentFrame = sprite.frame.name
+            if (owner === 'red') {
+                console.log(owner, sprite);
+                sprite?.setFrame(currentFrame + (18 * 3));
+            } else if (owner === 'blue') {
+                sprite.setFrame(currentFrame + (18 * 2));
+            } else if (owner === 'green') {
+                sprite.setFrame(currentFrame + (18 * 1));
+            } else if (owner === 'yellow') {
+                sprite.setFrame(currentFrame + (18 * 4));
+            }
         }
 
-        this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
+        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
             const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
-        });
+            for (const gameObject of this.gameObjects) {
+                // Get game object at position
+                const x = Math.floor(gameObject.x / TILE_SIZE / TILE_SCALE);
+                const y = Math.floor(gameObject.y / TILE_SIZE / TILE_SCALE);
+                if (x === tileX && y === tileY) {
+                    console.log('Clicked on game object at ', x, y, gameObject);
+                }
+            }
 
-        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            const tileX = Math.floor(pointer.worldX / TILE_SIZE);
-            const tileY = Math.floor(pointer.worldY / TILE_SIZE);
-
-            this.placeCursorAtPosition(tileX, tileY);
+            // this.placeCursorAtPosition(tileX, tileY);
+            console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
         });
 
         const cursors = this.input.keyboard!.createCursorKeys();
@@ -149,7 +151,7 @@ export class InGame extends Phaser.Scene {
     update(delta: number) {
         this.controls.update(delta);
 
-        // Hack to make the camera position update properly
+        // @ts-ignore Hack to make the camera position update properly
         this.cameras.main.preRender(1);
 
         // Render debug info

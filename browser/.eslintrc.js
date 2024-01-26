@@ -20,6 +20,7 @@ module.exports = {
     rules: {
         '@typescript-eslint/member-delimiter-style': 'error',
         '@typescript-eslint/no-explicit-any': ['warn', { ignoreRestArgs: true }],
+        '@typescript-eslint/ban-ts-comment': 'off',
         'arrow-parens': ['error', 'as-needed'],
         'quote-props': ['error', 'as-needed'],
         'sort-imports': ['error', { ignoreDeclarationSort: true }],
