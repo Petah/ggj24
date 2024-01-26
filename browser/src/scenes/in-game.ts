@@ -1,12 +1,12 @@
 import Phaser from 'phaser';
 
-export default class Demo extends Phaser.Scene {
+export class InGame extends Phaser.Scene {
     constructor() {
-        super('GameScene');
+        super('InGame');
     }
 
     preload() {
-        this.load.image('logo', 'assets/phaser3-logo.png');
+        this.load.image('logo', 'assets/red_boxCross.png');
     }
 
     create() {
