@@ -5,6 +5,7 @@ export interface GameState {
     players: {
         name: string;
     }[];
+    turn: number;
 }
 
 export class GameListRequest implements IEvent {
