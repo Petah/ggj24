@@ -3,6 +3,7 @@ import { GameListRequest, GameListResponse, GameState } from '../../common/event
 import { JoinGameRequest } from '../../common/events/join-game';
 import { logError, logInfo } from '../../common/log';
 import { GameStateUpdate } from '../../common/events/turn';
+import { ErrorEvent } from '../../common/events/error';
 
 interface EventListeners {
     [EventType.GAME_STATE_CHANGE]: ((gameState: GameState) => void)[];
@@ -39,6 +40,9 @@ export class Client {
                     break;
                 case EventType.GAME_STATE_UPDATE:
                     this.sendGameStateChange((event as GameStateUpdate).game);
+                    break;
+                case EventType.ERROR:
+                    logError('Received error from server:', (event as ErrorEvent).message);
                     break;
                 default:
                     logError('Unknown event type', event.type);

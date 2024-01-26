@@ -6,6 +6,8 @@ export enum EventType {
     PLAYER_JOINED = 'player_joined',
     END_TURN = 'end_turn',
     GAME_STATE_UPDATE = 'game_state_update',
+    START_GAME = 'start_game',
+    ERROR = 'error',
 
     // Client only events
     GAME_STATE_CHANGE = 'game_state_change',
