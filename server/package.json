@@ -5,6 +5,12 @@
     "ws": "^8.16.0"
   },
   "devDependencies": {
-    "@types/ws": "^8.5.10"
+    "@types/ws": "^8.5.10",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
+    "eslint": "^8.56.0"
+  },
+  "scripts": {
+    "lint": "eslint \"src/**/*.ts\" --fix"
   }
 }
