@@ -39,9 +39,9 @@ export class InGame extends Phaser.Scene {
         const tileset = map.addTilesetImage(tilesetName, 'tiles')
 
         if (tileset) {
-            map.createLayer('Map', tileset)
-            map.createLayer('Road', tileset)
-            map.createLayer('Mountains', tileset)
+            map.createLayer('Map', tileset)?.setScale(1.5)
+            map.createLayer('Road', tileset)?.setScale(1.5)
+            map.createLayer('Mountains', tileset)?.setScale(1.5)
         }
 
         const cursors = this.input.keyboard!.createCursorKeys();
@@ -54,7 +54,7 @@ export class InGame extends Phaser.Scene {
             down: cursors.down,
             acceleration: 0.02,
             drag: 0.0005,
-            maxSpeed: 0.5,
+            maxSpeed: 0.01,
         });
 
         this.cameras.main.setBounds(0, 0, 4096, 4096).setZoom(1);
