@@ -13,24 +13,19 @@ export class InGame extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('logo', 'assets/red_boxCross.png');
-
-        this.text = this.add.text(100, 100, '', {
-            font: '16px monospace',
-        });
+        this.load.image('base_tiles', 'assets/tilemap_packed.png')
+        this.load.tilemapTiledJSON('tilemap', 'assets/2playermap.json')
     }
 
     create() {
-        const logo = this.add.image(400, 70, 'logo');
+        const map = this.make.tilemap({ key: 'tilemap' })
+        const tileset = map.addTilesetImage('standard_tiles', 'base_tiles');
 
-        this.tweens.add({
-            targets: logo,
-            y: 350,
-            duration: 1500,
-            ease: 'Sine.inOut',
-            yoyo: true,
-            repeat: -1,
-        });
+        console.log("Tileset is: " + (tileset ? "not null" : "null"))
+        if (tileset) {
+            map.createLayer('Map', tileset)
+            map.createLayer('Mountains', tileset)
+        }
     }
 
 }

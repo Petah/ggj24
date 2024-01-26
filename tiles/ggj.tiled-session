@@ -7,6 +7,17 @@
     "expandedProjectPaths": [
     ],
     "fileStates": {
+        "2playermap.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 2,
+            "viewCenter": {
+                "x": 299.3333333333333,
+                "y": 286.66666666666663
+            }
+        },
+        "2playermap.tmx#Test": {
+            "scaleInDock": 1
+        },
         "Kennys.tsx": {
             "dynamicWrapping": true
         },
@@ -14,8 +25,10 @@
             "dynamicWrapping": false
         }
     },
+    "last.exportedFilePath": "C:/Users/GameJam/Documents/GameJam/ggj24/browser/public/assets",
     "last.imagePath": "C:/Users/GameJam/Downloads/kenney_tiny-battle/Tilemap",
     "map.height": 40,
+    "map.lastUsedExportFilter": "JSON map files (*.tmj *.json)",
     "map.lastUsedFormat": "tmx",
     "map.tileHeight": 16,
     "map.tileWidth": 16,
@@ -25,6 +38,7 @@
     "project": "ggj.tiled-project",
     "property.type": "string",
     "recentFiles": [
+        "2playermap.tmx"
     ],
     "tileset.lastUsedFormat": "tsx",
     "tileset.tileSize": {
