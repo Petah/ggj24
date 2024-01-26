@@ -14,6 +14,7 @@ export class InGame extends Phaser.Scene {
     private endTurnButton!: GameButton;
     private gameState!: GameState;
     private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
+    private selectedUnit?: Phaser.GameObjects.Sprite;
 
     constructor() {
         super('InGame');
@@ -48,38 +49,48 @@ export class InGame extends Phaser.Scene {
             // map.createLayer('Data', tileset)
 
             // const townsLayer = map.getObjectLayer('Towns')
-            const cities = map.createFromObjects('Towns', {
+            const gameobjects = map.createFromObjects('Towns', [{
+                type: 'City',
+                frame: 8,
+                key: 'tiles2',
+            }, {
                 type: 'Dock',
                 frame: 12,
                 key: 'tiles2',
-            })
-            // const factories = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Factory"})
-            // const docks = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Dock"})
-            // const airPorts = map.createFromObjects('Towns', { gid: tileset.firstgid + 9, type: "Airport"})
+            }, {
+                type: 'Factory',
+                frame: 11,
+                key: 'tiles2',
+            }, {
+                type: 'Airport',
+                frame: 15,
+                key: 'tiles2',
+            }, {
+                type: 'HQ',
+                frame: 9,
+                key: 'tiles2',
+            }, {
+                type: 'Infantry',
+                frame: 106,
+                key: 'tiles2',
+            }])
 
+            gameobjects.forEach((gameObject: Phaser.GameObjects.GameObject) => {
+                const owner = gameObject.getData('owner')
+                const currentFrame = gameObject.body?.gameObject?.frame
+                if (owner === 'Red') {
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 1))
+                } else if (owner === 'Blue') {
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 2))
+                } else if (owner === 'Green') {
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 3))
+                } else if (owner === 'Yellow') {
+                    gameObject.body?.gameObject?.setFrame(currentFrame + (16 * 4))
+                }
+            })
+            
 
             console.log(tileset)
-            // console.log(ob)
-            // if (ob) {
-            //     const gids = {}
-            //     ob.objects.forEach(object => {
-            //         const {gid, id} = object
-            //         map.createFromObjects('To')
-
-            //         //I do this check because createFromObjects will
-            //         //have already created objects once I use the same gid.
-            //         if (!gids[gid]) {
-            //           const objects = map.createFromObjects(name, gid)
-            //           objects.reduce((group, sprite) => {
-            //             group.add(sprite)
-            //             this.physics.world.enable(sprite)
-            //             sprite.body.setImmovable()
-            //             return group
-            //           }, group)
-            //         }
-            //       })
-            // }
-
         }
 
         this.input.on('pointermove', (pointer: Phaser.Input.Pointer) => {
