@@ -78,6 +78,7 @@ export abstract class MovableUnit extends Unit {
     public canCapture = false;
     public carryingCapacity = 0;
     public carriedUnits: MovableUnit[] = [];
+    public hasCommitedActions: boolean = false;
 }
 
 export class Infantry extends MovableUnit {
