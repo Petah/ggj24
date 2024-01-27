@@ -210,6 +210,10 @@ export class Game {
             throw new GameError('Unit cannot capture');
         }
 
+        if (unit.hasCommitedActions) {
+            throw new GameError('Unit has already commited actions');
+        }
+
         const unitCaptureValue = Math.max(unit.health / 10, 1);
         building.capturePoints -= unitCaptureValue;
 
