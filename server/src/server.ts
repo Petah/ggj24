@@ -9,6 +9,7 @@ import { JoinGameRequest, PlayerJoinedEvent } from '../../common/events/join-gam
 import { EndTurn, MoveUnitRequest, ReloadGameState, StartGame } from '../../common/events/turn';
 import { GameError } from './error';
 import { ErrorEvent } from '../../common/events/error';
+import { PurchaseUnitRequest } from '../../common/events/unit-purchase';
 
 export class Server {
     private wss: WebSocket.Server;
@@ -45,6 +46,10 @@ export class Server {
                             break;
                         case EventType.RELOAD_GAME_STATE:
                             await this.handleReloadGameState(client, event as ReloadGameState);
+                            break;
+                        case EventType.PURCHASE_UNIT_REQUEST:
+                        // TODO
+                            await this.handlePurchaseUnitRequest(client, event as PurchaseUnitRequest);
                             break;
                         default:
                             logInfo('Unknown event type', event.type);
@@ -114,6 +119,12 @@ export class Server {
     private async handleReloadGameState(client: Client, event: ReloadGameState) {
         const game = this.getGameByClient(client);
         game?.broadcastGameState();
+    }
+
+    private async handlePurchaseUnitRequest(client: Client, event: PurchaseUnitRequest) {
+        const game = this.getGameByClient(client);
+        // @ts-ignore
+        game?.buildUnit(event.unitId, event.unitType);
     }
 }
 

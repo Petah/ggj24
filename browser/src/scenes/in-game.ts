@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
 import { EndTurn, MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
@@ -103,6 +104,7 @@ export class InGame extends Phaser.Scene {
     private grid!: PF.Grid;
     private finder!: PF.AStarFinder;
     private selectedArrow!: Phaser.GameObjects.Sprite;
+    private isInMenuState: boolean = false;
 
     constructor() {
         super('InGame');
@@ -115,6 +117,7 @@ export class InGame extends Phaser.Scene {
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
+        this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32})
     }
 
     create() {
@@ -190,6 +193,26 @@ export class InGame extends Phaser.Scene {
         });
 
         this.input.keyboard?.on('keydown', (event: any) => {
+            if (this.isInMenuState) {
+                switch (event.key) {
+                    case 'ArrowUp':
+                        this.ui.movePurchaseCursorUp();
+                        break;
+                    case 'ArrowDown':
+                        this.ui.movePurchaseCursorDown();
+                        break;
+                    case 'x':
+                        this.unselectUnit();
+                        break;
+                    case "c":
+                    case " ":
+                        if (state.selectedUnit) {
+                            client.send(new PurchaseUnitRequest(state.selectedUnit.id, this.ui.getSelectedUnitTypeFromPurchaseList()))
+                        }
+                        break;
+                }
+                return;
+            }
             const tileX = Math.floor(this.cursorSprite.x / TILE_SIZE / TILE_SCALE);
             const tileY = Math.floor(this.cursorSprite.y / TILE_SIZE / TILE_SCALE);
 
@@ -265,7 +288,7 @@ export class InGame extends Phaser.Scene {
     }
 
     onCursorPositionUpdate(tileX: number, tileY: number) {
-        // const unit = this.findObjectAtPosition(tileX, tileY);
+
     }
 
     findObjectAtPosition(tileX: number, tileY: number) {
@@ -326,6 +349,7 @@ export class InGame extends Phaser.Scene {
         state.selectedUnit = unit;
         const type = unit?.type;
         if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
+            this.isInMenuState = true;
             this.ui.onProductionBuildingSelected(unit);
         }
         this.selectedArrow.setPosition(unit.x * TILE_SIZE * TILE_SCALE, (unit.y - 1) * TILE_SIZE * TILE_SCALE);
@@ -335,20 +359,11 @@ export class InGame extends Phaser.Scene {
     private unselectUnit() {
         const type = state.selectedUnit?.type;
         if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
+            this.isInMenuState = false;
             this.ui.onProductionBuildingUnselected();
         }
         state.selectedUnit = undefined;
         this.selectedArrow.setVisible(false);
-    }
-
-    private onProductionBuildingSelected(unit: Unit) {
-        this.add.rectangle(
-            state.cursorX * TILE_SIZE * TILE_SCALE + 8,
-            state.cursorY * TILE_SIZE * TILE_SCALE + 8,
-            80,
-            160,
-            0xFCF3CF,
-        ).setOrigin(0, 0);
     }
 
     private getUnitSprite(unit: Unit) {

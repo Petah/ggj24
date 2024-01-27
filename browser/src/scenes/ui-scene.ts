@@ -5,6 +5,7 @@ import { AntiTank, Infantry, PlayerColor, Tank, Unit, UnitType, UnitTypeMap } fr
 import { isOurTurn, state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
+import { PurchaseUnitReqest } from '../../../common/events/unit-purchase';
 import { ucFirst } from '../../../common/util';
 
 export class UI extends Phaser.Scene {
@@ -15,7 +16,10 @@ export class UI extends Phaser.Scene {
     private endTurnButton!: GameButton;
     private menuBackground!: Phaser.GameObjects.Rectangle;
     private purchasableUnits!: Phaser.GameObjects.Group;
+    private purchaseCursor!: Phaser.GameObjects.Sprite;
     private reloadGameStateButton!: GameButton;
+    private purchasableUnitList!: UnitType[];
+    private selectedPurchaseListIndex = 0;
 
     constructor() {
         super({ key: 'UI' });
@@ -102,6 +106,8 @@ export class UI extends Phaser.Scene {
         const building = unit as Building;
         const playerColor = state.game?.players.find(player => player.name === building.player)?.color || PlayerColor.NEUTRAL;
         const playerMoney = state.game?.players.find(player => player.name === building.player)?.money || 0;
+        this.purchasableUnitList = building.canBuild;
+        this.selectedPurchaseListIndex = 0;
 
         const height = building.canBuild.length * 32
 
@@ -163,12 +169,44 @@ export class UI extends Phaser.Scene {
             this.purchasableUnits.add(unitNameText);
             this.purchasableUnits.add(unitCostText);
         }
+
+        this.purchaseCursor = this.add.sprite(
+            this.menuBackground.x,
+            this.menuBackground.y,
+            'bigCursor',
+            1
+        ).setOrigin(0, 0);
     }
 
     public onProductionBuildingUnselected() {
         this.menuBackground.destroy(true);
         this.purchasableUnits.destroy(true);
         this.purchasableUnits = this.add.group();
+        this.purchaseCursor.destroy(true);
+    }
+
+    public movePurchaseCursorUp() {
+        if (this.selectedPurchaseListIndex === 0) return;
+
+        this.selectedPurchaseListIndex--;
+        this.purchaseCursor.setPosition(
+            this.purchaseCursor.x,
+            this.purchaseCursor.y - 32,
+        )
+    }
+
+    public movePurchaseCursorDown() {
+        if (this.selectedPurchaseListIndex === this.purchasableUnitList.length - 1) return;
+
+        this.selectedPurchaseListIndex++;
+        this.purchaseCursor.setPosition(
+            this.purchaseCursor.x,
+            this.purchaseCursor.y + 32,
+        )
+    }
+
+    public getSelectedUnitTypeFromPurchaseList() {
+        return this.purchasableUnitList[this.selectedPurchaseListIndex];
     }
 
     public updateGameState() {

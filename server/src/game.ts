@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { Airport, Building, City, Dock, Factory, HQ, Infantry, Jet, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType } from '../../common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType } from '../../common/unit';
 import { TILE_SIZE } from '../../common/map';
 import { generateId } from './id';
 
@@ -195,13 +195,17 @@ export class Game {
         this.broadcast(new MoveUnitResponse(unitId, clonePath, unit.movementPoints));
     }
 
-    public buildUnit(buildingId: number, unitType: UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET) {
+    public buildUnit(buildingId: number, unitType: UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET | UnitType.ANTI_TANK | UnitType.APC | UnitType.HELICOPTER | UnitType.LANDER) {
         const { player, unit } = this.getPlayerUnit(buildingId);
         const unitsAvailable = {
             [UnitType.INFANTRY]: Infantry,
+            [UnitType.HELICOPTER]: Helicopter,
+            [UnitType.ANTI_TANK]: AntiTank,
+            [UnitType.APC]: APC,
             [UnitType.TANK]: Tank,
             [UnitType.SHIP]: Ship,
             [UnitType.JET]: Jet,
+            [UnitType.LANDER]: Lander,
         }
         const building = unit as Building;
         if (!building.canBuild.includes(unitType)) {
