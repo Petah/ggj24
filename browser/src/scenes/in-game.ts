@@ -4,7 +4,7 @@ import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, Unit, UnitType, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { state } from '../state';
 import { UI } from './ui-scene';
-import { MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
+import { EndTurn, MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
 
 export const UnitSprites = {
@@ -187,6 +187,8 @@ export class InGame extends Phaser.Scene {
                 case 'x':
                     this.unselectUnit();
                     break;
+                case 'Enter':
+                    client.send(new EndTurn)
             }
         });
 

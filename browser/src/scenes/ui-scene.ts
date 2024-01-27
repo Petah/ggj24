@@ -180,10 +180,12 @@ export class UI extends Phaser.Scene {
             if (cost > playerMoney) {
                 tempSprite.setTint(0x808080);
                 unitNameText.setTint(0x808080);
+                unitCostText.setTint(0x808080);
             }
 
             this.purchasableUnits.add(tempSprite);
             this.purchasableUnits.add(unitNameText);
+            this.purchasableUnits.add(unitCostText);
         }
     }
 
