@@ -270,6 +270,7 @@ export class Game {
             turn: this.turn,
             currentPlayer: this.currentPlayer?.name,
             tiles: this.gameMap?.tiles,
+            matrix: this.gameMap?.matrix,
             units: this.units,
         };
     }

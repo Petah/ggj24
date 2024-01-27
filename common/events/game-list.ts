@@ -13,6 +13,7 @@ export interface GameState {
     turn: number;
     currentPlayer?: string;
     tiles?: TileType[][];
+    matrix?: number[][];
     units?: Unit[];
 }
 

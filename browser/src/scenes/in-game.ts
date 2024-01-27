@@ -6,6 +6,7 @@ import { state } from '../state';
 import { UI } from './ui-scene';
 import { MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
+import * as PF from 'pathfinding';
 
 export const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
@@ -99,6 +100,9 @@ export class InGame extends Phaser.Scene {
         time: number;
         current: number;
     };
+    private grid!: PF.Grid;
+    private finder!: PF.AStarFinder;
+    private selectedArrow!: Phaser.GameObjects.Sprite;
 
     constructor() {
         super('InGame');
@@ -107,6 +111,8 @@ export class InGame extends Phaser.Scene {
 
     preload() {
         this.load.image('tiles', 'assets/tilemap_packed.png');
+        // UIpackSheet_transparent.png
+        this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
     }
@@ -127,7 +133,6 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
         this.cameras.main.setZoom(2).setScroll(-300, -200);
-
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
             if (deltaY > 0) {
@@ -153,6 +158,21 @@ export class InGame extends Phaser.Scene {
 
             this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
             this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+        });
+
+        this.input.on('pointerdown', (pointer: {
+            worldX: number;
+            worldY: number;
+        }) => {
+            const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
+            const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
+            this.placeCursorAtPosition(tileX, tileY);
+            const unitAtPosition = this.findObjectAtPosition(tileX, tileY);
+            if (unitAtPosition) {
+                this.selectUnit(unitAtPosition);
+            } else {
+                this.unselectUnit();
+            }
         });
 
         this.input.keyboard?.on('keydown', (event: any) => {
@@ -198,6 +218,14 @@ export class InGame extends Phaser.Scene {
         this.cursorSprite = this.add.sprite(state.cursorX * TILE_SIZE, state.cursorY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
         this.placeCursorAtPosition(state.cursorX, state.cursorY)
+        this.selectedArrow = this.make.sprite({
+            x: 0,
+            y: 0,
+            key: 'uiTiles1',
+            frame: 715,
+            origin: 0,
+        }, false);
+        this.cursorLayer.add(this.selectedArrow);
 
         this.created = true;
         this.updateGameState();
@@ -213,6 +241,7 @@ export class InGame extends Phaser.Scene {
             const currentX = Phaser.Math.Interpolation.Linear(this.moving.pointsX, percent);
             const currentY = Phaser.Math.Interpolation.Linear(this.moving.pointsY, percent);
             this.moving.sprite.setPosition(currentX, currentY);
+            this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE * TILE_SCALE);
             if (percent >= 1) {
                 this.moving = undefined;
             }
@@ -239,35 +268,38 @@ export class InGame extends Phaser.Scene {
     }
 
     private handleSelect(tileX: number, tileY: number) {
-        console.log("selecting")
         if (state.selectedUnit) {
-            if (state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) {
+            if ((state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) || !isMoveableUnit(state.selectedUnit)) {
                 this.unselectUnit();
                 return;
             }
             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
         } else {
-            const unit = this.findObjectAtPosition(tileX, tileY);
-            state.selectedUnit = unit;
-            const type = unit?.type;
-            if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
-                if (unit) {
-                    this.ui.onProductionBuildingSelected(unit);
-                }
-            }
+            this.selectUnit(this.findObjectAtPosition(tileX, tileY));
         }
     }
 
-    private unselectUnit() {
-        const unit = state.selectedUnit;
+    private selectUnit(unit?: Unit) {
+        if (!unit) {
+            return;
+        }
+        state.selectedUnit = unit;
         const type = unit?.type;
-        console.log(type)
+        if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
+            this.ui.onProductionBuildingSelected(unit);
+        }
+        this.selectedArrow.setPosition(unit.x * TILE_SIZE * TILE_SCALE, (unit.y - 1) * TILE_SIZE * TILE_SCALE);
+        this.selectedArrow.setVisible(true);
+    }
+
+    private unselectUnit() {
+        const type = state.selectedUnit?.type;
         if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
             this.ui.onProductionBuildingUnselected();
         }
         state.selectedUnit = undefined;
+        this.selectedArrow.setVisible(false);
     }
-
 
     private onProductionBuildingSelected(unit: Unit) {
         this.add.rectangle(
@@ -292,6 +324,12 @@ export class InGame extends Phaser.Scene {
         if (!state.game || !this.created) {
             return;
         }
+
+        this.grid = new PF.Grid(state.game.matrix!);
+        this.finder = new PF.AStarFinder({
+            diagonalMovement: PF.DiagonalMovement.Never,
+        });
+
         for (const unit of state.game?.units || []) {
             const existingSprite = this.getUnitSprite(unit);
             if (existingSprite) {

@@ -4,6 +4,7 @@ import * as PF from 'pathfinding';
 export class GameMap {
     public grid: PF.Grid;
     public finder: PF.AStarFinder;
+    public matrix: number[][];
     public matrixString: string;
 
     constructor(
@@ -16,19 +17,19 @@ export class GameMap {
             this.matrixString += i % 10;
         }
         this.matrixString += '\n';
-        const matrix = [];
+        this.matrix = [];
         for (const row of tiles) {
             const matrixRow = [];
-            this.matrixString += matrix.length % 10;
+            this.matrixString += this.matrix.length % 10;
             for (const tile of row) {
                 matrixRow.push(tile === TileType.WATER ? 1 : 0);
                 this.matrixString += tile === TileType.WATER ? '~' : 'X';
             }
-            matrix.push(matrixRow);
+            this.matrix.push(matrixRow);
             this.matrixString += '\n';
         }
         process.stdout.write(this.matrixString);
-        this.grid = new PF.Grid(matrix);
+        this.grid = new PF.Grid(this.matrix);
         this.finder = new PF.AStarFinder({
             diagonalMovement: PF.DiagonalMovement.Never,
         });
