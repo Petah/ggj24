@@ -95,7 +95,7 @@ export class Game {
             const player = this.players.find(player => player.color === owner);
 
             const x = Math.round(gameObject.x / TILE_SIZE);
-            const y = Math.round(gameObject.y / TILE_SIZE);
+            const y = Math.round(gameObject.y / TILE_SIZE) - 1;
             if (x < 0 || x >= tileMap.width || y < 0 || y >= tileMap.height) {
                 logError('Object out of bounds', gameObject, x, y);
                 continue;

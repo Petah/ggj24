@@ -6,7 +6,6 @@ export class Menu extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('button', 'assets/green_button00.png');
     }
 
     create() {

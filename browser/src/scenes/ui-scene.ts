@@ -15,11 +15,15 @@ export class UI extends Phaser.Scene {
         super({ key: 'UI' });
     }
 
+    preload() {
+        this.load.image('button', 'assets/green_button00.png');
+    }
+
     create() {
-        this.startGameButton = new GameButton(this, 'Start Game', 900, 740, () => {
+        this.startGameButton = new GameButton(this, 'Start Game', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 120, () => {
             client.send(new StartGame());
         });
-        this.endTurnButton = new GameButton(this, 'End Turn', 900, 800, () => {
+        this.endTurnButton = new GameButton(this, 'End Turn', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 60, () => {
             client.send(new EndTurn());
         });
         // this.cameras.main.setZoom(2);
