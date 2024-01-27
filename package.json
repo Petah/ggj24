@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "@types/pathfinding": "^0.0.9",
+    "pathfinding": "^0.4.18"
+  }
+}

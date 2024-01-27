@@ -10,7 +10,7 @@ import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
 import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, getDamageAmount, isBuilding, isMoveableUnit } from '../../common/unit';
-import { TILE_SIZE } from '../../common/map';
+import { TILE_SIZE, getPathFinder } from '../../common/map';
 import { generateId } from './id';
 import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
 
@@ -185,13 +185,8 @@ export class Game {
             buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints
         }
 
-        const grid = this.gameMap.grid.clone();
-        for (const unit of this.units) {
-            if (isMoveableUnit(unit) && unit.player !== this.currentPlayer?.name) {
-                grid.setWalkableAt(unit.x, unit.y, false);
-            }
-        }
-        const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, grid);
+        const { finder, grid } = getPathFinder(unit, this.gameMap.matrix, this.units, this.currentPlayer?.name)
+        const path = finder.findPath(unit.x, unit.y, x, y, grid);
         // Clone path for movement animation
         const clonePath = [...path];
         // Remove first entry, which is the current position

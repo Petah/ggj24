@@ -2,13 +2,19 @@ TODO:
 
 Moment cost, and prevent tank driving through mountains
 More sound
+ - ships
+
 UI
 Win conditions
 Capture animation
 Aircraft - movement
 Boats - movement
 Range attacks
+<<<<<<< HEAD
 Flip units based on direction
+=======
+reset capture points walking off building
+>>>>>>> 240fe64f94f2b2d165353018d61536d92d89b11c
 fix map wrong tile
 boats on land
 Transport units

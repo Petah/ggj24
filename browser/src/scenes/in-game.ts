@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { client } from '../client';
-import { TILE_SIZE } from '../../../common/map';
+import { TILE_SIZE, getPathFinder } from '../../../common/map';
 import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
@@ -101,19 +101,25 @@ export class InGame extends Phaser.Scene {
     private ui!: UI;
     private moving?: {
         sprite: Phaser.GameObjects.Sprite;
+        startX: number;
+        startY: number;
+        endX: number;
+        endY: number;
         pointsX: number[];
         pointsY: number[];
         time: number;
         current: number;
     };
-    private grid!: PF.Grid;
-    private finder!: PF.AStarFinder;
     private selectedArrow!: Phaser.GameObjects.Sprite;
     private isInMenuState: boolean = false;
     private hoveringUnit?: Unit;
     private healthSprite!: Phaser.GameObjects.Sprite;
     private healthNumber!: Phaser.GameObjects.Sprite;
     private steps!: Phaser.Sound.BaseSound;
+    private jet!: Phaser.Sound.BaseSound;
+    private helicopter?: Phaser.Sound.BaseSound;
+    private tank?: Phaser.Sound.BaseSound;
+    private currentSound?: Phaser.Sound.BaseSound;
 
     constructor() {
         super('InGame');
@@ -132,6 +138,9 @@ export class InGame extends Phaser.Scene {
         this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 })
 
         this.load.audio('steps', ['assets/steps.ogg']);
+        this.load.audio('jet', ['assets/jet.ogg']);
+        this.load.audio('helicopter', ['assets/helicopter.ogg']);
+        this.load.audio('tank', ['assets/tank.ogg']);
     }
 
     create() {
@@ -203,9 +212,10 @@ export class InGame extends Phaser.Scene {
                     break;
                 case 2:
                     if (isMoveableUnit(state.selectedUnit)) {
-                        if (this.canUnitAttack(state.selectedUnit, tileX, tileY)) {
+                        const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.matrix, state.game?.units, state.playerName);
+                        if (this.canUnitAttack(state.selectedUnit, tileX, tileY, finder, grid)) {
                             client.send(new AttackUnitRequest(state.selectedUnit.id, tileX, tileY));
-                        } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY)) {
+                        } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY, true, finder, grid)) {
                             this.placeCursorAtPosition(tileX, tileY);
                             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
                         }
@@ -321,6 +331,15 @@ export class InGame extends Phaser.Scene {
         this.steps = this.sound.add('steps', {
             loop: true,
         });
+        this.jet = this.sound.add('jet', {
+            loop: true,
+        });
+        this.helicopter = this.sound.add('helicopter', {
+            loop: true,
+        });
+        this.tank = this.sound.add('tank', {
+            loop: true,
+        });
 
         this.created = true;
         this.updateGameState();
@@ -349,13 +368,21 @@ export class InGame extends Phaser.Scene {
                 this.moving.current = this.moving.time;
             }
             const percent = this.moving.current / this.moving.time;
+            const previousX = this.moving.sprite.x;
             const currentX = Phaser.Math.Interpolation.Linear(this.moving.pointsX, percent);
             const currentY = Phaser.Math.Interpolation.Linear(this.moving.pointsY, percent);
+            if (currentX < previousX) {
+                this.moving.sprite.setFlipX(true);
+            } else if (currentX === previousX) {
+                this.moving.sprite.setFlipX(this.moving.endX < this.moving.startX);
+            } else {
+                this.moving.sprite.setFlipX(false);
+            }
             this.moving.sprite.setPosition(currentX, currentY);
             this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE);
             if (percent >= 1) {
                 this.moving = undefined;
-                this.steps.stop();
+                this.currentSound?.stop();
                 client.send(new ReloadGameState());
             }
         }
@@ -448,9 +475,10 @@ export class InGame extends Phaser.Scene {
             children[0].destroy();
         }
         if (isMoveableUnit(state.selectedUnit)) {
+            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.matrix, state.game?.units, state.playerName);
             for (let y = state.selectedUnit.y - state.selectedUnit.movementPoints; y <= state.selectedUnit.y + state.selectedUnit.movementPoints; y++) {
                 for (let x = state.selectedUnit.x - state.selectedUnit.movementPoints; x <= state.selectedUnit.x + state.selectedUnit.movementPoints; x++) {
-                    if (this.canUnitMoveTo(state.selectedUnit, x, y)) {
+                    if (this.canUnitMoveTo(state.selectedUnit, x, y, true, finder, grid)) {
                         const sprite = this.make.sprite({
                             x: x * TILE_SIZE,
                             y: y * TILE_SIZE,
@@ -459,7 +487,7 @@ export class InGame extends Phaser.Scene {
                         }, false);
                         this.highlightLayer.add(sprite);
                     }
-                    if (this.canUnitAttack(state.selectedUnit, x, y)) {
+                    if (this.canUnitAttack(state.selectedUnit, x, y, finder, grid)) {
                         const sprite = this.make.sprite({
                             x: x * TILE_SIZE,
                             y: y * TILE_SIZE,
@@ -473,7 +501,7 @@ export class InGame extends Phaser.Scene {
         }
     }
 
-    private canUnitMoveTo(unit: Unit, x: number, y: number, checkUnitAtPosition: boolean = true) {
+    private canUnitMoveTo(unit: Unit, x: number, y: number, checkUnitAtPosition: boolean, finder: PF.AStarFinder, grid: PF.Grid) {
         if (!isMoveableUnit(unit)) {
             return false;
         }
@@ -486,16 +514,13 @@ export class InGame extends Phaser.Scene {
         if (unit.x === x && unit.y === y) {
             return false;
         }
-        if (state.game?.matrix![y][x] !== 0) {
-            return false;
-        }
         if (checkUnitAtPosition) {
             const unitAtPosition = state.game?.units?.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
             if (unitAtPosition && unitAtPosition.id !== unit.id) {
                 return false;
             }
         }
-        const path = this.finder.findPath(unit.x, unit.y, x, y, this.grid.clone());
+        const path = finder.findPath(unit.x, unit.y, x, y, grid.clone());
         path.shift();
         if (path.length > unit.movementPoints) {
             return false;
@@ -507,7 +532,7 @@ export class InGame extends Phaser.Scene {
         return true;
     }
 
-    private canUnitAttack(unit: Unit, x: number, y: number) {
+    private canUnitAttack(unit: Unit, x: number, y: number, finder: PF.AStarFinder, grid: PF.Grid) {
         if (!isMoveableUnit(unit)) {
             return false;
         }
@@ -515,7 +540,7 @@ export class InGame extends Phaser.Scene {
         if (!enemyUnit) {
             return false;
         }
-        return this.canUnitMoveTo(unit, x, y, false);
+        return this.canUnitMoveTo(unit, x, y, false, finder, grid);
     }
 
     private unselectUnit() {
@@ -558,22 +583,8 @@ export class InGame extends Phaser.Scene {
             this.unselectUnit();
         }
 
-        const units = state.game?.units || [];
-
-        // Setup path finding
-        if (state.game.matrix) {
-            this.grid = new PF.Grid(state.game.matrix);
-            for (const unit of units) {
-                if (isMoveableUnit(unit) && unit.player !== state.playerName) {
-                    this.grid.setWalkableAt(unit.x, unit.y, false);
-                }
-            }
-            this.finder = new PF.AStarFinder({
-                diagonalMovement: PF.DiagonalMovement.Never,
-            });
-        }
-
         // Setup sprites
+        const units = state.game?.units || [];
         for (const unit of units) {
             const existingSprite = this.getUnitSprite(unit);
             const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
@@ -715,14 +726,52 @@ export class InGame extends Phaser.Scene {
         }
         const pointsX = event.path.map(point => point[0] * TILE_SIZE);
         const pointsY = event.path.map(point => point[1] * TILE_SIZE);
+
+        let movementSpeed = 4;
+        switch (unit.type) {
+            case UnitType.JET:
+                movementSpeed = 10;
+                break;
+            case UnitType.HELICOPTER:
+                movementSpeed = 7;
+                break;
+            case UnitType.TANK:
+                movementSpeed = 5;
+                break;
+            default:
+                movementSpeed = 4;
+                break;
+        }
         this.moving = {
             sprite,
+            startX: unit.x,
+            startY: unit.y,
+            endX: event.path[event.path.length - 1][0],
+            endY: event.path[event.path.length - 1][1],
             pointsX,
             pointsY,
-            time: event.path.length * 1000 / 4,
+            time: event.path.length * 1000 / movementSpeed,
             current: 0,
         }
-        this.steps.play();
+        switch (unit.type) {
+            case UnitType.INFANTRY:
+            case UnitType.ANTI_TANK:
+                this.currentSound = this.steps;
+                break;
+            case UnitType.JET:
+                this.currentSound = this.jet;
+                break;
+            case UnitType.HELICOPTER:
+                this.currentSound = this.helicopter;
+                break;
+            case UnitType.TANK:
+                this.currentSound = this.tank;
+                break;
+            default:
+                this.currentSound = undefined;
+                break;
+        }
+        this.currentSound?.play();
 
         if (this.isCaptureAvailable()) {
             this.ui.enableCaptureButton();
