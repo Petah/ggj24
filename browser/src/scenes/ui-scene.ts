@@ -5,6 +5,7 @@ import { AntiTank, Infantry, PlayerColor, Tank, Unit, UnitType, UnitTypeMap } fr
 import { state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
+import { PurchaseUnitReqest } from '../../../common/events/unit-purchase';
 import { ucFirst } from '../../../common/util';
 
 export class UI extends Phaser.Scene {
@@ -203,5 +204,9 @@ export class UI extends Phaser.Scene {
             this.purchaseCursor.x,
             this.purchaseCursor.y + 32,
         )
+    }
+
+    public getSelectedUnitTypeFromPurchaseList() {
+        return this.purchasableUnitList[this.selectedPurchaseListIndex];
     }
 }

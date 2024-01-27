@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { state } from '../state';
 import { UI } from './ui-scene';
 import { EndTurn, MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
@@ -191,8 +192,9 @@ export class InGame extends Phaser.Scene {
                         break;
                     case "c":
                     case " ":
-                        // TODO
-                        // this.ui.handlePurchaseUnit();
+                        if (state.selectedUnit) {
+                            client.send(new PurchaseUnitRequest(state.selectedUnit.id, this.ui.getSelectedUnitTypeFromPurchaseList()))
+                        }
                         break;
                 }
                 return;
