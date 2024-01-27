@@ -5,6 +5,7 @@ More sound
  - ships
 
 UI
+Capture overlay
 Capture animation
 Aircraft - movement
 Boats - movement
