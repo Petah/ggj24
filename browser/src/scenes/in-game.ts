@@ -90,6 +90,8 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
         this.cameras.main.setZoom(2).setScroll(-300, -200);
+        this.cursorLayer = this.add.layer();
+
         this.placeCursorAtPosition(20,20)
 
         // map.createLayer('Data', tileset)
@@ -172,7 +174,6 @@ export class InGame extends Phaser.Scene {
         //     this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
         // });
 
-
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
@@ -181,44 +182,61 @@ export class InGame extends Phaser.Scene {
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.X)
 
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { console.log('up')});
-        this.input.keyboard?.on('keydown-' + 'DOWN', function (event: any) { console.log('down') });
-        this.input.keyboard?.on('keydown-' + 'LEFT', function (event: any) { console.log('left') });
-        this.input.keyboard?.on('keydown-' + 'RIGHT', function (event: any) { console.log('right') });
-        this.input.keyboard?.on('keydown-' + 'C', function (event: any) { console.log('c') });
-        this.input.keyboard?.on('keydown-' + 'SPACE', function (event: any) { console.log('space') });
-        this.input.keyboard?.on('keydown-' + 'X', function (event: any) { console.log('x') });
+        // this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { console.log('up')});
+        // this.input.keyboard?.on('keydown-' + 'DOWN', function (event: any) { console.log('down') });
+        // this.input.keyboard?.on('keydown-' + 'LEFT', function (event: any) { console.log('left') });
+        // this.input.keyboard?.on('keydown-' + 'RIGHT', function (event: any) { console.log('right') });
+        // this.input.keyboard?.on('keydown-' + 'C', function (event: any) { console.log('c') });
+        // this.input.keyboard?.on('keydown-' + 'SPACE', function (event: any) { console.log('space') });
+        // this.input.keyboard?.on('keydown-' + 'X', function (event: any) { console.log('x') });
 
-        this.input.keyboard?.on('keydown', function (event: any) {
-            console.log(event.key)
-            const tileX = Math.floor(this.cursorSprite.worldX / TILE_SIZE / TILE_SCALE);
-            const tileY = Math.floor(this.cursorSprite.worldY / TILE_SIZE / TILE_SCALE);
+        this.input.keyboard?.on('keydown', (event: any) => {
+            const tileX = Math.floor(this.cursorSprite.x / TILE_SIZE / TILE_SCALE);
+            const tileY = Math.floor(this.cursorSprite.y / TILE_SIZE / TILE_SCALE);
 
-            if (event.key === 'ArrowUp') {
-                console.log('up')
-            }
-            if (event.key === 'ArrowDown') {
-                console.log('down')
-            }
-            if (event.key === 'ArrowLeft') {
-                console.log('left')
+            switch (event.key) {
+                case 'ArrowUp':
+                    if (tileY > 0) {
+                        this.placeCursorAtPosition(tileX, tileY - 1);
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (tileY < 40 - 1) {
+                        this.placeCursorAtPosition(tileX, tileY + 1);
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (tileX > 0) {
+                        this.placeCursorAtPosition(tileX - 1, tileY);
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (tileX < 40 - 1) {
+                        this.placeCursorAtPosition(tileX + 1, tileY );
+                    }
+                    break;
+                case 'c':
+                case ' ':
+                    // TODO select it
+                    break;  
+                case 'x':
+                    break;
             }
             if (event.key === 'ArrowRight') {
-                console.log('right')
+                if (tileY > 40 - 1) {
+                    this.placeCursorAtPosition(tileX + 1, tileY );
+                }
             }
-            if (event.key === 'c') {
-                console.log('c')
+            if (event.key === 'c' || event.key === ' ') {
+                // TODO select it
             }
-            if (event.key === ' ') {
-                console.log('space')
-            }
+        
             if (event.key === 'x') {
-                console.log('x')
+                // TODO deselect it
             }
          });
 
 
-        this.cursorLayer = this.add.layer();
         this.unitLayer = this.add.layer();
 
         this.created = true;
