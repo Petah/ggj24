@@ -228,7 +228,7 @@ export class Tank extends MovableUnit {
 export class APC extends MovableUnit {
     public readonly type = UnitType.APC;
     public static readonly cost = 4000;
-    public maxMovementPoints = 6;
+    public maxMovementPoints = 30;
     public movementType = MovementType.WHEELS;
     public armourType = ArmourType.LIGHT_VEHICLE;
     public carryingCapacity = 1;

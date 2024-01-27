@@ -217,7 +217,7 @@ export class InGame extends Phaser.Scene {
                     break;
                 case 2:
                     if (isMoveableUnit(state.selectedUnit)) {
-                        const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.matrix, state.game?.units, state.playerName);
+                        const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
                         if (this.canUnitAttack(state.selectedUnit, tileX, tileY)) {
                             client.send(new AttackUnitRequest(state.selectedUnit.id, tileX, tileY));
                         } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY, true, finder, grid)) {
@@ -294,8 +294,8 @@ export class InGame extends Phaser.Scene {
         this.buildingLayer = this.add.layer();
         this.highlightLayer = this.add.layer().setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
         this.rangeCircle = [
-            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2),
-            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2),
+            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2).setVisible(false),
+            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2).setVisible(false),
         ];
         this.unitLayer = this.add.layer();
 
@@ -496,7 +496,7 @@ export class InGame extends Phaser.Scene {
             this.rangeCircle[1].setVisible(false);
         }
         if (isMoveableUnit(state.selectedUnit)) {
-            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.matrix, state.game?.units, state.playerName);
+            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
             for (let y = state.selectedUnit.y - state.selectedUnit.movementPoints; y <= state.selectedUnit.y + state.selectedUnit.movementPoints; y++) {
                 for (let x = state.selectedUnit.x - state.selectedUnit.movementPoints; x <= state.selectedUnit.x + state.selectedUnit.movementPoints; x++) {
                     if (x === state.selectedUnit.x && y === state.selectedUnit.y || this.canUnitMoveTo(state.selectedUnit, x, y, true, finder, grid)) {
@@ -594,11 +594,10 @@ export class InGame extends Phaser.Scene {
             return;
         }
 
-        const player = state.game?.players?.find(player => player.name === state.playerName)
-        if (state.winningPlayer || (player && player.hasLost)) {
+        const remainingPlayers = state.game.players.filter(player => !player.hasLost);
+        if (remainingPlayers.length === 1 && state.game.players.length > 1) {
+            state.winningPlayer = remainingPlayers[0].name;
             this.scene.start('EndGame')
-            // this.ui.scene.stop()
-            // this.scene.stop()
             return
         }
 
