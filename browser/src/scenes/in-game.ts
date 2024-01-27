@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
-import { state } from '../state';
+import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
 import { EndTurn, MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
@@ -163,15 +163,29 @@ export class InGame extends Phaser.Scene {
         this.input.on('pointerdown', (pointer: {
             worldX: number;
             worldY: number;
+            button: number;
         }) => {
+            if (!isOurTurn()) {
+                return;
+            }
             const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
             const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
-            this.placeCursorAtPosition(tileX, tileY);
-            const unitAtPosition = this.findObjectAtPosition(tileX, tileY);
-            if (unitAtPosition && this.isSelectable(unitAtPosition)) {
-                this.selectUnit(unitAtPosition);
-            } else {
-                this.unselectUnit();
+            switch (pointer.button) {
+                case 0:
+                    this.placeCursorAtPosition(tileX, tileY);
+                    const unitAtPosition = this.findObjectAtPosition(tileX, tileY);
+                    if (unitAtPosition && this.isSelectable(unitAtPosition)) {
+                        this.selectUnit(unitAtPosition);
+                    } else {
+                        this.unselectUnit();
+                    }
+                    break;
+                case 2:
+                    if (isMoveableUnit(state.selectedUnit)) {
+                        this.placeCursorAtPosition(tileX, tileY);
+                        client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
+                    }
+                    break;
             }
         });
 
@@ -208,7 +222,7 @@ export class InGame extends Phaser.Scene {
                     this.unselectUnit();
                     break;
                 case 'Enter':
-                    client.send(new EndTurn)
+                    client.send(new EndTurn())
             }
         });
 
@@ -255,11 +269,18 @@ export class InGame extends Phaser.Scene {
     }
 
     findObjectAtPosition(tileX: number, tileY: number) {
+        const units = [];
         for (const unit of state.game?.units || []) {
             if (unit.x === tileX && unit.y === tileY) {
+                units.push(unit);
+            }
+        }
+        for (const unit of units) {
+            if (isMoveableUnit(unit)) {
                 return unit;
             }
         }
+        return units[0];
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
@@ -285,7 +306,7 @@ export class InGame extends Phaser.Scene {
         }
     }
 
-    private isSelectable(unit?: Unit) {
+    private isSelectable(unit?: Unit): unit is Unit {
         if (!unit) {
             return false;
         }
@@ -296,7 +317,7 @@ export class InGame extends Phaser.Scene {
     }
 
     private selectUnit(unit?: Unit) {
-        if (!this.isSelectable(unit)) {
+        if (!this.isSelectable(unit) || !isOurTurn()) {
             return;
         }
         if (state.selectedUnit) {
@@ -344,12 +365,16 @@ export class InGame extends Phaser.Scene {
             return;
         }
 
+        if (!isOurTurn()) {
+            this.unselectUnit();
+        }
+
         this.grid = new PF.Grid(state.game.matrix!);
         this.finder = new PF.AStarFinder({
             diagonalMovement: PF.DiagonalMovement.Never,
         });
-
-        for (const unit of state.game?.units || []) {
+        const units = state.game?.units || [];
+        for (const unit of units) {
             const existingSprite = this.getUnitSprite(unit);
             if (existingSprite) {
                 existingSprite.setPosition(unit.x * TILE_SIZE, unit.y * TILE_SIZE);
@@ -374,6 +399,12 @@ export class InGame extends Phaser.Scene {
                 }
             }
         }
+
+        if (state.selectedUnit) {
+            state.selectedUnit = units.find(unit => unit.id === state.selectedUnit?.id);
+        }
+
+        this.ui.updateGameState();
     }
 
     public handleMoveUnitResponse(event: MoveUnitResponse) {

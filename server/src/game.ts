@@ -272,6 +272,7 @@ export class Game {
             tiles: this.gameMap?.tiles,
             matrix: this.gameMap?.matrix,
             units: this.units,
+            started: this.started,
         };
     }
 }

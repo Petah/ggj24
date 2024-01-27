@@ -14,10 +14,14 @@ export const state: {
     selectedUnit?: Unit;
     scene?: InGame;
 } = {
-    playerName: playerName,
+    playerName,
     cursorX: parseInt(localStorage.getItem('cursorX') || '20'),
     cursorY: parseInt(localStorage.getItem('cursorY') || '20'),
     game: undefined,
     selectedUnit: undefined,
     scene: undefined,
 };
+
+export function isOurTurn() {
+    return state.game?.currentPlayer === state.playerName;
+}

@@ -15,6 +15,7 @@ export interface GameState {
     tiles?: TileType[][];
     matrix?: number[][];
     units?: Unit[];
+    started: boolean;
 }
 
 export enum TileType {

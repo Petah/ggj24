@@ -2,7 +2,7 @@ import { InGame, UnitSprites } from './in-game';
 import { client } from '../client';
 import { GameButton } from '../button';
 import { AntiTank, Infantry, PlayerColor, Tank, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
-import { state } from '../state';
+import { isOurTurn, state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
 import { ucFirst } from '../../../common/util';
@@ -166,9 +166,17 @@ export class UI extends Phaser.Scene {
     }
 
     public onProductionBuildingUnselected() {
-        console.log('unselecting')
         this.menuBackground.destroy(true);
         this.purchasableUnits.destroy(true);
         this.purchasableUnits = this.add.group();
+    }
+
+    public updateGameState() {
+        if (this.startGameButton) {
+            this.startGameButton.setVisible(!state.game?.started);
+        }
+        if (this.endTurnButton) {
+            this.endTurnButton.setVisible(isOurTurn());
+        }
     }
 }

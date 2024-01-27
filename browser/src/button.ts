@@ -38,4 +38,8 @@ export class GameButton {
         );
     }
 
+    public setVisible(visible: boolean) {
+        this.imageObject.setVisible(visible);
+        this.textObject.setVisible(visible);
+    }
 }
