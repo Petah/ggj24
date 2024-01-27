@@ -5,7 +5,7 @@ import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } fr
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
-import { EndTurn, MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
+import { EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
 import * as PF from 'pathfinding';
 
@@ -283,6 +283,7 @@ export class InGame extends Phaser.Scene {
             this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE * TILE_SCALE);
             if (percent >= 1) {
                 this.moving = undefined;
+                client.send(new ReloadGameState())
             }
         }
     }
