@@ -2,8 +2,9 @@ import { EventType, IEvent } from '../../common/event';
 import { GameListRequest, GameListResponse, GameState } from '../../common/events/game-list';
 import { JoinGameRequest } from '../../common/events/join-game';
 import { logError, logInfo } from '../../common/log';
-import { GameStateUpdate } from '../../common/events/turn';
+import { GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { ErrorEvent } from '../../common/events/error';
+import { state } from './state';
 
 interface EventListeners {
     [EventType.GAME_STATE_CHANGE]: ((gameState: GameState) => void)[];
@@ -39,7 +40,10 @@ export class Client {
                     this.send(new JoinGameRequest(playerName, gameListEvent.games[0].name));
                     break;
                 case EventType.GAME_STATE_UPDATE:
-                    this.sendGameStateChange((event as GameStateUpdate).game);
+                    this.handleGameStateChange((event as GameStateUpdate).game);
+                    break;
+                case EventType.MOVE_UNIT_RESPONSE:
+                    this.handleMoveUnitResponse(event as MoveUnitResponse);
                     break;
                 case EventType.ERROR:
                     logError('Received error from server:', (event as ErrorEvent).message);
@@ -66,15 +70,13 @@ export class Client {
         this.ws.send(JSON.stringify(event));
     }
 
-    public onGameStateChange(callback: (gameState: GameState) => void) {
-        this.eventListeners[EventType.GAME_STATE_CHANGE].push(callback);
+    private handleGameStateChange(gameState: GameState) {
+        state.game = gameState;
+        state.scene?.updateGameState();
     }
 
-    public sendGameStateChange(gameState: GameState) {
-        for (const callback of this.eventListeners[EventType.GAME_STATE_CHANGE]) {
-            console.log('Sending game state change', callback)
-            callback(gameState);
-        }
+    private handleMoveUnitResponse(event: MoveUnitResponse) {
+        state.scene?.handleMoveUnitResponse(event);
     }
 }
 

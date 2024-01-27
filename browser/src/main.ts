@@ -8,6 +8,6 @@ new Phaser.Game({
     ...config,
     scene: [
         InGame,
-        UI
+        UI,
     ],
 });

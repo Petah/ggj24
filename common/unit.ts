@@ -201,7 +201,10 @@ export const UnitTypeMap = {
     [UnitType.HQ]: HQ,
 }
 
-export function isBuilding(unit: Unit): unit is Building {
+export function isBuilding(unit?: Unit): unit is Building {
+    if (!unit) {
+        return false;
+    }
     switch (unit.type) {
         case UnitType.CITY:
         case UnitType.DOCK:
@@ -213,7 +216,10 @@ export function isBuilding(unit: Unit): unit is Building {
     return false;
 }
 
-export function isMoveableUnit(unit: Unit): unit is MovableUnit {
+export function isMoveableUnit(unit?: Unit): unit is MovableUnit {
+    if (!unit) {
+        return false;
+    }
     switch (unit.type) {
         case UnitType.INFANTRY:
         case UnitType.TANK:

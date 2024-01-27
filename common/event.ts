@@ -10,9 +10,7 @@ export enum EventType {
     ERROR = 'error',
     MOVE_UNIT_REQUEST = 'move_unit_request',
     MOVE_UNIT_RESPONSE = 'move_unit_response',
-
-    // Client only events
-    GAME_STATE_CHANGE = 'game_state_change',
+    RELOAD_GAME_STATE = 'reload_game_state',
 }
 
 export interface IEvent {

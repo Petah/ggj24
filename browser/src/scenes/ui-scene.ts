@@ -1,9 +1,10 @@
 import { InGame } from './in-game';
 import { client } from '../client';
 import { GameButton } from '../button';
-import { EndTurn, StartGame } from '../../../common/events/turn';
+import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
 import { state } from '../state';
-import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
+import { MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
+import { ucFirst } from '../../../common/util';
 
 export class UI extends Phaser.Scene {
 
@@ -11,6 +12,7 @@ export class UI extends Phaser.Scene {
 
     private startGameButton!: GameButton;
     private endTurnButton!: GameButton;
+    private reloadGameStateButton!: GameButton;
 
     constructor() {
         super({ key: 'UI' });
@@ -26,6 +28,9 @@ export class UI extends Phaser.Scene {
         });
         this.endTurnButton = new GameButton(this, 'End Turn', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 60, () => {
             client.send(new EndTurn());
+        });
+        this.reloadGameStateButton = new GameButton(this, 'Reload Game State', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 180, () => {
+            client.send(new ReloadGameState());
         });
         // this.cameras.main.setZoom(2);
 
@@ -45,8 +50,8 @@ export class UI extends Phaser.Scene {
         this.scale.on('resize', this.resize, this);
     }
 
-    resize (gameSize:any, baseSize:any, displaySize:any, resolution:any) {
-        console.log(`resizing: ${  baseSize}`)
+    resize(gameSize: any, baseSize: any, displaySize: any, resolution: any) {
+        console.log(`resizing: ${baseSize}`)
 
         const width = baseSize.width;
         const height = baseSize.height;
@@ -64,7 +69,7 @@ export class UI extends Phaser.Scene {
 
         // Render debug info
         if (state.game) {
-            information.push(`Current player: ${state.game.currentPlayer}`)
+            information.push(`Current player: ${state.game.currentPlayer} ${ucFirst(state.game.players.find(player => player.name === state.game?.currentPlayer)?.color)}`)
             information.push(`Turn: ${state.game.turn}`)
 
             if (state.selectedUnit) {
@@ -74,6 +79,7 @@ export class UI extends Phaser.Scene {
             for (const player of state.game.players) {
                 information.push(`
                     ${player.name}
+                    ${ucFirst(player.color)}
                     $${player.money}
                     Units: ${state.game?.units?.filter(unit => isMoveableUnit(unit) && unit.player === player.name)?.length}
                     Buildings: ${state.game?.units?.filter(unit => isBuilding(unit) && unit.player === player.name)?.length}
@@ -90,13 +96,14 @@ export class UI extends Phaser.Scene {
         // Render UI
         this.startGameButton.update();
         this.endTurnButton.update();
+        this.reloadGameStateButton.update();
     }
 }
 
 const config = {
     width: 1920,
     height: 1080,
-    physics: {  default: 'arcade' },
+    physics: { default: 'arcade' },
     scene: [InGame, UI],
 };
 

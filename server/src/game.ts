@@ -3,7 +3,7 @@ import { IEvent } from '../../common/event';
 import { logError, logInfo } from '../../common/log';
 import { Player } from './player';
 import { GameState } from './events/game-list';
-import { GameStateUpdate } from '../../common/events/turn';
+import { GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { GameError } from './error';
 import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
@@ -177,6 +177,8 @@ export class Game {
             throw new GameError('Unit does not have enough movement points');
         }
         const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid.clone());
+        // Clone path for movement animation
+        const clonePath = [...path];
         // Remove first entry, which is the current position
         path.shift();
         if (path.length <= 0) {
@@ -184,11 +186,13 @@ export class Game {
         }
         if (path.length > unit.movementPoints) {
             path.splice(unit.movementPoints);
+            clonePath.splice(unit.movementPoints + 1);
         }
         const lastPathEntry = path[path.length - 1];
         unit.x = lastPathEntry[0];
         unit.y = lastPathEntry[1];
-        this.broadcastGameState();
+        unit.movementPoints -= path.length;
+        this.broadcast(new MoveUnitResponse(unitId, clonePath, unit.movementPoints));
     }
 
     public buildUnit(buildingId: number, unitType: UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET) {

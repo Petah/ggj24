@@ -1,5 +1,6 @@
 import { GameState } from './events/game-list';
 import { Unit } from '../../common/unit';
+import { InGame } from './scenes/in-game';
 
 export const state: {
     playerName: string;
@@ -7,10 +8,12 @@ export const state: {
     cursorY: number;
     game?: GameState;
     selectedUnit?: Unit;
+    scene?: InGame;
 } = {
     playerName: 'Test Player 1',
     cursorX: parseInt(localStorage.getItem('cursorX') || '20'),
     cursorY: parseInt(localStorage.getItem('cursorY') || '20'),
     game: undefined,
     selectedUnit: undefined,
+    scene: undefined,
 };
