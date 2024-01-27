@@ -391,7 +391,6 @@ export class InGame extends Phaser.Scene {
         this.hoveringUnit = this.findObjectAtPosition(tileX, tileY);
         const buildingAtPosition = state.game?.units?.find(unit => unit.x === tileX && unit.y === tileY && isBuilding(unit));
 
-        console.log("Building at position", buildingAtPosition)
         if (isMoveableUnit(this.hoveringUnit)) {
             const health = Math.round(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10);
             this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
@@ -401,10 +400,8 @@ export class InGame extends Phaser.Scene {
             this.healthNumber.setVisible(false);
         }
 
-        console.log("IsBuilding", isBuilding(buildingAtPosition))
         if (isBuilding(buildingAtPosition)) {
             const health = buildingAtPosition.capturePoints;
-            console.log("health", health)
             // const health = Math.round(buildingAtPosition.capturePoints / buildingAtPosition.maxCapturePoints * 10);
             this.captureSprite.setPosition((tileX + 1) * TILE_SIZE, (tileY) * TILE_SIZE).setVisible(health < 20);
             this.captureNumberOne.setPosition((tileX + 1) * TILE_SIZE, (tileY) * TILE_SIZE).setVisible(health < 20 && health >= 10).setFrame(180 + (health/10));

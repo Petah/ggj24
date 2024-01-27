@@ -1,13 +1,13 @@
 TODO:
 
-Moment cost, and prevent tank driving through mountains
+Moment cost
 More sound
  - ships
 
 UI
 Capture animation
+capture sound
 Boats - movement
-Range attacks
 fix map wrong tile
 boats on land
 Transport units
