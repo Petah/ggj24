@@ -7,7 +7,7 @@ export enum UnitType {
     FACTORY = 'Factory',
     HQ = 'HQ',
     INFANTRY = 'Infantry',
-    ANTI_TANK_INFANTRY = 'Anti-Tank Infantry',
+    ANTI_TANK = 'Anti-Tank',
     APC = 'APC',
     TANK = 'Tank',
     JET = 'Jet',
@@ -90,8 +90,8 @@ export class Infantry extends MovableUnit {
     public canCapture = true;
 }
 
-export class AntiTankInfantry extends MovableUnit {
-    public readonly type = UnitType.ANTI_TANK_INFANTRY;
+export class AntiTank extends MovableUnit {
+    public readonly type = UnitType.ANTI_TANK;
     public static readonly cost = 3000;
     public maxMovementPoints = 2;
     public movementType = MovementType.INFANTRY;
@@ -173,7 +173,7 @@ export class Dock extends Building {
 
 export class Factory extends Building {
     public readonly type = UnitType.FACTORY;
-    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK_INFANTRY, UnitType.APC, UnitType.TANK];
+    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.APC, UnitType.TANK];
 }
 
 export class Airport extends Building {
@@ -192,7 +192,7 @@ export const UnitTypeMap = {
     [UnitType.JET]: Jet,
     [UnitType.HELICOPTER]: Helicopter,
     [UnitType.APC]: APC,
-    [UnitType.ANTI_TANK_INFANTRY]: AntiTankInfantry,
+    [UnitType.ANTI_TANK]: AntiTank,
     [UnitType.LANDER]: Lander,
     [UnitType.CITY]: City,
     [UnitType.DOCK]: Dock,
@@ -221,7 +221,7 @@ export function isMoveableUnit(unit: Unit): unit is MovableUnit {
         case UnitType.JET:
         case UnitType.HELICOPTER:
         case UnitType.APC:
-        case UnitType.ANTI_TANK_INFANTRY:
+        case UnitType.ANTI_TANK:
         case UnitType.LANDER:
             return true;
     }

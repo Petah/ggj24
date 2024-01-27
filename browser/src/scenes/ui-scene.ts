@@ -1,8 +1,10 @@
-import { InGame } from './in-game';
+import { InGame, UnitSprites } from './in-game';
 import { client } from '../client';
 import { GameButton } from '../button';
 import { EndTurn, StartGame } from '../../../common/events/turn';
+import { PlayerColor, Unit, UnitType } from '../../../common/unit';
 import { state } from '../state';
+import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 
 export class UI extends Phaser.Scene {
@@ -11,6 +13,8 @@ export class UI extends Phaser.Scene {
 
     private startGameButton!: GameButton;
     private endTurnButton!: GameButton;
+    private menuBackground!: Phaser.GameObjects.Rectangle;
+    private purchasableUnits!: Phaser.GameObjects.Group;
 
     constructor() {
         super({ key: 'UI' });
@@ -21,6 +25,7 @@ export class UI extends Phaser.Scene {
     }
 
     create() {
+        this.purchasableUnits = this.add.group();
         this.startGameButton = new GameButton(this, 'Start Game', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 120, () => {
             client.send(new StartGame());
         });
@@ -66,10 +71,13 @@ export class UI extends Phaser.Scene {
         if (state.game) {
             information.push(`Current player: ${state.game.currentPlayer}`)
             information.push(`Turn: ${state.game.turn}`)
+            const unit = state.selectedUnit
 
-            if (state.selectedUnit) {
+            if (unit) {
                 information.push(`Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x}x${state.selectedUnit?.y} MP:${(state.selectedUnit as MovableUnit)?.movementPoints}`)
+        
             }
+        
 
             for (const player of state.game.players) {
                 information.push(`
@@ -91,6 +99,67 @@ export class UI extends Phaser.Scene {
         this.startGameButton.update();
         this.endTurnButton.update();
     }
+
+    public onProductionBuildingSelected(unit: Unit) {
+        const building = unit as Building;
+        const playerColor = state.game?.players.find(player => player.name === building.player)?.color || PlayerColor.NEUTRAL;
+
+        const height = building.canBuild.length * 32
+
+        this.menuBackground = this.add.rectangle(
+            (this.cameras.main.worldView.width / 2) - 65,
+            (this.cameras.main.worldView.height / 2) - height/2,
+            130,
+            height,
+            0xFCF3CF,
+        ).setOrigin(0, 0);
+
+        for (let index = 0; index < building.canBuild.length; index++) {
+            const purchasableUnit = building.canBuild[index];
+
+            const x = this.menuBackground.x + 8;
+            const y = this.menuBackground.y + 8 + index * 32;
+
+            const tempSprite = this.add.sprite(
+                x,
+                y,
+                'tiles2',
+                UnitSprites[playerColor][purchasableUnit]
+            );
+            tempSprite.setOrigin(0, 0);
+
+            console.log(purchasableUnit,building)
+            const text = this.add.text(
+                x + 32,
+                y,
+                `${purchasableUnit}`,
+                {
+                    font: '16px monospace',
+                    color: '#000',
+                    align: 'left',
+                    shadow: {
+                        offsetX: 1,
+                        offsetY: 1,
+                        color: '#000',
+                        blur: 1,
+                        stroke: true,
+                        fill: true,
+                    },
+                }
+            )
+            text.setOrigin(0, 0);
+
+            this.purchasableUnits.add(tempSprite);
+            this.purchasableUnits.add(text);
+        }
+    }
+
+    public onProductionBuildingUnselected() {
+        console.log('unselecting')
+        this.menuBackground.destroy(true);
+        this.purchasableUnits.destroy(true);
+        this.purchasableUnits = this.add.group();
+    }
 }
 
 const config = {
@@ -99,4 +168,3 @@ const config = {
     physics: {  default: 'arcade' },
     scene: [InGame, UI],
 };
-

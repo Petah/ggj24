@@ -17,7 +17,7 @@ export class Server {
 
     constructor() {
         this.wss = new WebSocket.Server({ port: 8080 });
-
+ 
         this.wss.on('connection', (ws: WebSocket) => {
             logInfo('New client connected');
             const client = new Client(ws);

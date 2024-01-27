@@ -5,8 +5,9 @@ import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, Unit, UnitType } from '../../../common/unit';
 import { state } from '../state';
 import { MoveUnitRequest } from '../../../common/events/turn';
+import { UI } from './ui-scene';
 
-const UnitSprites = {
+export const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
         [UnitType.CITY]: 8,
         [UnitType.INFANTRY]: 106,
@@ -14,6 +15,13 @@ const UnitSprites = {
         [UnitType.FACTORY]: 11,
         [UnitType.AIRPORT]: 15,
         [UnitType.DOCK]: 12,
+        [UnitType.TANK]: 0,
+        [UnitType.SHIP]: 0,
+        [UnitType.JET]: 0,
+        [UnitType.HELICOPTER]: 0,
+        [UnitType.APC]: 0,
+        [UnitType.ANTI_TANK]: 0,
+        [UnitType.LANDER]: 0,
     },
     [PlayerColor.RED]: {
         [UnitType.CITY]: 62,
@@ -22,6 +30,13 @@ const UnitSprites = {
         [UnitType.FACTORY]: 65,
         [UnitType.AIRPORT]: 69,
         [UnitType.DOCK]: 66,
+        [UnitType.TANK]: 152,
+        [UnitType.SHIP]: 158,
+        [UnitType.JET]: 154,
+        [UnitType.HELICOPTER]: 155,
+        [UnitType.APC]: 150,
+        [UnitType.ANTI_TANK]: 161,
+        [UnitType.LANDER]: 157,
     },
     [PlayerColor.BLUE]: {
         [UnitType.CITY]: 44,
@@ -30,6 +45,13 @@ const UnitSprites = {
         [UnitType.FACTORY]: 47,
         [UnitType.AIRPORT]: 51,
         [UnitType.DOCK]: 48,
+        [UnitType.TANK]: 134,
+        [UnitType.SHIP]: 140,
+        [UnitType.JET]: 154,
+        [UnitType.HELICOPTER]: 155,
+        [UnitType.APC]: 150,
+        [UnitType.ANTI_TANK]: 161,
+        [UnitType.LANDER]: 157,
     },
     [PlayerColor.GREEN]: {
         [UnitType.CITY]: 26,
@@ -38,6 +60,13 @@ const UnitSprites = {
         [UnitType.FACTORY]: 29,
         [UnitType.AIRPORT]: 33,
         [UnitType.DOCK]: 30,
+        [UnitType.TANK]: 116,
+        [UnitType.SHIP]: 122,
+        [UnitType.JET]: 118,
+        [UnitType.HELICOPTER]: 119,
+        [UnitType.APC]: 114,
+        [UnitType.ANTI_TANK]: 125,
+        [UnitType.LANDER]: 121,
     },
     [PlayerColor.YELLOW]: {
         [UnitType.CITY]: 80,
@@ -46,6 +75,13 @@ const UnitSprites = {
         [UnitType.FACTORY]: 83,
         [UnitType.AIRPORT]: 87,
         [UnitType.DOCK]: 84,
+        [UnitType.TANK]: 170,
+        [UnitType.SHIP]: 176,
+        [UnitType.JET]: 172,
+        [UnitType.HELICOPTER]: 173,
+        [UnitType.APC]: 168,
+        [UnitType.ANTI_TANK]: 179,
+        [UnitType.LANDER]: 175,
     },
 }
 
@@ -55,6 +91,7 @@ export class InGame extends Phaser.Scene {
     private shoppingLayer!: Phaser.GameObjects.Layer;
     private unitLayer!: Phaser.GameObjects.Layer;
     private created: boolean = false;
+    private ui!: UI;
 
     constructor() {
         super('InGame');
@@ -75,6 +112,7 @@ export class InGame extends Phaser.Scene {
     create() {
         this.scale.setGameSize(window.innerWidth, window.innerHeight)
         this.scene.launch('UI')
+        this.ui = this.scene.manager.getScene('UI') as UI;
 
         // create the Tilemap
         const map = this.make.tilemap({ key: 'map' })
@@ -182,12 +220,12 @@ export class InGame extends Phaser.Scene {
     }
 
     private handleSelect(tileX: number, tileY: number) {
+        console.log("selecting")
         if (state.selectedUnit) {
             if (state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) {
                 this.unselectUnit();
                 return;
             }
-            console.log(unit);
             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
         } else {
             const unit = this.findObjectAtPosition(tileX, tileY);
@@ -195,25 +233,20 @@ export class InGame extends Phaser.Scene {
             const type = unit?.type;
             if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
                 if (unit) {
-                    this.onProductionBuildingSelected(unit);
+                    this.ui.onProductionBuildingSelected(unit);
                 }
             }
-            console.log(unit);
         }
     }
 
     private unselectUnit() {
+        const unit = state.selectedUnit;
+        const type = unit?.type;
+        console.log(type)
+        if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
+            this.ui.onProductionBuildingUnselected();
+        }
         state.selectedUnit = undefined;
-    }
-
-    private onProductionBuildingSelected(unit: Unit) {
-        this.add.rectangle(
-            state.cursorX * TILE_SIZE * TILE_SCALE + 8,
-            state.cursorY * TILE_SIZE * TILE_SCALE + 8,
-            80,
-            160,
-            0xFCF3CF,
-        ).setOrigin(0, 0);
     }
 
     private updateGameState() {
