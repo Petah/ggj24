@@ -176,7 +176,9 @@ export class Game {
             throw new GameError('Unit does not have enough movement points');
         }
         const unitAtPosition = this.units.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
-        if (unitAtPosition) {
+        if (unitAtPosition
+            // && !(unitAtPosition.type == UnitType.LANDER || unitAtPosition.type == UnitType.APC)
+        ) {
             throw new GameError('Unit already at position');
         }
         const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid.clone());

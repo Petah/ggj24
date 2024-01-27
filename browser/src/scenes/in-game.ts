@@ -516,6 +516,7 @@ export class InGame extends Phaser.Scene {
         state.selectedUnit = undefined;
         this.selectedArrow.setVisible(false);
         this.updateHighlight();
+        this.ui.disableCaptureButton();
     }
 
     private getUnitSprite(unit: Unit) {
@@ -596,6 +597,11 @@ export class InGame extends Phaser.Scene {
             state.selectedUnit = units.find(unit => unit.id === state.selectedUnit?.id);
         }
         this.updateHighlight();
+        if (this.isCaptureAvailable()) {
+            this.ui.enableCaptureButton();
+        } else {
+            this.ui.disableCaptureButton();
+        }
 
         if (!this.fogLayer) {
             this.fogLayer = this.add.layer().setAlpha(this.fogEnabled ? 1 : 0);
