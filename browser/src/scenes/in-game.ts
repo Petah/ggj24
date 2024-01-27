@@ -114,7 +114,10 @@ export class InGame extends Phaser.Scene {
     private isInMenuState: boolean = false;
     private hoveringUnit?: Unit;
     private healthSprite!: Phaser.GameObjects.Sprite;
+    private captureSprite!: Phaser.GameObjects.Sprite;
     private healthNumber!: Phaser.GameObjects.Sprite;
+    private captureNumberOne!: Phaser.GameObjects.Sprite;
+    private captureNumberTwo!: Phaser.GameObjects.Sprite;
     private steps!: Phaser.Sound.BaseSound;
     private jet!: Phaser.Sound.BaseSound;
     private helicopter?: Phaser.Sound.BaseSound;
@@ -310,6 +313,13 @@ export class InGame extends Phaser.Scene {
             frame: 195,
             origin: 0,
         }, false);
+        this.captureSprite = this.make.sprite({
+            x: 0,
+            y: 0,
+            key: 'tiles2',
+            frame: 194,
+            origin: 0,
+        }, false);
         this.cursorLayer.add(this.healthSprite);
         this.healthNumber = this.make.sprite({
             x: 0,
@@ -318,7 +328,24 @@ export class InGame extends Phaser.Scene {
             frame: 181,
             origin: 0,
         }, false);
+        this.captureNumberOne = this.make.sprite({
+            x: 0,
+            y: 0,
+            key: 'tiles2',
+            frame: 181,
+            origin: 0,
+        }, false);
+        this.captureNumberTwo = this.make.sprite({
+            x: 0,
+            y: 0,
+            key: 'tiles2',
+            frame: 181,
+            origin: 0,
+        }, false);
         this.cursorLayer.add(this.healthNumber);
+        this.cursorLayer.add(this.captureSprite);
+        this.cursorLayer.add(this.captureNumberOne);
+        this.cursorLayer.add(this.captureNumberTwo);
 
 
         this.anims.create({
@@ -348,17 +375,30 @@ export class InGame extends Phaser.Scene {
     // TODO
     updateHover(tileX: number, tileY: number) {
         this.hoveringUnit = this.findObjectAtPosition(tileX, tileY);
+        const buildingAtPosition = state.game?.units?.find(unit => unit.x === tileX && unit.y === tileY && isBuilding(unit));
+
+        console.log("Building at position", buildingAtPosition)
         if (isMoveableUnit(this.hoveringUnit)) {
             const health = Math.round(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10);
             this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
             this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
-        } else if (isBuilding(this.hoveringUnit)) {
-            const health = Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10);
-            this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
-            this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10));
         } else {
             this.healthSprite.setVisible(false);
             this.healthNumber.setVisible(false);
+        }
+
+        console.log("IsBuilding", isBuilding(buildingAtPosition))
+        if (isBuilding(buildingAtPosition)) {
+            const health = buildingAtPosition.capturePoints;
+            console.log("health", health)
+            // const health = Math.round(buildingAtPosition.capturePoints / buildingAtPosition.maxCapturePoints * 10);
+            this.captureSprite.setPosition((tileX + 1) * TILE_SIZE, (tileY) * TILE_SIZE).setVisible(health < 20);
+            this.captureNumberOne.setPosition((tileX + 1) * TILE_SIZE, (tileY) * TILE_SIZE).setVisible(health < 20 && health > 10).setFrame(180 + (health/10));
+            this.captureNumberTwo.setPosition(((tileX + 1) * TILE_SIZE) + 4, (tileY) * TILE_SIZE).setVisible(health < 20).setFrame(180 + (health%10));
+        } else {
+            this.captureSprite.setVisible(false);
+            this.captureNumberOne.setVisible(false);
+            this.captureNumberTwo.setVisible(false);
         }
     }
 

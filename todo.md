@@ -13,3 +13,4 @@ Range attacks
 fix map wrong tile
 boats on land
 Transport units
+Ranged detection broken for adjacent units
