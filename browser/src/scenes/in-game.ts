@@ -1,14 +1,13 @@
 import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SIZE, getPathFinder } from '../../../common/map';
-import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
-import { AttackUnitRequest, CaptureRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
+import { AttackUnitRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
 import * as PF from 'pathfinding';
-import { clone } from '../../../common/util';
 
 export const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
@@ -26,6 +25,7 @@ export const UnitSprites = {
         [UnitType.APC]: 0,
         [UnitType.ANTI_TANK]: 0,
         [UnitType.LANDER]: 0,
+        [UnitType.ROCKET_TRUCK]: 0,
     },
     [PlayerColor.RED]: {
         [UnitType.CITY]: 62,
@@ -42,6 +42,7 @@ export const UnitSprites = {
         [UnitType.APC]: 150,
         [UnitType.ANTI_TANK]: 161,
         [UnitType.LANDER]: 157,
+        [UnitType.ROCKET_TRUCK]: 153,
     },
     [PlayerColor.BLUE]: {
         [UnitType.CITY]: 44,
@@ -58,6 +59,7 @@ export const UnitSprites = {
         [UnitType.APC]: 150,
         [UnitType.ANTI_TANK]: 161,
         [UnitType.LANDER]: 157,
+        [UnitType.ROCKET_TRUCK]: 135,
     },
     [PlayerColor.GREEN]: {
         [UnitType.CITY]: 26,
@@ -74,6 +76,7 @@ export const UnitSprites = {
         [UnitType.APC]: 114,
         [UnitType.ANTI_TANK]: 125,
         [UnitType.LANDER]: 121,
+        [UnitType.ROCKET_TRUCK]: 117,
     },
     [PlayerColor.YELLOW]: {
         [UnitType.CITY]: 80,
@@ -90,6 +93,7 @@ export const UnitSprites = {
         [UnitType.APC]: 168,
         [UnitType.ANTI_TANK]: 179,
         [UnitType.LANDER]: 175,
+        [UnitType.ROCKET_TRUCK]: 171,
     },
 }
 
@@ -99,6 +103,7 @@ export class InGame extends Phaser.Scene {
     private buildingLayer!: Phaser.GameObjects.Layer;
     private unitLayer!: Phaser.GameObjects.Layer;
     private highlightLayer!: Phaser.GameObjects.Layer;
+    private rangeCircle!: [Phaser.GameObjects.Arc, Phaser.GameObjects.Arc];
     private fogLayer!: Phaser.GameObjects.Layer;
     private fogEnabled: boolean = false;
     private fogSprites: Phaser.GameObjects.Sprite[][] = [];
@@ -220,8 +225,8 @@ export class InGame extends Phaser.Scene {
                     break;
                 case 2:
                     if (isMoveableUnit(state.selectedUnit)) {
-                        const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.matrix, state.game?.units, state.playerName);
-                        if (this.canUnitAttack(state.selectedUnit, tileX, tileY, finder, grid)) {
+                        const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
+                        if (this.canUnitAttack(state.selectedUnit, tileX, tileY)) {
                             client.send(new AttackUnitRequest(state.selectedUnit.id, tileX, tileY));
                         } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY, true, finder, grid)) {
                             this.placeCursorAtPosition(tileX, tileY);
@@ -296,6 +301,10 @@ export class InGame extends Phaser.Scene {
 
         this.buildingLayer = this.add.layer();
         this.highlightLayer = this.add.layer().setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
+        this.rangeCircle = [
+            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2).setVisible(false),
+            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2).setVisible(false),
+        ];
         this.unitLayer = this.add.layer();
 
         this.cursorLayer = this.add.layer();
@@ -520,11 +529,23 @@ export class InGame extends Phaser.Scene {
         while (children.length > 0) {
             children[0].destroy();
         }
+
+        if (isMoveableUnit(state.selectedUnit) && state.selectedUnit.maxRange > 1) {
+            const x = state.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2;
+            const y = state.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2;
+            this.rangeCircle[0].setPosition(x, y).setRadius(state.selectedUnit.minRange * TILE_SIZE);
+            this.rangeCircle[1].setPosition(x, y).setRadius(state.selectedUnit.maxRange * TILE_SIZE);
+            this.rangeCircle[0].setVisible(state.selectedUnit.minRange > 1);
+            this.rangeCircle[1].setVisible(true);
+        } else {
+            this.rangeCircle[0].setVisible(false);
+            this.rangeCircle[1].setVisible(false);
+        }
         if (isMoveableUnit(state.selectedUnit)) {
-            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.matrix, state.game?.units, state.playerName);
+            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
             for (let y = state.selectedUnit.y - state.selectedUnit.movementPoints; y <= state.selectedUnit.y + state.selectedUnit.movementPoints; y++) {
                 for (let x = state.selectedUnit.x - state.selectedUnit.movementPoints; x <= state.selectedUnit.x + state.selectedUnit.movementPoints; x++) {
-                    if (this.canUnitMoveTo(state.selectedUnit, x, y, true, finder, grid)) {
+                    if (x === state.selectedUnit.x && y === state.selectedUnit.y || this.canUnitMoveTo(state.selectedUnit, x, y, true, finder, grid)) {
                         const sprite = this.make.sprite({
                             x: x * TILE_SIZE,
                             y: y * TILE_SIZE,
@@ -533,7 +554,7 @@ export class InGame extends Phaser.Scene {
                         }, false);
                         this.highlightLayer.add(sprite);
                     }
-                    if (this.canUnitAttack(state.selectedUnit, x, y, finder, grid)) {
+                    if (this.canUnitAttack(state.selectedUnit, x, y)) {
                         const sprite = this.make.sprite({
                             x: x * TILE_SIZE,
                             y: y * TILE_SIZE,
@@ -578,7 +599,7 @@ export class InGame extends Phaser.Scene {
         return true;
     }
 
-    private canUnitAttack(unit: Unit, x: number, y: number, finder: PF.AStarFinder, grid: PF.Grid) {
+    private canUnitAttack(unit: Unit, x: number, y: number) {
         if (!isMoveableUnit(unit)) {
             return false;
         }
@@ -586,7 +607,11 @@ export class InGame extends Phaser.Scene {
         if (!enemyUnit) {
             return false;
         }
-        return this.canUnitMoveTo(unit, x, y, false, finder, grid);
+        const distance = Math.sqrt(Math.pow(unit.x - x, 2) + Math.pow(unit.y - y, 2));
+        if (distance < unit.minRange || distance > unit.maxRange) {
+            return false;
+        }
+        return true;
     }
 
     private unselectUnit() {
@@ -615,11 +640,10 @@ export class InGame extends Phaser.Scene {
             return;
         }
 
-        const player = state.game?.players?.find(player => player.name === state.playerName)
-        if (state.winningPlayer || (player && player.hasLost)) {
+        const remainingPlayers = state.game.players.filter(player => !player.hasLost);
+        if (remainingPlayers.length === 1 && state.game.players.length > 1) {
+            state.winningPlayer = remainingPlayers[0].name;
             this.scene.start('EndGame')
-            // this.ui.scene.stop()
-            // this.scene.stop()
             return
         }
 
@@ -781,6 +805,8 @@ export class InGame extends Phaser.Scene {
             case UnitType.HELICOPTER:
                 movementSpeed = 7;
                 break;
+            case UnitType.APC:
+            case UnitType.ROCKET_TRUCK:
             case UnitType.TANK:
                 movementSpeed = 5;
                 break;
@@ -799,6 +825,8 @@ export class InGame extends Phaser.Scene {
             time: event.path.length * 1000 / movementSpeed,
             current: 0,
         }
+        this.rangeCircle[0].setVisible(false);
+        this.rangeCircle[1].setVisible(false);
         switch (unit.type) {
             case UnitType.INFANTRY:
             case UnitType.ANTI_TANK:
@@ -810,6 +838,8 @@ export class InGame extends Phaser.Scene {
             case UnitType.HELICOPTER:
                 this.currentSound = this.helicopter;
                 break;
+            case UnitType.APC:
+            case UnitType.ROCKET_TRUCK:
             case UnitType.TANK:
                 this.currentSound = this.tank;
                 break;

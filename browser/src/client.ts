@@ -12,7 +12,6 @@ export class Client {
 
     constructor() {
         const currentHost = window.location.host.replace(/:.*/, '');
-        console.log(currentHost);
         this.ws = new WebSocket(`ws://${currentHost}:8080`);
         this.ws.onopen = () => {
             logInfo('Connected to server');
@@ -71,11 +70,6 @@ export class Client {
     }
 
     private handleGameStateChange(gameState: GameState) {
-        const remainingPlayers = gameState.players.filter(player => !player.hasLost);
-        if (remainingPlayers.length === 1) {
-            state.winningPlayer = remainingPlayers[0].name;
-        }
-
         state.game = gameState;
         state.scene?.updateGameState();
     }

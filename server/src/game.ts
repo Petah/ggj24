@@ -3,13 +3,12 @@ import { IEvent } from '../../common/event';
 import { logError, logInfo } from '../../common/log';
 import { Player } from './player';
 import { GameState } from './events/game-list';
-import { AttackUnitResponse, CaptureResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
+import { AttackUnitResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { GameError } from './error';
 import { readFile } from 'fs/promises';
-import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, getDamageAmount, isBuilding, isMoveableUnit } from '../../common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, RocketTruck, Ship, Tank, Unit, UnitType, getDamageAmount, isBuilding, isMoveableUnit } from '../../common/unit';
 import { TILE_SIZE, getPathFinder } from '../../common/map';
 import { generateId } from './id';
 import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
@@ -19,8 +18,10 @@ export class Game {
     public started: boolean = false;
     public turn: number = 0;
     public currentPlayer?: Player;
-    public gameMap!: GameMap;
     public units: Unit[] = [];
+    public tiles: TileType[][] = [];
+    public mapWidth: number = 0;
+    public mapHeight: number = 0;
 
     constructor(
         public name: string,
@@ -131,7 +132,9 @@ export class Game {
                 this.units.push(unit);
             }
         }
-        this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
+        this.mapWidth = tileMap.width;
+        this.mapHeight = tileMap.height;
+        this.tiles = tiles;
 
         this.setupTurn(this.currentPlayer);
     }
@@ -181,12 +184,11 @@ export class Game {
         }
 
         const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && u instanceof Building) as Building | undefined;
-        console.log("Building", buildingAtPosition, this.units.filter(u => unit.x === u.x && unit.y === u.y))
         if (buildingAtPosition) {
             buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints
         }
 
-        const { finder, grid } = getPathFinder(unit, this.gameMap.matrix, this.units, this.currentPlayer?.name)
+        const { finder, grid } = getPathFinder(unit, this.tiles, this.units, this.currentPlayer?.name)
         const path = finder.findPath(unit.x, unit.y, x, y, grid);
         // Clone path for movement animation
         const clonePath = [...path];
@@ -258,10 +260,6 @@ export class Game {
         unit.hasCommittedActions = true;
         unit.movementPoints = 0;
 
-        console.log('originalOwner', originalOwner)
-        console.log('building.type', building.type)
-        console.log('building.capturePoints', building.capturePoints)
-
         this.broadcastGameState();
     }
 
@@ -276,6 +274,7 @@ export class Game {
             [UnitType.SHIP]: Ship,
             [UnitType.JET]: Jet,
             [UnitType.LANDER]: Lander,
+            [UnitType.ROCKET_TRUCK]: RocketTruck,
         }
         const building = unit as Building;
         if (!building.canBuild.includes(unitType)) {
@@ -376,12 +375,11 @@ export class Game {
                 money: player.money,
                 hasLost: player.hasLost,
             })),
-            width: this.gameMap?.width,
-            height: this.gameMap?.height,
+            width: this.mapWidth,
+            height: this.mapHeight,
             turn: this.turn,
             currentPlayer: this.currentPlayer?.name,
-            tiles: this.gameMap?.tiles,
-            matrix: this.gameMap?.matrix,
+            tiles: this.tiles,
             units: this.units,
             started: this.started,
         };

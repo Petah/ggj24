@@ -6,6 +6,7 @@ export class Menu extends Phaser.Scene {
     }
 
     preload() {
+        this.load.image('button', 'assets/green_button00.png');
     }
 
     create() {
@@ -16,6 +17,10 @@ export class Menu extends Phaser.Scene {
         });
 
         // @todo remove, jump straight to in-game for testing
-        this.scene.start('InGame');
+        // this.scene.start('InGame');
+    }
+
+    update(time: number, delta: number): void {
+        console.log('menu')
     }
 }

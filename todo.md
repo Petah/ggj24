@@ -6,7 +6,6 @@ More sound
 
 UI
 Capture animation
-Aircraft - movement
 Boats - movement
 Range attacks
 fix map wrong tile
