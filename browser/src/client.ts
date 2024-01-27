@@ -2,7 +2,7 @@ import { EventType, IEvent } from '../../common/event';
 import { GameListRequest, GameListResponse, GameState } from '../../common/events/game-list';
 import { JoinGameRequest } from '../../common/events/join-game';
 import { logError, logInfo } from '../../common/log';
-import { GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
+import { AttackUnitResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { ErrorEvent } from '../../common/events/error';
 import { state } from './state';
 import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
@@ -39,7 +39,9 @@ export class Client {
                     break;
                 case EventType.CAPTURE_RESPONSE:
                     this.handleGameStateChange((event as GameStateUpdate).game);
-                    // TODO
+                    break;
+                case EventType.ATTACK_UNIT_RESPONSE:
+                    this.handleAttackUnitResponse(event as AttackUnitResponse);
                     break;
                 case EventType.ERROR:
                     logError('Received error from server:', (event as ErrorEvent).message);
@@ -79,6 +81,10 @@ export class Client {
         state.game = event.game;
         state.scene?.updateGameState();
         state.scene?.selectUnit(state.game.units?.find(u => u.id === event.unitId));
+    }
+
+    private handleAttackUnitResponse(event: AttackUnitResponse) {
+        state.scene?.explode(event.x, event.y);
     }
 }
 

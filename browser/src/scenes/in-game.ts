@@ -123,7 +123,7 @@ export class InGame extends Phaser.Scene {
         this.load.image('highlight', 'assets/highlight3.png');
         this.load.image('highlightAttack', 'assets/highlight_attack.png');
         this.load.image('fog', 'assets/fog.png');
-        // UIpackSheet_transparent.png
+        this.load.spritesheet('explosion', 'assets/explosion.png', { frameWidth: 20, frameHeight: 20 });
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
@@ -169,19 +169,7 @@ export class InGame extends Phaser.Scene {
         this.input.on('pointermove', (pointer: any) => {
             const tileX = Math.floor(pointer.worldX / TILE_SIZE);
             const tileY = Math.floor(pointer.worldY / TILE_SIZE);
-            this.hoveringUnit = this.findObjectAtPosition(tileX, tileY);
-            if (isMoveableUnit(this.hoveringUnit)) {
-                const health = Math.round(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10);
-                this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
-                this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
-            } else if (isBuilding(this.hoveringUnit)) {
-                const health = Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10);
-                this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
-                this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10));
-            } else {
-                this.healthSprite.setVisible(false);
-                this.healthNumber.setVisible(false);
-            }
+            this.updateHover(tileX, tileY);
             if (pointer.isDown) {
                 this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
                 this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
@@ -313,8 +301,31 @@ export class InGame extends Phaser.Scene {
         }, false);
         this.cursorLayer.add(this.healthNumber);
 
+
+        this.anims.create({
+            key: 'explosion',
+            frames: this.anims.generateFrameNumbers('explosion'),
+            frameRate: 16,
+        });
+
         this.created = true;
         this.updateGameState();
+    }
+
+    updateHover(tileX: number, tileY: number) {
+        this.hoveringUnit = this.findObjectAtPosition(tileX, tileY);
+        if (isMoveableUnit(this.hoveringUnit)) {
+            const health = Math.round(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10);
+            this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
+            this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
+        } else if (isBuilding(this.hoveringUnit)) {
+            const health = Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10);
+            this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
+            this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10));
+        } else {
+            this.healthSprite.setVisible(false);
+            this.healthNumber.setVisible(false);
+        }
     }
 
     update(time: number, delta: number): void {
@@ -605,6 +616,10 @@ export class InGame extends Phaser.Scene {
             }
         }
         this.updateFog();
+
+        const tileX = Math.floor(this.input.mousePointer.worldX / TILE_SIZE);
+        const tileY = Math.floor(this.input.mousePointer.worldY / TILE_SIZE);
+        this.updateHover(tileX, tileY);
     }
 
     private updateFog() {
@@ -662,5 +677,19 @@ export class InGame extends Phaser.Scene {
             this.ui.enableCaptureButton();
         }
         console.log('this.moving', this.moving);
+    }
+
+    public explode(x: number, y: number) {
+        const explosion = this.make.sprite({
+            x: x * TILE_SIZE,
+            y: y * TILE_SIZE,
+            key: 'explosion',
+            origin: 0,
+        }, false);
+        explosion.play('explosion', true);
+        explosion.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            explosion.destroy();
+        });
+        this.cursorLayer.add(explosion);
     }
 }

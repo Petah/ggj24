@@ -47,3 +47,8 @@ export class AttackUnitRequest implements IEvent {
     public type = EventType.ATTACK_UNIT_REQUEST;
     constructor(public unitId: number, public x: number, public y: number) { }
 }
+
+export class AttackUnitResponse implements IEvent {
+    public type = EventType.ATTACK_UNIT_RESPONSE;
+    constructor(public x: number, public y: number) { }
+}

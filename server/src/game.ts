@@ -3,7 +3,7 @@ import { IEvent } from '../../common/event';
 import { logError, logInfo } from '../../common/log';
 import { Player } from './player';
 import { GameState } from './events/game-list';
-import { CaptureResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
+import { AttackUnitResponse, CaptureResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { GameError } from './error';
 import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
@@ -289,6 +289,7 @@ export class Game {
         if (unitAtPosition.health <= 0) {
             this.units = this.units.filter(unit => unit.id !== unitAtPosition.id);
         }
+        this.broadcast(new AttackUnitResponse(unitAtPosition.x, unitAtPosition.y));
         this.broadcastGameState();
     }
 
