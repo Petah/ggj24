@@ -101,6 +101,10 @@ export class InGame extends Phaser.Scene {
     private ui!: UI;
     private moving?: {
         sprite: Phaser.GameObjects.Sprite;
+        startX: number;
+        startY: number;
+        endX: number;
+        endY: number;
         pointsX: number[];
         pointsY: number[];
         time: number;
@@ -348,8 +352,16 @@ export class InGame extends Phaser.Scene {
                 this.moving.current = this.moving.time;
             }
             const percent = this.moving.current / this.moving.time;
+            const previousX = this.moving.sprite.x;
             const currentX = Phaser.Math.Interpolation.Linear(this.moving.pointsX, percent);
             const currentY = Phaser.Math.Interpolation.Linear(this.moving.pointsY, percent);
+            if (currentX < previousX) {
+                this.moving.sprite.setFlipX(true);
+            } else if (currentX === previousX) {
+                this.moving.sprite.setFlipX(this.moving.endX < this.moving.startX);
+            } else {
+                this.moving.sprite.setFlipX(false);
+            }
             this.moving.sprite.setPosition(currentX, currentY);
             this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE);
             if (percent >= 1) {
@@ -691,6 +703,10 @@ export class InGame extends Phaser.Scene {
         const pointsY = event.path.map(point => point[1] * TILE_SIZE);
         this.moving = {
             sprite,
+            startX: unit.x,
+            startY: unit.y,
+            endX: event.path[event.path.length - 1][0],
+            endY: event.path[event.path.length - 1][1],
             pointsX,
             pointsY,
             time: event.path.length * 1000 / 4,
