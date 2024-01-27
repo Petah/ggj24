@@ -2,8 +2,6 @@ import { TileType } from '../../common/events/game-list';
 import * as PF from 'pathfinding';
 
 export class GameMap {
-    public grid: PF.Grid;
-    public finder: PF.AStarFinder;
     public matrix: number[][];
     public matrixString: string;
 
@@ -29,9 +27,5 @@ export class GameMap {
             this.matrixString += '\n';
         }
         process.stdout.write(this.matrixString);
-        this.grid = new PF.Grid(this.matrix);
-        this.finder = new PF.AStarFinder({
-            diagonalMovement: PF.DiagonalMovement.Never,
-        });
     }
 }
