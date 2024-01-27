@@ -42,3 +42,8 @@ export class ReloadGameState implements IEvent {
     public type = EventType.RELOAD_GAME_STATE;
     constructor() { }
 }
+
+export class AttackUnitRequest implements IEvent {
+    public type = EventType.ATTACK_UNIT_REQUEST;
+    constructor(public unitId: number, public x: number, public y: number) { }
+}

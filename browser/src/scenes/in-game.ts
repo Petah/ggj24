@@ -5,7 +5,7 @@ import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMove
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
-import { CaptureRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
+import { AttackUnitRequest, CaptureRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
 import * as PF from 'pathfinding';
 
@@ -109,7 +109,9 @@ export class InGame extends Phaser.Scene {
     private finder!: PF.AStarFinder;
     private selectedArrow!: Phaser.GameObjects.Sprite;
     private isInMenuState: boolean = false;
-    private highlightGroup?: Phaser.GameObjects.Group;
+    private hoveringUnit?: Unit;
+    private healthSprite!: Phaser.GameObjects.Sprite;
+    private healthNumber!: Phaser.GameObjects.Sprite;
 
     constructor() {
         super('InGame');
@@ -119,6 +121,7 @@ export class InGame extends Phaser.Scene {
     preload() {
         this.load.image('tiles', 'assets/tilemap_packed.png');
         this.load.image('highlight', 'assets/highlight3.png');
+        this.load.image('highlightAttack', 'assets/highlight_attack.png');
         this.load.image('fog', 'assets/fog.png');
         // UIpackSheet_transparent.png
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
@@ -164,10 +167,25 @@ export class InGame extends Phaser.Scene {
         });
 
         this.input.on('pointermove', (pointer: any) => {
-            if (!pointer.isDown) return;
-
-            this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
-            this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+            const tileX = Math.floor(pointer.worldX / TILE_SIZE);
+            const tileY = Math.floor(pointer.worldY / TILE_SIZE);
+            this.hoveringUnit = this.findObjectAtPosition(tileX, tileY);
+            if (isMoveableUnit(this.hoveringUnit)) {
+                const health = Math.round(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10);
+                this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
+                this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
+            } else if (isBuilding(this.hoveringUnit)) {
+                const health = Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10);
+                this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
+                this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + Math.round(this.hoveringUnit.capturePoints / this.hoveringUnit.maxCapturePoints * 10));
+            } else {
+                this.healthSprite.setVisible(false);
+                this.healthNumber.setVisible(false);
+            }
+            if (pointer.isDown) {
+                this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
+                this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+            };
         });
 
         this.input.on('pointerdown', (pointer: {
@@ -182,18 +200,23 @@ export class InGame extends Phaser.Scene {
             const tileY = Math.floor(pointer.worldY / TILE_SIZE);
             switch (pointer.button) {
                 case 0:
-                    this.placeCursorAtPosition(tileX, tileY);
                     const unitAtPosition = this.findObjectAtPosition(tileX, tileY);
                     if (unitAtPosition && this.isSelectable(unitAtPosition)) {
+                        this.placeCursorAtPosition(tileX, tileY);
                         this.selectUnit(unitAtPosition);
                     } else {
                         this.unselectUnit();
+                        this.cursorSprite.setVisible(false);
                     }
                     break;
                 case 2:
                     if (isMoveableUnit(state.selectedUnit)) {
-                        this.placeCursorAtPosition(tileX, tileY);
-                        client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
+                        if (this.canUnitAttack(state.selectedUnit, tileX, tileY)) {
+                            client.send(new AttackUnitRequest(state.selectedUnit.id, tileX, tileY));
+                        } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY)) {
+                            this.placeCursorAtPosition(tileX, tileY);
+                            client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
+                        }
                     }
                     break;
             }
@@ -273,6 +296,23 @@ export class InGame extends Phaser.Scene {
         }, false);
         this.cursorLayer.add(this.selectedArrow);
 
+        this.healthSprite = this.make.sprite({
+            x: 0,
+            y: 0,
+            key: 'tiles2',
+            frame: 195,
+            origin: 0,
+        }, false);
+        this.cursorLayer.add(this.healthSprite);
+        this.healthNumber = this.make.sprite({
+            x: 0,
+            y: 0,
+            key: 'tiles2',
+            frame: 181,
+            origin: 0,
+        }, false);
+        this.cursorLayer.add(this.healthNumber);
+
         this.created = true;
         this.updateGameState();
     }
@@ -316,6 +356,7 @@ export class InGame extends Phaser.Scene {
 
     placeCursorAtPosition(tileX: number, tileY: number) {
         this.cursorSprite.setPosition(tileX * TILE_SIZE, tileY * TILE_SIZE);
+        this.cursorSprite.setVisible(true);
         localStorage.setItem('cursorX', tileX.toString());
         localStorage.setItem('cursorY', tileY.toString());
         this.onCursorPositionUpdate(tileX, tileY);
@@ -397,12 +438,21 @@ export class InGame extends Phaser.Scene {
                         }, false);
                         this.highlightLayer.add(sprite);
                     }
+                    if (this.canUnitAttack(state.selectedUnit, x, y)) {
+                        const sprite = this.make.sprite({
+                            x: x * TILE_SIZE,
+                            y: y * TILE_SIZE,
+                            key: 'highlightAttack',
+                            origin: 0,
+                        }, false);
+                        this.highlightLayer.add(sprite);
+                    }
                 }
             }
         }
     }
 
-    private canUnitMoveTo(unit: Unit, x: number, y: number) {
+    private canUnitMoveTo(unit: Unit, x: number, y: number, checkUnitAtPosition: boolean = true) {
         if (!isMoveableUnit(unit)) {
             return false;
         }
@@ -418,9 +468,11 @@ export class InGame extends Phaser.Scene {
         if (state.game?.matrix![y][x] !== 0) {
             return false;
         }
-        const unitAtPosition = state.game?.units?.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
-        if (unitAtPosition && unitAtPosition.id !== unit.id) {
-            return false;
+        if (checkUnitAtPosition) {
+            const unitAtPosition = state.game?.units?.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
+            if (unitAtPosition && unitAtPosition.id !== unit.id) {
+                return false;
+            }
         }
         const path = this.finder.findPath(unit.x, unit.y, x, y, this.grid.clone());
         path.shift();
@@ -432,7 +484,17 @@ export class InGame extends Phaser.Scene {
             return false;
         }
         return true;
-        // return path.length <= unit.movementPoints;
+    }
+
+    private canUnitAttack(unit: Unit, x: number, y: number) {
+        if (!isMoveableUnit(unit)) {
+            return false;
+        }
+        const enemyUnit = state.game?.units?.find(unit => unit.x === x && unit.y === y && !this.isPlayersUnit(unit) && isMoveableUnit(unit));
+        if (!enemyUnit) {
+            return false;
+        }
+        return this.canUnitMoveTo(unit, x, y, false);
     }
 
     private unselectUnit() {
@@ -489,7 +551,6 @@ export class InGame extends Phaser.Scene {
                     existingSprite.setFrame(frame)
                 }
             } else {
-
                 const sprite = this.make.sprite({
                     x: unit.x * TILE_SIZE,
                     y: unit.y * TILE_SIZE,
@@ -500,11 +561,22 @@ export class InGame extends Phaser.Scene {
                 sprite.setData('unit', unit.id);
                 if (isMoveableUnit(unit)) {
                     this.unitLayer.add(sprite);
-                    
+
                 } else if (isBuilding(unit)) {
                     this.buildingLayer.add(sprite);
                 } else {
                     logError(`Unknown unit type ${unit.type}`);
+                }
+            }
+        }
+
+        // Cull dead units
+        for (const layer of [this.buildingLayer, this.unitLayer]) {
+            const children = layer.getChildren();
+            for (const child of children) {
+                const unit = units.find(unit => unit.id === child.getData('unit'));
+                if (!unit) {
+                    child.destroy();
                 }
             }
         }
@@ -536,7 +608,7 @@ export class InGame extends Phaser.Scene {
     }
 
     private updateFog() {
-        if (!state.game) {
+        if (!state.game || !this.fogEnabled) {
             return;
         }
         for (let y = 0; y < state.game.height; y++) {
@@ -583,9 +655,9 @@ export class InGame extends Phaser.Scene {
         }
 
         const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
-        if (isMoveableUnit(unit) 
-        && (((unit as MovableUnit).type == UnitType.INFANTRY) || (unit as MovableUnit).type == UnitType.ANTI_TANK)
-        && building?.player !== state.playerName) {
+        if (isMoveableUnit(unit)
+            && (((unit as MovableUnit).type == UnitType.INFANTRY) || (unit as MovableUnit).type == UnitType.ANTI_TANK)
+            && building?.player !== state.playerName) {
             console.log('enable capture button in selectUnit');
             this.ui.enableCaptureButton();
         }

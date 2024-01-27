@@ -15,6 +15,8 @@ export enum EventType {
     RELOAD_GAME_STATE = 'reload_game_state',
     PURCHASE_UNIT_REQUEST = 'purchase_unit_request',
     PURCHASE_UNIT_RESPONSE = 'purchase_unit_response',
+    ATTACK_UNIT_REQUEST = 'attack_unit_request',
+    ATTACK_UNIT_RESPONSE = 'attack_unit_response',
 }
 
 export interface IEvent {

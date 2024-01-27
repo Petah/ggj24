@@ -6,7 +6,7 @@ import { Client } from './client';
 import { EventType, IEvent } from '../../common/event';
 import { GameListRequest, GameListResponse } from '../../common/events/game-list';
 import { JoinGameRequest, PlayerJoinedEvent } from '../../common/events/join-game';
-import { EndTurn, MoveUnitRequest, ReloadGameState, StartGame, CaptureRequest } from '../../common/events/turn';
+import { EndTurn, MoveUnitRequest, ReloadGameState, StartGame, CaptureRequest, AttackUnitRequest } from '../../common/events/turn';
 import { GameError } from './error';
 import { ErrorEvent } from '../../common/events/error';
 import { PurchaseUnitRequest } from '../../common/events/unit-purchase';
@@ -52,6 +52,9 @@ export class Server {
                             break;
                         case EventType.PURCHASE_UNIT_REQUEST:
                             await this.handlePurchaseUnitRequest(client, event as PurchaseUnitRequest);
+                            break;
+                        case EventType.ATTACK_UNIT_REQUEST:
+                            await this.handleAttackUnitRequest(client, event as AttackUnitRequest);
                             break;
                         default:
                             logInfo('Unknown event type', event.type);
@@ -139,6 +142,11 @@ export class Server {
         const game = this.getGameByClient(client);
         // @ts-ignore
         game?.buildUnit(event.unitId, event.unitType);
+    }
+
+    private async handleAttackUnitRequest(client: Client, event: AttackUnitRequest) {
+        const game = this.getGameByClient(client);
+        game?.attackUnit(event.unitId, event.x, event.y);
     }
 }
 
