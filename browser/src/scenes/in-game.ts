@@ -68,6 +68,7 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Road', tileset)
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
+        this.cameras.main.setZoom(2).setScroll(-300, -200);
 
         // map.createLayer('Data', tileset)
 
@@ -150,6 +151,20 @@ export class InGame extends Phaser.Scene {
         // });
 
 
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.C)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.X)
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
 
         this.cursorLayer = this.add.layer();
         this.unitLayer = this.add.layer();
@@ -158,8 +173,8 @@ export class InGame extends Phaser.Scene {
         this.updateGameState();
     }
 
-    update(delta: number) {
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
+    onCursorPositionUpdate(tileX: number, tileY: number) {
+
     }
 
     findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
