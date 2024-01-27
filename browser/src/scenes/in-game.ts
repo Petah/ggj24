@@ -112,10 +112,11 @@ export class InGame extends Phaser.Scene {
     private hoveringUnit?: Unit;
     private healthSprite!: Phaser.GameObjects.Sprite;
     private healthNumber!: Phaser.GameObjects.Sprite;
+    private steps!: Phaser.Sound.BaseSound;
 
     constructor() {
         super('InGame');
-        state.scene = this
+        state.scene = this;
     }
 
     preload() {
@@ -128,6 +129,8 @@ export class InGame extends Phaser.Scene {
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
         this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 })
+
+        this.load.audio('steps', ['assets/steps.ogg']);
     }
 
     create() {
@@ -145,7 +148,7 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Road', tileset)
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
+        this.cameras.main.setZoom(2).setScroll(-300, -200).setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
             if (deltaY > 0) {
@@ -312,6 +315,9 @@ export class InGame extends Phaser.Scene {
             frameRate: 16,
         });
 
+
+        this.steps = this.sound.add('steps');
+
         this.created = true;
         this.updateGameState();
     }
@@ -345,6 +351,7 @@ export class InGame extends Phaser.Scene {
             this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE);
             if (percent >= 1) {
                 this.moving = undefined;
+                this.steps.stop();
                 client.send(new ReloadGameState());
             }
         }
@@ -656,7 +663,7 @@ export class InGame extends Phaser.Scene {
         if (!unit) return false
         const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
         if ((unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
-        && (building && building?.player !== state.playerName)) {
+            && (building && building?.player !== state.playerName)) {
             return true;
         } else {
             return false;
@@ -686,13 +693,13 @@ export class InGame extends Phaser.Scene {
             time: event.path.length * 1000 / 4,
             current: 0,
         }
+        this.steps.play();
 
         if (this.isCaptureAvailable()) {
             this.ui.enableCaptureButton();
         } else {
             this.ui.disableCaptureButton();
         }
-        console.log('this.moving', this.moving);
     }
 
     public explode(x: number, y: number) {

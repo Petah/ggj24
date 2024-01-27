@@ -133,7 +133,7 @@ export class Game {
         }
         this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
 
-        this.setupTurn();
+        this.setupTurn(true);
     }
 
     public endTurn() {
@@ -142,14 +142,15 @@ export class Game {
             this.turn++;
             this.currentPlayer = this.players[0];
             logInfo('New turn', this.turn, this.currentPlayer?.name)
+            this.setupTurn(true);
         } else {
             this.currentPlayer = this.players[currentPlayerIndex + 1];
             logInfo('Next player', this.currentPlayer?.name);
+            this.setupTurn(false);
         }
-        this.setupTurn();
     }
 
-    private setupTurn() {
+    private setupTurn(nextRound: boolean) {
         // Give players money
         for (const player of this.players) {
             const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
