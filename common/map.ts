@@ -7,10 +7,8 @@ export function getPathFinder(unit: Unit, matrix?: number[][], units?: Unit[], c
     if (!matrix?.[0] || !units) {
         throw new Error('Game not loaded');
     }
-    console.log(matrix, matrix.length, matrix[0].length);
 
     let grid: PF.Grid;
-    console.log(unit.type)
     if (unit.type === UnitType.SHIP || unit.type === UnitType.LANDER) {
         grid = new PF.Grid(matrix);
     } else if (unit.type === UnitType.JET || unit.type === UnitType.HELICOPTER) {

@@ -180,7 +180,8 @@ export class Game {
             throw new GameError('Unit already at position');
         }
 
-        const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && unit instanceof Building) as Building | undefined;
+        const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && u instanceof Building) as Building | undefined;
+        console.log("Building", buildingAtPosition, this.units.filter(u => unit.x === u.x && unit.y === u.y))
         if (buildingAtPosition) {
             buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints
         }
