@@ -22,18 +22,22 @@ export class InGame extends Phaser.Scene {
         this.client.onGameStateChange((gameState: GameState) => {
             this.gameState = gameState;
         });
+
     }
 
     preload() {
-        this.load.image('logo', 'assets/red_boxCross.png');
-        this.load.image('grid', 'assets/uv-grid-4096-ian-maclachlan.png');
         this.load.image('tiles', 'assets/tilemap_packed.png');
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
     }
 
     create() {
+        this.cameras.main.setZoom(1);
+
+        this.scale.setGameSize(window.innerWidth, window.innerHeight)
         this.scene.launch('UI')
+        this.scale.on('resize', this.resize, this);
+
 
         // create the Tilemap
         const map = this.make.tilemap({ key: 'map' })
@@ -97,7 +101,6 @@ export class InGame extends Phaser.Scene {
         });
 
 
-        this.cameras.main.setBounds(0, 0, 1920, 1080).setZoom(1);
         this.cursorLayer = this.add.layer();
     }
 
@@ -121,6 +124,16 @@ export class InGame extends Phaser.Scene {
         this.cursorSprite?.destroy();
         this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
+    }
+
+    resize (gameSize:any, baseSize:any, displaySize:any, resolution:any) {
+        console.log("resizing Game: " + baseSize)
+
+        const width = baseSize.width;
+        const height = baseSize.height;
+
+        // this.cameras.resize(width, height);
+
     }
 
     fixSprite(sprite: Phaser.GameObjects.Sprite) {

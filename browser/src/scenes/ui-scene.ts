@@ -31,19 +31,7 @@ export class UI extends Phaser.Scene {
         this.endTurnButton = new GameButton(this, 'End Turn', 900, 800, () => {
             this.client.send(new EndTurn());
         });
-
-        const cursors = this.input.keyboard!.createCursorKeys();
-
-        this.controls = new Phaser.Cameras.Controls.SmoothedKeyControl({
-            camera: this.cameras.main,
-            left: cursors.left,
-            right: cursors.right,
-            up: cursors.up,
-            down: cursors.down,
-            acceleration: 0.02,
-            drag: 0.0005,
-            maxSpeed: 0.01,
-        });
+        // this.cameras.main.setZoom(2);
 
         this.text = this.add.text(10, 10, '', {
             font: '16px monospace',
@@ -57,10 +45,22 @@ export class UI extends Phaser.Scene {
                 fill: true,
             },
         });
+
+        this.scale.on('resize', this.resize, this);
+    }
+
+    resize (gameSize:any, baseSize:any, displaySize:any, resolution:any) {
+        console.log("resizing: " + baseSize)
+
+        const width = baseSize.width;
+        const height = baseSize.height;
+
+        this.cameras.resize(width, height);
+
     }
 
     update(delta: number) {
-        this.controls.update(delta);
+        // this.controls.update(delta);
 
         // @ts-ignore Hack to make the camera position update properly
         this.cameras.main.preRender(1);
