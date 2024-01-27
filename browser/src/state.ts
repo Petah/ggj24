@@ -13,6 +13,7 @@ export const state: {
     game?: GameState;
     selectedUnit?: Unit;
     scene?: InGame;
+    winningPlayer?: string;
 } = {
     playerName,
     cursorX: parseInt(localStorage.getItem('cursorX') || '20'),

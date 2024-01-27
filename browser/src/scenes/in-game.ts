@@ -539,6 +539,12 @@ export class InGame extends Phaser.Scene {
         if (!state.game || !this.created) {
             return;
         }
+
+        if (state.winningPlayer) {
+            this.scene.transition({ target: 'EndGame', duration: 1000 })
+            return
+        }
+
         this.ui.updateGameState();
 
         if (!isOurTurn()) {

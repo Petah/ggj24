@@ -8,10 +8,8 @@ Capture animation
 Aircraft - movement
 Boats - movement
 Range attacks
-reset capture points walking off building
 Flip units based on direction
 fix map wrong tile
 boats on land
 drive through enemy units
-fix double money
 Transport units

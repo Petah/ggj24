@@ -208,6 +208,7 @@ export class Game {
         // @ts-ignore
         const { unit } = this.getPlayerUnit(unitId) as MovableUnit;
         const building = this.units.find(unit => unit.x === x && unit.y === y && unit instanceof Building) as Building;
+        const originalOwner = building.player
         if (building.player == unit.player) {
             throw new GameError('Cannot capture own buildings');
         }
@@ -230,6 +231,25 @@ export class Game {
 
         unit.hasCommitedActions = true;
         unit.movementPoints = 0;
+
+        if (originalOwner && building.type == UnitType.HQ) {
+            this.units = this.units.filter(unit => {
+                if (unit.player == originalOwner) {
+                    return false
+                } else {
+                    return true
+                }
+            });
+            for (const item of this.units) {
+                if (item.player == originalOwner) {
+                    if (item instanceof Building) {
+                        item.capturePoints = 20;
+                        item.player = undefined;
+                    }
+                }
+            }
+            this.players = this.players.filter(player => player.name !== originalOwner);
+        }
 
         this.broadcastGameState();
     }
