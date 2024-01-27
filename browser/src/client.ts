@@ -5,6 +5,7 @@ import { logError, logInfo } from '../../common/log';
 import { GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { ErrorEvent } from '../../common/events/error';
 import { state } from './state';
+import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
 
 export class Client {
     private ws: WebSocket;
@@ -32,6 +33,9 @@ export class Client {
                     break;
                 case EventType.MOVE_UNIT_RESPONSE:
                     this.handleMoveUnitResponse(event as MoveUnitResponse);
+                    break;
+                case EventType.PURCHASE_UNIT_RESPONSE:
+                    this.handlePurchaseUnitResponse(event as PurchaseUnitResponse);
                     break;
                 case EventType.ERROR:
                     logError('Received error from server:', (event as ErrorEvent).message);
@@ -65,6 +69,12 @@ export class Client {
 
     private handleMoveUnitResponse(event: MoveUnitResponse) {
         state.scene?.handleMoveUnitResponse(event);
+    }
+
+    private handlePurchaseUnitResponse(event: PurchaseUnitResponse) {
+        state.game = event.game;
+        state.scene?.updateGameState();
+        state.scene?.selectUnit(state.game.units?.find(u => u.id === event.unitId));
     }
 }
 

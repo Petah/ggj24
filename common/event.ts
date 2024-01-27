@@ -12,6 +12,7 @@ export enum EventType {
     MOVE_UNIT_RESPONSE = 'move_unit_response',
     RELOAD_GAME_STATE = 'reload_game_state',
     PURCHASE_UNIT_REQUEST = 'purchase_unit_request',
+    PURCHASE_UNIT_RESPONSE = 'purchase_unit_response',
 }
 
 export interface IEvent {

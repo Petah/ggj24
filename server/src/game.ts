@@ -9,9 +9,10 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType } from '../../common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, isMoveableUnit } from '../../common/unit';
 import { TILE_SIZE } from '../../common/map';
 import { generateId } from './id';
+import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
 
 export class Game {
     public players: Player[] = [];
@@ -167,14 +168,15 @@ export class Game {
 
     public moveUnit(unitId: number, x: number, y: number) {
         const { unit } = this.getPlayerUnit(unitId);
-        // if (unit.movementPoints <= 0) {
-        //     throw new GameError('Unit does not have enough movement points');
-        // }
         if (!(unit instanceof MovableUnit)) {
             throw new GameError('Unit is not movable');
         }
         if (unit.movementPoints <= 0) {
             throw new GameError('Unit does not have enough movement points');
+        }
+        const unitAtPosition = this.units.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
+        if (unitAtPosition) {
+            throw new GameError('Unit already at position');
         }
         const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid.clone());
         // Clone path for movement animation
@@ -225,6 +227,7 @@ export class Game {
         const newUnit = new unitsAvailable[unitType](generateId(), building.x, building.y, player.name);
         this.units.push(newUnit);
         logInfo('Building unit', newUnit);
+        player.client?.send(new PurchaseUnitResponse(newUnit.id, this.serialize()));
         this.broadcastGameState();
     }
 

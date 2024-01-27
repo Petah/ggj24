@@ -6,3 +6,8 @@ export class PurchaseUnitRequest implements IEvent {
     public type = EventType.PURCHASE_UNIT_REQUEST;
     constructor(public unitId: number, public unitType:  UnitType) { }
 }
+
+export class PurchaseUnitResponse implements IEvent {
+    public type = EventType.PURCHASE_UNIT_RESPONSE;
+    constructor(public unitId: number, public game: GameState) { }
+}

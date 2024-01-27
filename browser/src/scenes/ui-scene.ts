@@ -1,11 +1,10 @@
-import { InGame, UnitSprites } from './in-game';
+import { UnitSprites } from './in-game';
 import { client } from '../client';
 import { GameButton } from '../button';
-import { AntiTank, Infantry, PlayerColor, Tank, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
+import { PlayerColor, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
 import { isOurTurn, state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
-import { PurchaseUnitReqest } from '../../../common/events/unit-purchase';
 import { ucFirst } from '../../../common/util';
 
 export class UI extends Phaser.Scene {
@@ -55,6 +54,8 @@ export class UI extends Phaser.Scene {
         });
 
         this.scale.on('resize', this.resize, this);
+
+        this.updateGameState();
     }
 
     resize(gameSize: any, baseSize: any, displaySize: any, resolution: any) {

@@ -117,7 +117,7 @@ export class InGame extends Phaser.Scene {
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
-        this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32})
+        this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 })
     }
 
     create() {
@@ -193,7 +193,7 @@ export class InGame extends Phaser.Scene {
         });
 
         this.input.keyboard?.on('keydown', (event: any) => {
-            if (this.isInMenuState) {
+            if (this.isInMenuState && state.selectedUnit) {
                 switch (event.key) {
                     case 'ArrowUp':
                         this.ui.movePurchaseCursorUp();
@@ -204,11 +204,10 @@ export class InGame extends Phaser.Scene {
                     case 'x':
                         this.unselectUnit();
                         break;
-                    case "c":
-                    case " ":
-                        if (state.selectedUnit) {
-                            client.send(new PurchaseUnitRequest(state.selectedUnit.id, this.ui.getSelectedUnitTypeFromPurchaseList()))
-                        }
+                    case 'c':
+                    case ' ':
+                        client.send(new PurchaseUnitRequest(state.selectedUnit.id, this.ui.getSelectedUnitTypeFromPurchaseList()))
+                        this.unselectUnit();
                         break;
                 }
                 return;
@@ -318,14 +317,19 @@ export class InGame extends Phaser.Scene {
     }
 
     private handleSelect(tileX: number, tileY: number) {
+        const unit = this.findObjectAtPosition(tileX, tileY)
         if (state.selectedUnit) {
+            if (this.isSelectable(unit) && unit.id !== state.selectedUnit.id) {
+                this.selectUnit(unit);
+                return;
+            }
             if ((state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) || !isMoveableUnit(state.selectedUnit)) {
                 this.unselectUnit();
                 return;
             }
             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
         } else {
-            this.selectUnit(this.findObjectAtPosition(tileX, tileY));
+            this.selectUnit(unit);
         }
     }
 
@@ -339,7 +343,7 @@ export class InGame extends Phaser.Scene {
         return isFactory(unit) || isMoveableUnit(unit);
     }
 
-    private selectUnit(unit?: Unit) {
+    public selectUnit(unit?: Unit) {
         if (!this.isSelectable(unit) || !isOurTurn()) {
             return;
         }
@@ -379,6 +383,7 @@ export class InGame extends Phaser.Scene {
         if (!state.game || !this.created) {
             return;
         }
+        this.ui.updateGameState();
 
         if (!isOurTurn()) {
             this.unselectUnit();
@@ -418,8 +423,6 @@ export class InGame extends Phaser.Scene {
         if (state.selectedUnit) {
             state.selectedUnit = units.find(unit => unit.id === state.selectedUnit?.id);
         }
-
-        this.ui.updateGameState();
     }
 
     public handleMoveUnitResponse(event: MoveUnitResponse) {
