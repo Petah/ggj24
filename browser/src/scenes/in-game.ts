@@ -145,7 +145,7 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Road', tileset)
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
+        this.cameras.main.setZoom(2).setScroll(-300, -200).setBounds(0, 0, map.widthInPixels, map.heightInPixels);
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
             if (deltaY > 0) {
