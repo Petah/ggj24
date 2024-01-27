@@ -15,6 +15,7 @@ export class UI extends Phaser.Scene {
     private endTurnButton!: GameButton;
     private menuBackground!: Phaser.GameObjects.Rectangle;
     private purchasableUnits!: Phaser.GameObjects.Group;
+    private purchaseCursor!: Phaser.GameObjects.Sprite;
     private reloadGameStateButton!: GameButton;
 
     constructor() {
@@ -187,6 +188,13 @@ export class UI extends Phaser.Scene {
             this.purchasableUnits.add(unitNameText);
             this.purchasableUnits.add(unitCostText);
         }
+
+        this.purchaseCursor = this.add.sprite(
+            this.menuBackground.x,
+            this.menuBackground.y,
+            'bigCursor',
+            1
+        ).setOrigin(0, 0);
     }
 
     public onProductionBuildingUnselected() {
@@ -194,5 +202,19 @@ export class UI extends Phaser.Scene {
         this.menuBackground.destroy(true);
         this.purchasableUnits.destroy(true);
         this.purchasableUnits = this.add.group();
+    }
+
+    public movePurchaseCursorUp() {
+        this.purchaseCursor.setPosition(
+            this.purchaseCursor.x,
+            this.purchaseCursor.y - 32,
+        )
+    }
+
+    public movePurchaseCursorDown() {
+        this.purchaseCursor.setPosition(
+            this.purchaseCursor.x,
+            this.purchaseCursor.y + 32,
+        )
     }
 }
