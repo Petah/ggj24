@@ -58,7 +58,6 @@ export class InGame extends Phaser.Scene {
         this.scene.launch('UI')
         this.scale.on('resize', this.resize, this);
 
-
         // create the Tilemap
         const map = this.make.tilemap({ key: 'map' })
         const tilesetName = map.tilesets[0].name
@@ -106,21 +105,21 @@ export class InGame extends Phaser.Scene {
         }
         */
 
-        this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-            const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
-            const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
-            for (const gameObject of this.gameObjects) {
-                // Get game object at position
-                const x = Math.floor(gameObject.x / TILE_SIZE / TILE_SCALE);
-                const y = Math.floor(gameObject.y / TILE_SIZE / TILE_SCALE);
-                if (x === tileX && y === tileY) {
-                    console.log('Clicked on game object at ', x, y, gameObject);
-                }
-            }
+        // this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
+        //     const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
+        //     const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
+        //     for (const gameObject of this.gameObjects) {
+        //         // Get game object at position
+        //         const x = Math.floor(gameObject.x / TILE_SIZE / TILE_SCALE);
+        //         const y = Math.floor(gameObject.y / TILE_SIZE / TILE_SCALE);
+        //         if (x === tileX && y === tileY) {
+        //             console.log('Clicked on game object at ', x, y, gameObject);
+        //         }
+        //     }
 
-            // this.placeCursorAtPosition(tileX, tileY);
-            console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
-        });
+        //     // this.placeCursorAtPosition(tileX, tileY);
+        //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
+        // });
 
         // this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
 
@@ -158,12 +157,9 @@ export class InGame extends Phaser.Scene {
         this.created = true;
         this.updateGameState();
     }
-    update(delta: number) {
-        // this.controls.update(delta);
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
 
-        // @ts-ignore Hack to make the camera position update properly
-        this.cameras.main.preRender(1);
+    update(delta: number) {
+        this.cameras.main.setZoom(2).setScroll(-300, -200);
     }
 
     findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
