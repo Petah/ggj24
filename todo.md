@@ -12,3 +12,6 @@ fix map wrong tile
 boats on land
 Transport units
 Ranged detection broken for adjacent units
+
+rocket tank cant shoot air
+rocket tank cant shoot after moving
