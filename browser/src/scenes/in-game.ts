@@ -8,6 +8,7 @@ import { UI } from './ui-scene';
 import { AttackUnitRequest, CaptureRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
 import * as PF from 'pathfinding';
+import { clone } from '../../../common/util';
 
 export const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
@@ -268,6 +269,7 @@ export class InGame extends Phaser.Scene {
                 case 'x':
                     this.unselectUnit();
                     break;
+                case 'e':
                 case 'Enter':
                     client.send(new EndTurn())
             }
@@ -316,7 +318,9 @@ export class InGame extends Phaser.Scene {
         });
 
 
-        this.steps = this.sound.add('steps');
+        this.steps = this.sound.add('steps', {
+            loop: true,
+        });
 
         this.created = true;
         this.updateGameState();
@@ -545,26 +549,29 @@ export class InGame extends Phaser.Scene {
             this.unselectUnit();
         }
 
-        this.grid = new PF.Grid(state.game.matrix!);
-        this.finder = new PF.AStarFinder({
-            diagonalMovement: PF.DiagonalMovement.Never,
-        });
         const units = state.game?.units || [];
+
+        // Setup path finding
+        if (state.game.matrix) {
+            this.grid = new PF.Grid(state.game.matrix);
+            for (const unit of units) {
+                if (isMoveableUnit(unit) && unit.player !== state.playerName) {
+                    this.grid.setWalkableAt(unit.x, unit.y, false);
+                }
+            }
+            this.finder = new PF.AStarFinder({
+                diagonalMovement: PF.DiagonalMovement.Never,
+            });
+        }
+
+        // Setup sprites
         for (const unit of units) {
             const existingSprite = this.getUnitSprite(unit);
             const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
             const frame = UnitSprites[playerColor][unit.type] || 193;
             if (existingSprite) {
                 existingSprite.setPosition(unit.x * TILE_SIZE, unit.y * TILE_SIZE);
-                // TODO check if they can shoot, check if they capture
-                if (
-                    isMoveableUnit(unit)
-                    && (unit.movementPoints === 0 || unit.hasCommitedActions)
-                ) {
-                    existingSprite.setTint(0x888888);
-                } else {
-                    existingSprite.clearTint();
-                }
+                this.tintSprite(existingSprite, unit);
 
                 if (isBuilding(unit)) {
                     existingSprite.setFrame(frame)
@@ -578,6 +585,7 @@ export class InGame extends Phaser.Scene {
                     origin: 0,
                 }, false);
                 sprite.setData('unit', unit.id);
+                this.tintSprite(sprite, unit);
                 if (isMoveableUnit(unit)) {
                     this.unitLayer.add(sprite);
 
@@ -633,6 +641,18 @@ export class InGame extends Phaser.Scene {
         const tileX = Math.floor(this.input.mousePointer.worldX / TILE_SIZE);
         const tileY = Math.floor(this.input.mousePointer.worldY / TILE_SIZE);
         this.updateHover(tileX, tileY);
+    }
+
+    private tintSprite(sprite: Phaser.GameObjects.Sprite, unit: Unit) {
+        // TODO check if they can shoot, check if they capture
+        if (
+            isMoveableUnit(unit)
+            && (unit.movementPoints === 0 || unit.hasCommittedActions)
+        ) {
+            sprite.setTint(0x888888);
+        } else {
+            sprite.clearTint();
+        }
     }
 
     private updateFog() {
