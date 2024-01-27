@@ -3,6 +3,7 @@ import { client } from '../client';
 import { GameButton } from '../button';
 import { EndTurn, StartGame } from '../../../common/events/turn';
 import { state } from '../state';
+import { MovableUnit } from '../unit';
 
 export class UI extends Phaser.Scene {
 
@@ -67,7 +68,7 @@ export class UI extends Phaser.Scene {
                 ...state.game.players.map(player => `${player.name}: ${player.color} $${player.money}`),
                 `Current player: ${state.game.currentPlayer}`,
                 `Turn: ${state.game.turn}`,
-                state.selectedUnit ? `Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x} ${state.selectedUnit?.y}` : 'Nothing selected',
+                state.selectedUnit ? `Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x}x${state.selectedUnit?.y} MP:${(state.selectedUnit as MovableUnit)?.movementPoints}` : 'Nothing selected',
             ];
             this.text.setText(debugText.join('\n'));
             this.text.setPosition(

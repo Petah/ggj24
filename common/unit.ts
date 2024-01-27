@@ -36,7 +36,7 @@ export enum DamageType {
     MACHINE_GUN = 'machine gun',
     BAZOOKA = 'bazooka',
     TANK_CANNON = 'tank cannon',
-    GROUD_ROCKETS = 'rockets',
+    GROUND_ROCKETS = 'rockets',
     MISSILES = 'missiles',
     BOMBS = 'bombs',
 }
@@ -91,7 +91,7 @@ export class Infantry extends MovableUnit {
 }
 
 export class AntiTankInfantry extends MovableUnit {
-    public readonly type = UnitType.INFANTRY;
+    public readonly type = UnitType.ANTI_TANK_INFANTRY;
     public static readonly cost = 3000;
     public maxMovementPoints = 2;
     public movementType = MovementType.INFANTRY;
@@ -123,7 +123,7 @@ export class Helicopter extends MovableUnit {
     public static readonly cost = 8000;
     public maxMovementPoints = 7;
     public movementType = MovementType.AIR;
-    public damageType = DamageType.GROUD_ROCKETS;
+    public damageType = DamageType.GROUND_ROCKETS;
     public armourType = ArmourType.HELICOPTER;
 }
 
@@ -132,11 +132,11 @@ export class Jet extends MovableUnit {
     public static readonly cost = 20000;
     public maxMovementPoints = 9;
     public movementType = MovementType.AIR;
-    public damageType = DamageType.GROUD_ROCKETS;
+    public damageType = DamageType.GROUND_ROCKETS;
     public armourType = ArmourType.PLANE;
 }
 
-export class LANDER extends MovableUnit {
+export class Lander extends MovableUnit {
     public readonly type = UnitType.SHIP;
     public static readonly cost = 15000;
     public maxMovementPoints = 7;
@@ -155,7 +155,7 @@ export class Ship extends MovableUnit {
     public armourType = ArmourType.SHIP;
 }
 
-export abstract class Building extends MovableUnit {
+export abstract class Building extends Unit {
     public readonly income: number = 1000;
     public readonly canBuild!: UnitType[];
 }

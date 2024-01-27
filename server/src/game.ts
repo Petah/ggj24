@@ -46,7 +46,6 @@ export class Game {
         this.started = true;
         this.turn = 1;
         this.currentPlayer = this.players[0];
-        this.setupTurn();
 
         const tileMapData = await readFile('../browser/public/assets/test3.json', 'utf-8');
         const tileMap: TileMap = JSON.parse(tileMapData);
@@ -134,13 +133,7 @@ export class Game {
             this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
         }
 
-        // Give players initial money
-        for (const player of this.players) {
-            const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
-            const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
-            player.money = income;
-            logInfo('Player money', player.name, player.money);
-        }
+        this.setupTurn();
     }
 
     public endTurn() {
@@ -157,6 +150,15 @@ export class Game {
     }
 
     private setupTurn() {
+        // Give players money
+        for (const player of this.players) {
+            const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
+            const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
+            player.money = income;
+            logInfo('Player money', player.name, player.money);
+        }
+
+        // Set movement points
         for (const unit of this.units) {
             if (unit instanceof MovableUnit) {
                 unit.movementPoints = unit.maxMovementPoints;
@@ -169,9 +171,21 @@ export class Game {
         // if (unit.movementPoints <= 0) {
         //     throw new GameError('Unit does not have enough movement points');
         // }
+        if (!(unit instanceof MovableUnit)) {
+            throw new GameError('Unit is not movable');
+        }
+        if (unit.movementPoints <= 0) {
+            throw new GameError('Unit does not have enough movement points');
+        }
         const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid);
+        console.log('path', path, unit);
+        // Remove first entry, which is the current position
+        path.shift();
         if (path.length <= 0) {
             throw new GameError('No path found');
+        }
+        if (path.length > unit.movementPoints) {
+            path.splice(unit.movementPoints);
         }
         const lastPathEntry = path[path.length - 1];
         unit.x = lastPathEntry[0];

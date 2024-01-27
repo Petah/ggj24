@@ -205,17 +205,23 @@ export class InGame extends Phaser.Scene {
             return;
         }
         for (const unit of state.game?.units || []) {
-            const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
-            const frame = UnitSprites[playerColor][unit.type] || 193;
-            const sprite = this.make.sprite({
-                x: unit.x * TILE_SIZE,
-                y: unit.y * TILE_SIZE,
-                key: 'tiles2',
-                frame,
-                scale: TILE_SCALE,
-                origin: 0,
-            }, false);
-            this.unitLayer.add(sprite);
+            const existingSprite = this.unitLayer.getChildren().find((child: any) => child.getData('unit') === unit.id) as Phaser.GameObjects.Sprite;
+            if (existingSprite) {
+                existingSprite.setPosition(unit.x * TILE_SIZE, unit.y * TILE_SIZE);
+            } else {
+                const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
+                const frame = UnitSprites[playerColor][unit.type] || 193;
+                const sprite = this.make.sprite({
+                    x: unit.x * TILE_SIZE,
+                    y: unit.y * TILE_SIZE,
+                    key: 'tiles2',
+                    frame,
+                    scale: TILE_SCALE,
+                    origin: 0,
+                }, false);
+                sprite.setData('unit', unit.id);
+                this.unitLayer.add(sprite);
+            }
         }
     }
 }
