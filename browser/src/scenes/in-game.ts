@@ -1,12 +1,7 @@
 import Phaser from 'phaser';
 import { client } from '../client';
-<<<<<<< HEAD
-import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
-import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
-=======
 import { TILE_SIZE } from '../../../common/map';
-import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
->>>>>>> f241d02e965f7c8ed02d6f4a951b323b4646c1da
+import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
