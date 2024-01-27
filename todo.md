@@ -5,6 +5,7 @@ More sound
  - ships
 
 UI
+Capture overlay
 Capture animation
 Boats - movement
 Range attacks

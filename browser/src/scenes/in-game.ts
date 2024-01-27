@@ -354,6 +354,7 @@ export class InGame extends Phaser.Scene {
         this.updateGameState();
     }
 
+    // TODO
     updateHover(tileX: number, tileY: number) {
         this.hoveringUnit = this.findObjectAtPosition(tileX, tileY);
         if (isMoveableUnit(this.hoveringUnit)) {

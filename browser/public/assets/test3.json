@@ -727,6 +727,18 @@
                  "width":16,
                  "x":240,
                  "y":288
+                }, 
+                {
+                 "gid":182,
+                 "height":16,
+                 "id":57,
+                 "name":"",
+                 "rotation":0,
+                 "type":"",
+                 "visible":true,
+                 "width":16,
+                 "x":384,
+                 "y":368
                 }],
          "opacity":1,
          "type":"objectgroup",
@@ -780,13 +792,13 @@
          "name":"Data",
          "opacity":1,
          "type":"tilelayer",
-         "visible":false,
+         "visible":true,
          "width":40,
          "x":0,
          "y":0
         }],
  "nextlayerid":7,
- "nextobjectid":56,
+ "nextobjectid":58,
  "orientation":"orthogonal",
  "renderorder":"right-down",
  "tiledversion":"1.10.2",
@@ -806,15 +818,15 @@
          "tiles":[
                 {
                  "id":0,
-                 "probability":0.600000023841858
+                 "probability":0.6
                 }, 
                 {
                  "id":1,
-                 "probability":0.300000011920929
+                 "probability":0.3
                 }, 
                 {
                  "id":2,
-                 "probability":0.100000001490116
+                 "probability":0.1
                 }],
          "tilewidth":16,
          "wangsets":[
