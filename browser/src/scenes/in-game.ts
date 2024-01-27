@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { client } from '../client';
 import { GameState } from '../../../common/events/game-list';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
-import { PlayerColor, UnitType } from '../../../common/unit';
+import { PlayerColor, Unit, UnitType } from '../../../common/unit';
 import { state } from '../state';
 import { MoveUnitRequest } from '../../../common/events/turn';
 
@@ -52,6 +52,7 @@ const UnitSprites = {
 export class InGame extends Phaser.Scene {
     private cursorLayer!: Phaser.GameObjects.Layer;
     private cursorSprite!: Phaser.GameObjects.Sprite;
+    private shoppingLayer!: Phaser.GameObjects.Layer;
     private unitLayer!: Phaser.GameObjects.Layer;
     private created: boolean = false;
 
@@ -87,14 +88,6 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Trees', tileset)
         this.cameras.main.setZoom(2).setScroll(-300, -200);
 
-        // this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
-        //     const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
-        //     const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
-        //     // this.placeCursorAtPosition(tileX, tileY);
-        //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, state.game.tiles?.[tileY]?.[tileX]);
-        // });
-
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
             if (deltaY > 0) {
@@ -152,6 +145,7 @@ export class InGame extends Phaser.Scene {
                     this.handleSelect(tileX, tileY);
                     break;
                 case 'x':
+                    this.unselectUnit();
                     break;
             }
         });
@@ -190,14 +184,36 @@ export class InGame extends Phaser.Scene {
     private handleSelect(tileX: number, tileY: number) {
         if (state.selectedUnit) {
             if (state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) {
-                state.selectedUnit = undefined;
+                this.unselectUnit();
                 return;
             }
+            console.log(unit);
             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
         } else {
             const unit = this.findObjectAtPosition(tileX, tileY);
             state.selectedUnit = unit;
+            const type = unit?.type;
+            if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
+                if (unit) {
+                    this.onProductionBuildingSelected(unit);
+                }
+            }
+            console.log(unit);
         }
+    }
+
+    private unselectUnit() {
+        state.selectedUnit = undefined;
+    }
+
+    private onProductionBuildingSelected(unit: Unit) {
+        this.add.rectangle(
+            state.cursorX * TILE_SIZE * TILE_SCALE + 8,
+            state.cursorY * TILE_SIZE * TILE_SCALE + 8,
+            80,
+            160,
+            0xFCF3CF,
+        ).setOrigin(0, 0);
     }
 
     private updateGameState() {
