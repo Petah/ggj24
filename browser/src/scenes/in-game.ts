@@ -5,7 +5,7 @@ import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, UnitType } from '../../../common/unit';
 import { state } from '../state';
 
-const UnitsSprites = {
+const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
         [UnitType.CITY]: 8,
         [UnitType.INFANTRY]: 106,
@@ -89,6 +89,10 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Road', tileset)
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
+        this.cameras.main.setZoom(2).setScroll(-300, -200);
+        this.cursorLayer = this.add.layer();
+
+        this.placeCursorAtPosition(20,20)
 
         // map.createLayer('Data', tileset)
 
@@ -170,17 +174,55 @@ export class InGame extends Phaser.Scene {
             this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
         });
 
+        this.input.keyboard?.on('keydown', (event: any) => {
+            const tileX = Math.floor(this.cursorSprite.x / TILE_SIZE / TILE_SCALE);
+            const tileY = Math.floor(this.cursorSprite.y / TILE_SIZE / TILE_SCALE);
+
+            switch (event.key) {
+                case 'ArrowUp':
+                    if (tileY > 0) {
+                        this.placeCursorAtPosition(tileX, tileY - 1);
+                    }
+                    break;
+                case 'ArrowDown':
+                    if (tileY < (state.game?.height || 40) - 1) {
+                        this.placeCursorAtPosition(tileX, tileY + 1);
+                    }
+                    break;
+                case 'ArrowLeft':
+                    if (tileX > 0) {
+                        this.placeCursorAtPosition(tileX - 1, tileY);
+                    }
+                    break;
+                case 'ArrowRight':
+                    if (tileX < (state.game?.width || 40) - 1) {
+                        this.placeCursorAtPosition(tileX + 1, tileY );
+                    }
+                    break;
+                case 'c':
+                case ' ':
+                    // TODO select it
+                    break;  
+                case 'x':
+                    break;
+            }
+         });
 
 
-        this.cursorLayer = this.add.layer();
         this.unitLayer = this.add.layer();
 
         this.created = true;
         this.updateGameState();
     }
 
-    update(delta: number) {
+    updateCursorPosition(tileX: number, tileY: number) {
+        this.onCursorPositionUpdate(tileX, tileY);
     }
+
+    onCursorPositionUpdate(tileX: number, tileY: number) {
+
+    }
+
 
     findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
         const objectLayer = map.getObjectLayer('Towns');
@@ -198,20 +240,9 @@ export class InGame extends Phaser.Scene {
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
-        console.log(`TileX: ${tileX} TileY: ${tileY} placedPositionX: ${tileX * TILE_SIZE} placedPositionY: ${tileY * TILE_SIZE}`)
         this.cursorSprite?.destroy();
         this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
-    }
-
-    resize(gameSize: any, baseSize: any, displaySize: any, resolution: any) {
-        console.log(`resizing Game: ${baseSize}`)
-
-        const width = baseSize.width;
-        const height = baseSize.height;
-
-        // this.cameras.resize(width, height);
-
     }
 
     fixSprite(sprite: Phaser.GameObjects.Sprite) {
@@ -323,7 +354,7 @@ export class InGame extends Phaser.Scene {
         }
         for (const unit of state.game?.units || []) {
             const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
-            const frame = UnitsSprites[playerColor][unit.type] || 193;
+            const frame = UnitSprites[playerColor][unit.type] || 193;
             const sprite = this.make.sprite({
                 x: unit.x * TILE_SIZE,
                 y: unit.y * TILE_SIZE,
