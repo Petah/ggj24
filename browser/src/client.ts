@@ -6,22 +6,10 @@ import { GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { ErrorEvent } from '../../common/events/error';
 import { state } from './state';
 
-interface EventListeners {
-    [EventType.GAME_STATE_CHANGE]: ((gameState: GameState) => void)[];
-}
-
 export class Client {
     private ws: WebSocket;
-    private eventListeners: EventListeners = {
-        [EventType.GAME_STATE_CHANGE]: [],
-    };
 
     constructor() {
-        const queryString = new URLSearchParams(window.location.search);
-        // @todo dynamic player name
-        const playerName = queryString.get('playerName') || 'Player1';
-        logInfo('Player name', playerName);
-
         this.ws = new WebSocket('ws://localhost:8080');
         this.ws.onopen = () => {
             logInfo('Connected to server');
@@ -37,7 +25,7 @@ export class Client {
                 case EventType.GAME_LIST_RESPONSE:
                     const gameListEvent = event as GameListResponse;
                     // @todo join game from a list
-                    this.send(new JoinGameRequest(playerName, gameListEvent.games[0].name));
+                    this.send(new JoinGameRequest(state.playerName, gameListEvent.games[0].name));
                     break;
                 case EventType.GAME_STATE_UPDATE:
                     this.handleGameStateChange((event as GameStateUpdate).game);

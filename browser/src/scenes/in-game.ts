@@ -168,7 +168,7 @@ export class InGame extends Phaser.Scene {
             const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
             this.placeCursorAtPosition(tileX, tileY);
             const unitAtPosition = this.findObjectAtPosition(tileX, tileY);
-            if (unitAtPosition) {
+            if (unitAtPosition && this.isPlayersUnit(unitAtPosition)) {
                 this.selectUnit(unitAtPosition);
             } else {
                 this.unselectUnit();
@@ -267,6 +267,10 @@ export class InGame extends Phaser.Scene {
         this.onCursorPositionUpdate(tileX, tileY);
     }
 
+    private isPlayersUnit(unit: Unit) {
+        return unit.player === state.playerName;
+    }
+
     private handleSelect(tileX: number, tileY: number) {
         if (state.selectedUnit) {
             if ((state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) || !isMoveableUnit(state.selectedUnit)) {
@@ -280,7 +284,7 @@ export class InGame extends Phaser.Scene {
     }
 
     private selectUnit(unit?: Unit) {
-        if (!unit) {
+        if (!unit || !this.isPlayersUnit(unit)) {
             return;
         }
         state.selectedUnit = unit;
