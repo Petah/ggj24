@@ -93,6 +93,9 @@ export class InGame extends Phaser.Scene {
     private buildingLayer!: Phaser.GameObjects.Layer;
     private unitLayer!: Phaser.GameObjects.Layer;
     private highlightLayer!: Phaser.GameObjects.Layer;
+    private fogLayer!: Phaser.GameObjects.Layer;
+    private fogEnabled: boolean = false;
+    private fogSprites: Phaser.GameObjects.Sprite[][] = [];
     private created: boolean = false;
     private ui!: UI;
     private moving?: {
@@ -116,6 +119,7 @@ export class InGame extends Phaser.Scene {
     preload() {
         this.load.image('tiles', 'assets/tilemap_packed.png');
         this.load.image('highlight', 'assets/highlight3.png');
+        this.load.image('fog', 'assets/fog.png');
         // UIpackSheet_transparent.png
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
@@ -484,6 +488,49 @@ export class InGame extends Phaser.Scene {
             state.selectedUnit = units.find(unit => unit.id === state.selectedUnit?.id);
         }
         this.updateHighlight();
+
+        if (!this.fogLayer) {
+            this.fogLayer = this.add.layer().setAlpha(this.fogEnabled ? 1 : 0);
+            this.fogSprites = [];
+            for (let y = 0; y < state.game.height; y++) {
+                const row = [];
+                for (let x = 0; x < state.game.width; x++) {
+                    const sprite = this.make.sprite({
+                        x: x * TILE_SIZE,
+                        y: y * TILE_SIZE,
+                        key: 'fog',
+                        origin: 0,
+                    }, false);
+                    row.push(sprite);
+                    this.fogLayer.add(sprite);
+                }
+                this.fogSprites.push(row);
+            }
+        }
+        this.updateFog();
+    }
+
+    private updateFog() {
+        if (!state.game) {
+            return;
+        }
+        for (let y = 0; y < state.game.height; y++) {
+            for (let x = 0; x < state.game.width; x++) {
+                let visible = false;
+                for (const unit of state.game.units || []) {
+                    if (unit.player !== state.playerName) {
+                        continue;
+                    }
+                    const distance = Math.sqrt(Math.pow(unit.x - x, 2) + Math.pow(unit.y - y, 2));
+                    if (distance <= 4) {
+                        visible = true;
+                        break;
+                    }
+                }
+                const sprite = this.fogSprites[y][x];
+                sprite.setVisible(!visible);
+            }
+        }
     }
 
     public handleMoveUnitResponse(event: MoveUnitResponse) {
