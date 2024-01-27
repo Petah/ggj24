@@ -184,3 +184,46 @@ export class Airport extends Building {
 export class HQ extends Building {
     public readonly type = UnitType.HQ;
 }
+
+export const UnitTypeMap = {
+    [UnitType.INFANTRY]: Infantry,
+    [UnitType.TANK]: Tank,
+    [UnitType.SHIP]: Ship,
+    [UnitType.JET]: Jet,
+    [UnitType.HELICOPTER]: Helicopter,
+    [UnitType.APC]: APC,
+    [UnitType.ANTI_TANK_INFANTRY]: AntiTankInfantry,
+    [UnitType.LANDER]: Lander,
+    [UnitType.CITY]: City,
+    [UnitType.DOCK]: Dock,
+    [UnitType.FACTORY]: Factory,
+    [UnitType.AIRPORT]: Airport,
+    [UnitType.HQ]: HQ,
+}
+
+export function isBuilding(unit: Unit): unit is Building {
+    switch (unit.type) {
+        case UnitType.CITY:
+        case UnitType.DOCK:
+        case UnitType.FACTORY:
+        case UnitType.AIRPORT:
+        case UnitType.HQ:
+            return true;
+    }
+    return false;
+}
+
+export function isMoveableUnit(unit: Unit): unit is MovableUnit {
+    switch (unit.type) {
+        case UnitType.INFANTRY:
+        case UnitType.TANK:
+        case UnitType.SHIP:
+        case UnitType.JET:
+        case UnitType.HELICOPTER:
+        case UnitType.APC:
+        case UnitType.ANTI_TANK_INFANTRY:
+        case UnitType.LANDER:
+            return true;
+    }
+    return false;
+}
