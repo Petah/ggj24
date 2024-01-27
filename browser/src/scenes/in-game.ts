@@ -289,6 +289,9 @@ export class InGame extends Phaser.Scene {
         if (!unit || !this.isPlayersUnit(unit)) {
             return;
         }
+        if (state.selectedUnit) {
+            this.unselectUnit();
+        }
         state.selectedUnit = unit;
         const type = unit?.type;
         if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {

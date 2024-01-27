@@ -36,7 +36,6 @@ export class UI extends Phaser.Scene {
         this.reloadGameStateButton = new GameButton(this, 'Reload Game State', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 180, () => {
             client.send(new ReloadGameState());
         });
-        // this.cameras.main.setZoom(2);
 
         this.text = this.add.text(10, 10, '', {
             font: '16px monospace',
@@ -55,8 +54,6 @@ export class UI extends Phaser.Scene {
     }
 
     resize(gameSize: any, baseSize: any, displaySize: any, resolution: any) {
-        console.log(`resizing: ${baseSize}`)
-
         const width = baseSize.width;
         const height = baseSize.height;
 
@@ -65,10 +62,6 @@ export class UI extends Phaser.Scene {
     }
 
     update(delta: number) {
-        // this.controls.update(delta);
-
-        // @ts-ignore Hack to make the camera position update properly
-        this.cameras.main.preRender(1);
         const information = []
 
         // Render debug info
@@ -79,9 +72,8 @@ export class UI extends Phaser.Scene {
 
             if (unit) {
                 information.push(`Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x}x${state.selectedUnit?.y} MP:${(state.selectedUnit as MovableUnit)?.movementPoints}`)
-        
+
             }
-        
 
             for (const player of state.game.players) {
                 information.push(`
@@ -146,14 +138,6 @@ export class UI extends Phaser.Scene {
                     font: '16px monospace',
                     color: '#000',
                     align: 'left',
-                    shadow: {
-                        offsetX: 1,
-                        offsetY: 1,
-                        color: '#000',
-                        blur: 1,
-                        stroke: true,
-                        fill: true,
-                    },
                 }
             )
             unitNameText.setOrigin(0, 0);
@@ -166,14 +150,6 @@ export class UI extends Phaser.Scene {
                     font: '16px monospace',
                     color: '#000',
                     align: 'right',
-                    shadow: {
-                        offsetX: 1,
-                        offsetY: 1,
-                        color: '#000',
-                        blur: 1,
-                        stroke: true,
-                        fill: true,
-                    },
                 }
             )
 
