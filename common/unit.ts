@@ -233,3 +233,16 @@ export function isMoveableUnit(unit?: Unit): unit is MovableUnit {
     }
     return false;
 }
+
+export function isFactory(unit?: Unit): unit is Building {
+    if (!unit) {
+        return false;
+    }
+    switch (unit.type) {
+        case UnitType.DOCK:
+        case UnitType.FACTORY:
+        case UnitType.AIRPORT:
+            return true;
+    }
+    return false;
+}
