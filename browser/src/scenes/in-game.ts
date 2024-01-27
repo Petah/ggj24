@@ -8,18 +8,43 @@ import { state } from '../state';
 const UnitsSprites = {
     [PlayerColor.NEUTRAL]: {
         [UnitType.CITY]: 8,
+        [UnitType.INFANTRY]: 106,
+        [UnitType.HQ]: 9,
+        [UnitType.FACTORY]: 11,
+        [UnitType.AIRPORT]: 15,
+        [UnitType.DOCK]: 12,
     },
     [PlayerColor.RED]: {
         [UnitType.CITY]: 62,
+        [UnitType.INFANTRY]: 160,
+        [UnitType.HQ]: 63,
+        [UnitType.FACTORY]: 65,
+        [UnitType.AIRPORT]: 69,
+        [UnitType.DOCK]: 66,
     },
     [PlayerColor.BLUE]: {
         [UnitType.CITY]: 44,
+        [UnitType.INFANTRY]: 142,
+        [UnitType.HQ]: 45,
+        [UnitType.FACTORY]: 47,
+        [UnitType.AIRPORT]: 51,
+        [UnitType.DOCK]: 48,
     },
     [PlayerColor.GREEN]: {
         [UnitType.CITY]: 26,
+        [UnitType.INFANTRY]: 124,
+        [UnitType.HQ]: 27,
+        [UnitType.FACTORY]: 29,
+        [UnitType.AIRPORT]: 33,
+        [UnitType.DOCK]: 30,
     },
     [PlayerColor.YELLOW]: {
         [UnitType.CITY]: 80,
+        [UnitType.INFANTRY]: 178,
+        [UnitType.HQ]: 81,
+        [UnitType.FACTORY]: 83,
+        [UnitType.AIRPORT]: 87,
+        [UnitType.DOCK]: 84,
     },
 }
 
