@@ -20,5 +20,5 @@ export class GameStateUpdate implements IEvent {
 
 export class MoveUnitRequest implements IEvent {
     public type = EventType.MOVE_UNIT_REQUEST;
-    constructor(public unitId: string, public x: number, public y: number) { }
+    constructor(public unitId: number, public x: number, public y: number) { }
 }

@@ -1,22 +1,26 @@
 import { TileType } from '../../common/events/game-list';
-
-export class Tile {
-
-}
+import * as PF from 'pathfinding';
 
 export class GameMap {
+    public grid: PF.Grid;
+    public finder: PF.AStarFinder;
+
     constructor(
         public width: number,
         public height: number,
         public tiles: TileType[][],
-    ) { }
-
-    // public load() {
-    //     for (let x = 0; x < this.width; x++) {
-    //         this.tiles[x] = [];
-    //         for (let y = 0; y < this.height; y++) {
-    //             this.tiles[x][y] = new Tile();
-    //         }
-    //     }
-    // }
+    ) {
+        const matrix = [];
+        for (const row of tiles) {
+            const matrixRow = [];
+            for (const tile of row) {
+                matrixRow.push(tile === TileType.WATER ? 1 : 0);
+            }
+            matrix.push(matrixRow);
+        }
+        this.grid = new PF.Grid(matrix);
+        this.finder = new PF.AStarFinder({
+            diagonalMovement: PF.DiagonalMovement.Never,
+        });
+    }
 }

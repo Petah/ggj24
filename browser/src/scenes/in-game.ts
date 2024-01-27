@@ -1,14 +1,35 @@
 import Phaser from 'phaser';
 import { Client } from '../client';
 import { GameState } from '../../../common/events/game-list';
+import { EndTurn, StartGame } from '../../../common/events/turn';
+import { GameButton } from '../button';
+import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
+import { PlayerColor, UnitType } from '../../../common/unit';
 
-const TILE_SIZE = 16;
-const TILE_SCALE = 1;
+const UnitsSprites = {
+    [PlayerColor.NEUTRAL]: {
+        [UnitType.CITY]: 8,
+    },
+    [PlayerColor.RED]: {
+        [UnitType.CITY]: 62,
+    },
+    [PlayerColor.BLUE]: {
+        [UnitType.CITY]: 44,
+    },
+    [PlayerColor.GREEN]: {
+        [UnitType.CITY]: 26,
+    },
+    [PlayerColor.YELLOW]: {
+        [UnitType.CITY]: 80,
+    },
+}
 
 export class InGame extends Phaser.Scene {
     private cursorLayer!: Phaser.GameObjects.Layer;
     private cursorSprite!: Phaser.GameObjects.Sprite;
     private gameObjects!: Phaser.GameObjects.Sprite[];
+    private unitLayer!: Phaser.GameObjects.Layer;
+    private created: boolean = false;
 
     private client: Client;
     private gameState!: GameState;
@@ -21,6 +42,7 @@ export class InGame extends Phaser.Scene {
 
         this.client.onGameStateChange((gameState: GameState) => {
             this.gameState = gameState;
+            this.updateGameState();
         });
 
     }
@@ -32,8 +54,6 @@ export class InGame extends Phaser.Scene {
     }
 
     create() {
-        this.cameras.main.setZoom(1);
-
         this.scale.setGameSize(window.innerWidth, window.innerHeight)
         this.scene.launch('UI')
         this.scale.on('resize', this.resize, this);
@@ -45,14 +65,15 @@ export class InGame extends Phaser.Scene {
         // add the tileset image we are using
         const tileset = map.addTilesetImage(tilesetName, 'tiles') as Phaser.Tilemaps.Tileset;
 
-        map.createLayer('Map', tileset)?.setScale(TILE_SCALE)
-        map.createLayer('Road', tileset)?.setScale(TILE_SCALE)
-        map.createLayer('Mountains', tileset)?.setScale(TILE_SCALE)
-        map.createLayer('Trees', tileset)?.setScale(TILE_SCALE)
+        map.createLayer('Map', tileset)
+        map.createLayer('Road', tileset)
+        map.createLayer('Mountains', tileset)
+        map.createLayer('Trees', tileset)
 
         // map.createLayer('Data', tileset)
 
         // const townsLayer = map.getObjectLayer('Towns')
+        /*
         this.gameObjects = map.createFromObjects('Towns', [{
             type: 'City',
             // frame: 8,
@@ -83,6 +104,7 @@ export class InGame extends Phaser.Scene {
             // console.log(gameObject);
             this.fixSprite(sprite)
         }
+        */
 
         this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
             const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
@@ -100,8 +122,48 @@ export class InGame extends Phaser.Scene {
             console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
         });
 
+        // this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
+
+        //     if (deltaY > 0) {
+        //         const newZoom = this.cameras.main.zoom - .1;
+        //         if (newZoom > 0.3) {
+        //             this.cameras.main.zoom = newZoom;
+        //         }
+        //     }
+
+        //     if (deltaY < 0) {
+        //         const newZoom = this.cameras.main.zoom + .1;
+        //         if (newZoom < 2) {
+        //             this.cameras.main.zoom = newZoom;
+        //         }
+        //     }
+
+        //     // this.cameras.main.centerOn(pointer.worldX, pointer.worldY);
+        //     // this.cameras.main.pan(pointer.worldX, pointer.worldY, 2000, "Power2");
+
+        // });
+
+        // this.input.on('pointermove', (pointer: any) => {
+        //     if (!pointer.isDown) return;
+
+        //     this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
+        //     this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+        // });
+
+
 
         this.cursorLayer = this.add.layer();
+        this.unitLayer = this.add.layer();
+
+        this.created = true;
+        this.updateGameState();
+    }
+    update(delta: number) {
+        // this.controls.update(delta);
+        this.cameras.main.setZoom(2).setScroll(-300, -200);
+
+        // @ts-ignore Hack to make the camera position update properly
+        this.cameras.main.preRender(1);
     }
 
     findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
@@ -120,14 +182,14 @@ export class InGame extends Phaser.Scene {
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
-        console.log("TileX: " + tileX + " TileY: " + tileY + " placedPositionX: " + tileX * TILE_SIZE + " placedPositionY: " + tileY * TILE_SIZE)
+        console.log(`TileX: ${tileX} TileY: ${tileY} placedPositionX: ${tileX * TILE_SIZE} placedPositionY: ${tileY * TILE_SIZE}`)
         this.cursorSprite?.destroy();
         this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
     }
 
-    resize (gameSize:any, baseSize:any, displaySize:any, resolution:any) {
-        console.log("resizing Game: " + baseSize)
+    resize(gameSize: any, baseSize: any, displaySize: any, resolution: any) {
+        console.log(`resizing Game: ${baseSize}`)
 
         const width = baseSize.width;
         const height = baseSize.height;
@@ -238,6 +300,26 @@ export class InGame extends Phaser.Scene {
                 }
                 break;
         }
+    }
 
+    private updateGameState() {
+        console.log(this.gameState, this.created);
+        if (!this.gameState || !this.created) {
+            return;
+        }
+        for (const unit of this.gameState?.units || []) {
+            const playerColor = this.gameState.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
+            const frame = UnitsSprites[playerColor][unit.type] || 193;
+            console.log('unit', unit, playerColor, frame);
+            const sprite = this.make.sprite({
+                x: unit.x * TILE_SIZE,
+                y: unit.y * TILE_SIZE,
+                key: 'tiles2',
+                frame,
+                scale: TILE_SCALE,
+                origin: 0,
+            }, false);
+            this.unitLayer.add(sprite);
+        }
     }
 }

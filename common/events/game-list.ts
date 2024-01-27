@@ -1,13 +1,16 @@
 import { EventType, IEvent } from '../event';
+import { PlayerColor, Unit } from '../unit';
 
 export interface GameState {
     name: string;
     players: {
         name: string;
+        color: PlayerColor;
     }[];
     turn: number;
     currentPlayer?: string;
     tiles?: TileType[][];
+    units?: Unit[];
 }
 
 export enum TileType {

@@ -1,16 +1,13 @@
 import { Client } from './client';
-
-export class Unit {
-    public x: number = 0;
-    public y: number = 0;
-}
+import { PlayerColor, Unit } from '../../common/unit';
 
 export class Player {
     public units: Unit[] = [];
 
     constructor(
         public name: string,
-        public client: Client,
+        public client: Client | undefined,
+        public color: PlayerColor,
     ) {
 
     };

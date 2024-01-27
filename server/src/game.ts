@@ -9,25 +9,33 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
+import { Airport, City, Dock, Factory, HQ, Infantry, PlayerColor, PlayerColors, Unit, UnitType } from '../../common/unit';
+import { TILE_SIZE } from '../../common/map';
+import { generateId } from './id';
 
 export class Game {
     public players: Player[] = [];
     public started: boolean = false;
     public turn: number = 0;
     public currentPlayer?: Player;
-    public gameMap?: GameMap;
+    public gameMap!: GameMap;
+    public units: Unit[] = [];
 
     constructor(
         public name: string,
     ) {
     }
 
-    public addPlayer(playerName: string, client: Client) {
+    public addPlayer(playerName: string, client?: Client) {
         const existingPlayer = this.players.find(player => player.name === playerName);
         if (existingPlayer) {
             existingPlayer.client = client;
         } else {
-            this.players.push(new Player(playerName, client));
+            if (this.players.length >= 4) {
+                throw new GameError('Game is full');
+            }
+            const nextColor = PlayerColors.find(color => !this.players.find(player => player.color === color)) as PlayerColor;
+            this.players.push(new Player(playerName, client, nextColor));
         }
     }
 
@@ -82,9 +90,47 @@ export class Game {
             tiles.push(row);
         }
         const objectLayer = tileMap.layers.find(layer => layer.name === 'Towns');
-        console.log(objectLayer);
+        for (const gameObject of objectLayer?.objects || []) {
+            const owner = gameObject.properties?.find(property => property.name === 'owner')?.value as PlayerColor;
+            const player = this.players.find(player => player.color === owner);
 
-        this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
+            const x = Math.round(gameObject.x / TILE_SIZE);
+            const y = Math.round(gameObject.y / TILE_SIZE);
+            if (x < 0 || x >= tileMap.width || y < 0 || y >= tileMap.height) {
+                logError('Object out of bounds', gameObject, x, y);
+                continue;
+            }
+
+            let unit: Unit | undefined;
+            switch (gameObject.type) {
+                case UnitType.HQ:
+                    unit = new HQ(generateId(), x, y, player?.name);
+                    break;
+                case UnitType.CITY:
+                    unit = new City(generateId(), x, y, player?.name);
+                    break;
+                case UnitType.DOCK:
+                    unit = new Dock(generateId(), x, y, player?.name);
+                    break;
+                case UnitType.FACTORY:
+                    unit = new Factory(generateId(), x, y, player?.name);
+                    break;
+                case UnitType.INFANTRY:
+                    unit = new Infantry(generateId(), x, y, player?.name);
+                    break;
+                case UnitType.AIRPORT:
+                    unit = new Airport(generateId(), x, y, player?.name);
+                    break;
+                default:
+                    logError('Unknown game object type', gameObject.type);
+                    break;
+            }
+            if (unit) {
+                this.units.push(unit);
+            }
+
+            this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
+        }
     }
 
     public endTurn() {
@@ -97,13 +143,38 @@ export class Game {
         }
     }
 
-    public moveUnit(unitId: string, x: number, y: number) {
+    public moveUnit(unitId: number, x: number, y: number) {
+        if (!this.started) {
+            throw new GameError('Game not started');
+        }
+        const unit = this.units.find(unit => unit.id === unitId);
+        if (!unit) {
+            throw new GameError('Unit not found');
+        }
+        if (unit.player !== this.currentPlayer?.name) {
+            throw new GameError('Unit does not belong to current player');
+        }
+        const player = this.players.find(player => player.name === unit.player);
+        if (!player) {
+            throw new GameError('Player not found');
+        }
+        // if (unit.movementPoints <= 0) {
+        //     throw new GameError('Unit does not have enough movement points');
+        // }
+        const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid);
+        if (path.length <= 0) {
+            throw new GameError('No path found');
+        }
+        const lastPathEntry = path[path.length - 1];
+        unit.x = lastPathEntry[0];
+        unit.y = lastPathEntry[1];
+        this.broadcastGameState();
     }
 
     public broadcast(event: IEvent) {
         logInfo('Broadcasting event to game', this.name, event);
         for (const player of this.players) {
-            player.client.send(event);
+            player.client?.send(event);
         }
     }
 
@@ -116,10 +187,12 @@ export class Game {
             name: this.name,
             players: this.players.map(player => ({
                 name: player.name,
+                color: player.color,
             })),
             turn: this.turn,
             currentPlayer: this.currentPlayer?.name,
             tiles: this.gameMap?.tiles,
+            units: this.units,
         };
     }
 }
