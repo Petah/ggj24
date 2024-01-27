@@ -1,7 +1,12 @@
 import Phaser from 'phaser';
 import { client } from '../client';
+<<<<<<< HEAD
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+=======
+import { TILE_SIZE } from '../../../common/map';
+import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+>>>>>>> f241d02e965f7c8ed02d6f4a951b323b4646c1da
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
@@ -92,6 +97,10 @@ export class InGame extends Phaser.Scene {
     private cursorSprite!: Phaser.GameObjects.Sprite;
     private buildingLayer!: Phaser.GameObjects.Layer;
     private unitLayer!: Phaser.GameObjects.Layer;
+    private highlightLayer!: Phaser.GameObjects.Layer;
+    private fogLayer!: Phaser.GameObjects.Layer;
+    private fogEnabled: boolean = false;
+    private fogSprites: Phaser.GameObjects.Sprite[][] = [];
     private created: boolean = false;
     private ui!: UI;
     private moving?: {
@@ -105,6 +114,7 @@ export class InGame extends Phaser.Scene {
     private finder!: PF.AStarFinder;
     private selectedArrow!: Phaser.GameObjects.Sprite;
     private isInMenuState: boolean = false;
+    private highlightGroup?: Phaser.GameObjects.Group;
 
     constructor() {
         super('InGame');
@@ -113,6 +123,8 @@ export class InGame extends Phaser.Scene {
 
     preload() {
         this.load.image('tiles', 'assets/tilemap_packed.png');
+        this.load.image('highlight', 'assets/highlight3.png');
+        this.load.image('fog', 'assets/fog.png');
         // UIpackSheet_transparent.png
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
@@ -171,8 +183,8 @@ export class InGame extends Phaser.Scene {
             if (!isOurTurn()) {
                 return;
             }
-            const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
-            const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
+            const tileX = Math.floor(pointer.worldX / TILE_SIZE);
+            const tileY = Math.floor(pointer.worldY / TILE_SIZE);
             switch (pointer.button) {
                 case 0:
                     this.placeCursorAtPosition(tileX, tileY);
@@ -212,8 +224,8 @@ export class InGame extends Phaser.Scene {
                 }
                 return;
             }
-            const tileX = Math.floor(this.cursorSprite.x / TILE_SIZE / TILE_SCALE);
-            const tileY = Math.floor(this.cursorSprite.y / TILE_SIZE / TILE_SCALE);
+            const tileX = Math.floor(this.cursorSprite.x / TILE_SIZE);
+            const tileY = Math.floor(this.cursorSprite.y / TILE_SIZE);
 
             switch (event.key) {
                 case 'ArrowUp':
@@ -250,10 +262,11 @@ export class InGame extends Phaser.Scene {
 
 
         this.buildingLayer = this.add.layer();
+        this.highlightLayer = this.add.layer().setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
         this.unitLayer = this.add.layer();
 
         this.cursorLayer = this.add.layer();
-        this.cursorSprite = this.add.sprite(state.cursorX * TILE_SIZE, state.cursorY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
+        this.cursorSprite = this.add.sprite(state.cursorX * TILE_SIZE, state.cursorY * TILE_SIZE, 'tiles2', 61).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
         this.placeCursorAtPosition(state.cursorX, state.cursorY)
         this.selectedArrow = this.make.sprite({
@@ -279,10 +292,10 @@ export class InGame extends Phaser.Scene {
             const currentX = Phaser.Math.Interpolation.Linear(this.moving.pointsX, percent);
             const currentY = Phaser.Math.Interpolation.Linear(this.moving.pointsY, percent);
             this.moving.sprite.setPosition(currentX, currentY);
-            this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE * TILE_SCALE);
+            this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE);
             if (percent >= 1) {
                 this.moving = undefined;
-                client.send(new ReloadGameState())
+                client.send(new ReloadGameState());
             }
         }
     }
@@ -307,7 +320,7 @@ export class InGame extends Phaser.Scene {
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
-        this.cursorSprite.setPosition(tileX * TILE_SIZE * TILE_SCALE, tileY * TILE_SIZE * TILE_SCALE);
+        this.cursorSprite.setPosition(tileX * TILE_SIZE, tileY * TILE_SIZE);
         localStorage.setItem('cursorX', tileX.toString());
         localStorage.setItem('cursorY', tileY.toString());
         this.onCursorPositionUpdate(tileX, tileY);
@@ -357,7 +370,7 @@ export class InGame extends Phaser.Scene {
             this.isInMenuState = true;
             this.ui.onProductionBuildingSelected(unit);
         }
-        this.selectedArrow.setPosition(unit.x * TILE_SIZE * TILE_SCALE, (unit.y - 1) * TILE_SIZE * TILE_SCALE);
+        this.selectedArrow.setPosition(unit.x * TILE_SIZE, (unit.y - 1) * TILE_SIZE);
         this.selectedArrow.setVisible(true);
         const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
         if (
@@ -369,6 +382,62 @@ export class InGame extends Phaser.Scene {
         } else {
             this.ui.disableCaptureButton();
         }
+        this.updateHighlight();
+    }
+
+    private updateHighlight() {
+        const children = this.highlightLayer.getChildren();
+        while (children.length > 0) {
+            children[0].destroy();
+        }
+        if (isMoveableUnit(state.selectedUnit)) {
+            for (let y = state.selectedUnit.y - state.selectedUnit.movementPoints; y <= state.selectedUnit.y + state.selectedUnit.movementPoints; y++) {
+                for (let x = state.selectedUnit.x - state.selectedUnit.movementPoints; x <= state.selectedUnit.x + state.selectedUnit.movementPoints; x++) {
+                    if (this.canUnitMoveTo(state.selectedUnit, x, y)) {
+                        const sprite = this.make.sprite({
+                            x: x * TILE_SIZE,
+                            y: y * TILE_SIZE,
+                            key: 'highlight',
+                            origin: 0,
+                        }, false);
+                        this.highlightLayer.add(sprite);
+                    }
+                }
+            }
+        }
+    }
+
+    private canUnitMoveTo(unit: Unit, x: number, y: number) {
+        if (!isMoveableUnit(unit)) {
+            return false;
+        }
+        if (x < 0 || x >= (state.game?.width || 40)) {
+            return false;
+        }
+        if (y < 0 || y >= (state.game?.height || 40)) {
+            return false;
+        }
+        if (unit.x === x && unit.y === y) {
+            return false;
+        }
+        if (state.game?.matrix![y][x] !== 0) {
+            return false;
+        }
+        const unitAtPosition = state.game?.units?.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
+        if (unitAtPosition && unitAtPosition.id !== unit.id) {
+            return false;
+        }
+        const path = this.finder.findPath(unit.x, unit.y, x, y, this.grid.clone());
+        path.shift();
+        if (path.length > unit.movementPoints) {
+            return false;
+        }
+        const lastPoint = path[path.length - 1];
+        if (!lastPoint || lastPoint[0] !== x || lastPoint[1] !== y) {
+            return false;
+        }
+        return true;
+        // return path.length <= unit.movementPoints;
     }
 
     private unselectUnit() {
@@ -431,7 +500,6 @@ export class InGame extends Phaser.Scene {
                     y: unit.y * TILE_SIZE,
                     key: 'tiles2',
                     frame,
-                    scale: TILE_SCALE,
                     origin: 0,
                 }, false);
                 sprite.setData('unit', unit.id);
@@ -448,6 +516,50 @@ export class InGame extends Phaser.Scene {
 
         if (state.selectedUnit) {
             state.selectedUnit = units.find(unit => unit.id === state.selectedUnit?.id);
+        }
+        this.updateHighlight();
+
+        if (!this.fogLayer) {
+            this.fogLayer = this.add.layer().setAlpha(this.fogEnabled ? 1 : 0);
+            this.fogSprites = [];
+            for (let y = 0; y < state.game.height; y++) {
+                const row = [];
+                for (let x = 0; x < state.game.width; x++) {
+                    const sprite = this.make.sprite({
+                        x: x * TILE_SIZE,
+                        y: y * TILE_SIZE,
+                        key: 'fog',
+                        origin: 0,
+                    }, false);
+                    row.push(sprite);
+                    this.fogLayer.add(sprite);
+                }
+                this.fogSprites.push(row);
+            }
+        }
+        this.updateFog();
+    }
+
+    private updateFog() {
+        if (!state.game) {
+            return;
+        }
+        for (let y = 0; y < state.game.height; y++) {
+            for (let x = 0; x < state.game.width; x++) {
+                let visible = false;
+                for (const unit of state.game.units || []) {
+                    if (unit.player !== state.playerName) {
+                        continue;
+                    }
+                    const distance = Math.sqrt(Math.pow(unit.x - x, 2) + Math.pow(unit.y - y, 2));
+                    if (distance <= 4) {
+                        visible = true;
+                        break;
+                    }
+                }
+                const sprite = this.fogSprites[y][x];
+                sprite.setVisible(!visible);
+            }
         }
     }
 
