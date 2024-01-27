@@ -181,7 +181,6 @@ export class Game {
         }
 
         const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && u instanceof Building) as Building | undefined;
-        console.log("Building", buildingAtPosition, this.units.filter(u => unit.x === u.x && unit.y === u.y))
         if (buildingAtPosition) {
             buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints
         }
@@ -257,10 +256,6 @@ export class Game {
 
         unit.hasCommittedActions = true;
         unit.movementPoints = 0;
-
-        console.log('originalOwner', originalOwner)
-        console.log('building.type', building.type)
-        console.log('building.capturePoints', building.capturePoints)
 
         this.broadcastGameState();
     }

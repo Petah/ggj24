@@ -484,8 +484,6 @@ export class InGame extends Phaser.Scene {
             children[0].destroy();
         }
 
-        // @ts-ignore
-        console.log(state.selectedUnit?.minRange, state.selectedUnit?.maxRange)
         if (isMoveableUnit(state.selectedUnit) && state.selectedUnit.maxRange > 1) {
             const x = state.selectedUnit.x * TILE_SIZE + TILE_SIZE / 2;
             const y = state.selectedUnit.y * TILE_SIZE + TILE_SIZE / 2;
@@ -564,7 +562,6 @@ export class InGame extends Phaser.Scene {
             return false;
         }
         const distance = Math.sqrt(Math.pow(unit.x - x, 2) + Math.pow(unit.y - y, 2));
-        console.log('distance', distance, unit.minRange, unit.maxRange);
         if (distance < unit.minRange || distance > unit.maxRange) {
             return false;
         }
