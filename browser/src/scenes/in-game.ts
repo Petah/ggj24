@@ -206,18 +206,6 @@ export class InGame extends Phaser.Scene {
                 case 'x':
                     break;
             }
-            if (event.key === 'ArrowRight') {
-                if (tileY > 40 - 1) {
-                    this.placeCursorAtPosition(tileX + 1, tileY );
-                }
-            }
-            if (event.key === 'c' || event.key === ' ') {
-                // TODO select it
-            }
-        
-            if (event.key === 'x') {
-                // TODO deselect it
-            }
          });
 
 
@@ -252,20 +240,9 @@ export class InGame extends Phaser.Scene {
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
-        console.log(`TileX: ${tileX} TileY: ${tileY} placedPositionX: ${tileX * TILE_SIZE} placedPositionY: ${tileY * TILE_SIZE}`)
         this.cursorSprite?.destroy();
         this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
         this.cursorLayer.add(this.cursorSprite);
-    }
-
-    resize(gameSize: any, baseSize: any, displaySize: any, resolution: any) {
-        console.log(`resizing Game: ${baseSize}`)
-
-        const width = baseSize.width;
-        const height = baseSize.height;
-
-        // this.cameras.resize(width, height);
-
     }
 
     fixSprite(sprite: Phaser.GameObjects.Sprite) {
