@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, getDamageAmount, isMoveableUnit } from '../../common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, getDamageAmount, isBuilding, isMoveableUnit } from '../../common/unit';
 import { TILE_SIZE } from '../../common/map';
 import { generateId } from './id';
 import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
@@ -232,30 +232,39 @@ export class Game {
 
         if (building.capturePoints <= 0) {
             building.player = unit.player;
+            if (originalOwner
+                && building.type == UnitType.HQ
+                && building.capturePoints <= 0
+            ) {
+                this.units = this.units.filter(unit => {
+                    if (!isBuilding(unit) && unit.player == originalOwner) {
+                        return false
+                    } else {
+                        return true
+                    }
+                });
+                for (const item of this.units) {
+                    if (item.player == originalOwner) {
+                        if (item instanceof Building) {
+                            item.capturePoints = 20;
+                            item.player = undefined;
+                        }
+                    }
+                }
+                const player = this.players.find(player => player.name === originalOwner)
+                if (player) {
+                    player.hasLost = true;
+                }
+            }
             building.capturePoints = 20;
         }
 
         unit.hasCommittedActions = true;
         unit.movementPoints = 0;
 
-        if (originalOwner && building.type == UnitType.HQ) {
-            this.units = this.units.filter(unit => {
-                if (unit.player == originalOwner) {
-                    return false
-                } else {
-                    return true
-                }
-            });
-            for (const item of this.units) {
-                if (item.player == originalOwner) {
-                    if (item instanceof Building) {
-                        item.capturePoints = 20;
-                        item.player = undefined;
-                    }
-                }
-            }
-            this.players = this.players.filter(player => player.name !== originalOwner);
-        }
+        console.log('originalOwner', originalOwner)
+        console.log('building.type', building.type)
+        console.log('building.capturePoints', building.capturePoints)
 
         this.broadcastGameState();
     }
@@ -369,6 +378,7 @@ export class Game {
                 name: player.name,
                 color: player.color,
                 money: player.money,
+                hasLost: player.hasLost,
             })),
             width: this.gameMap?.width,
             height: this.gameMap?.height,

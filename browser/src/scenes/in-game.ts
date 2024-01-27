@@ -544,8 +544,11 @@ export class InGame extends Phaser.Scene {
             return;
         }
 
-        if (state.winningPlayer) {
-            this.scene.transition({ target: 'EndGame', duration: 1000 })
+        const player = state.game?.players?.find(player => player.name === state.playerName)
+        if (state.winningPlayer || (player && player.hasLost)) {
+            this.scene.start('EndGame')
+            // this.ui.scene.stop()
+            // this.scene.stop()
             return
         }
 

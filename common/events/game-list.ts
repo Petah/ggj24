@@ -7,6 +7,7 @@ export interface GameState {
         name: string;
         color: PlayerColor;
         money: number;
+        hasLost: boolean;
     }[];
     width: number;
     height: number;
