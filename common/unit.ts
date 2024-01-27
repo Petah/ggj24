@@ -12,6 +12,7 @@ export enum UnitType {
     TANK = 'Tank',
     JET = 'Jet',
     HELICOPTER = 'Helicopter',
+    TRANSPORT_COPTER = 'Transport Copter',
     SHIP = 'Ship',
     LANDER = 'Lander',
 }
@@ -176,6 +177,8 @@ export abstract class MovableUnit extends Unit {
     public damageType?: DamageType;
     public armourType!: ArmourType;
     public canCapture = false;
+    public canBeTransported = false;
+    public isInTransport = false;
     public carryingCapacity = 0;
     public carriedUnits: MovableUnit[] = [];
     public hasCommittedActions: boolean = false;
@@ -189,6 +192,7 @@ export class Infantry extends MovableUnit {
     public damageType = DamageType.MACHINE_GUN;
     public armourType = ArmourType.INFANTRY;
     public canCapture = true;
+    public canBeTransported = true;
 }
 
 export class AntiTank extends MovableUnit {
@@ -199,6 +203,7 @@ export class AntiTank extends MovableUnit {
     public damageType = DamageType.BAZOOKA;
     public armourType = ArmourType.INFANTRY;
     public canCapture = true;
+    public canBeTransported = true;
 }
 
 export class Tank extends MovableUnit {
@@ -226,6 +231,15 @@ export class Helicopter extends MovableUnit {
     public movementType = MovementType.AIR;
     public damageType = DamageType.GROUND_ROCKETS;
     public armourType = ArmourType.HELICOPTER;
+}
+
+export class TransportCopter extends MovableUnit {
+    public readonly type = UnitType.TRANSPORT_COPTER;
+    public static readonly cost = 5000;
+    public maxMovementPoints = 6;
+    public movementType = MovementType.AIR;
+    public armourType = ArmourType.HELICOPTER;
+    public carryingCapacity = 1;
 }
 
 export class Jet extends MovableUnit {
@@ -279,7 +293,7 @@ export class Factory extends Building {
 
 export class Airport extends Building {
     public readonly type = UnitType.AIRPORT;
-    public readonly canBuild = [UnitType.HELICOPTER, UnitType.JET];
+    public readonly canBuild = [UnitType.HELICOPTER, UnitType.TRANSPORT_COPTER, UnitType.JET];
 }
 
 export class HQ extends Building {
