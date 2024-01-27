@@ -1,15 +1,21 @@
 TODO:
 
-Moment cost, and prevent tank driving through mountains
+Moment cost
 More sound
  - ships
+ - capture battle sound
+ - explosion sound
 
 UI
 Capture animation
-Aircraft - movement
+capture sound
 Boats - movement
-Range attacks
-fix map wrong tile
 boats on land
 Transport units
 Ranged detection broken for adjacent unitsgit 
+Ranged detection broken for adjacent units
+
+rocket tank cant shoot air
+rocket tank cant shoot after moving
+smoking animation when almost dead
+can shoot unlimited times

@@ -57,7 +57,7 @@ export class Game {
         }
         const tiles: TileType[][] = [];
         for (let y = 0; y < tileMap.height; y++) {
-            const row = [];
+            const row: TileType[] = [];
             for (let x = 0; x < tileMap.width; x++) {
                 const tile = layer.data[y * tileMap.width + x];
                 switch (tile) {

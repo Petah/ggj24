@@ -1,12 +1,15 @@
 import { TileType } from "./events/game-list";
+import { DiagonalMovement } from "./pf/core/DiagonalMovement";
+import { Grid } from "./pf/core/Grid";
+import { AStarFinder } from "./pf/finders/AStarFinder";
 import { Unit, UnitType, isMoveableUnit } from "./unit";
-import * as PF from 'pathfinding';
 
 export const TILE_SIZE = 16;
 
-const Blocked = 1;
+const Blocked = 2;
+const Road = 0;
 const Walkable = 0;
-type MatrixRow = (typeof Walkable | typeof Blocked)[];
+type MatrixRow = (typeof Walkable | typeof Blocked | typeof Road)[];
 type Matrix = MatrixRow[];
 
 export function getPathFinder(unit: Unit, tiles?: TileType[][], units?: Unit[], currentPlayer?: string, blockEnemyUnits = true) {
@@ -14,56 +17,64 @@ export function getPathFinder(unit: Unit, tiles?: TileType[][], units?: Unit[], 
         throw new Error('Game not loaded');
     }
 
-    let grid: PF.Grid;
+    let grid: any = new Grid(tiles[0].length, tiles.length);
     if (unit.type === UnitType.JET || unit.type === UnitType.HELICOPTER) {
-        const matrix: Matrix = [];
-        for (const row of tiles) {
-            const matrixRow: MatrixRow = [];
-            for (const tile of row) {
-                matrixRow.push(Walkable);
+        for (const y in tiles) {
+            for (const x in tiles[y]) {
+                grid.setWalkableAt(x, y, true);
+                grid.setCostAt(x, y, 1);
             }
-            matrix.push(matrixRow);
         }
-        grid = new PF.Grid(matrix);
     } else if (unit.type === UnitType.SHIP || unit.type === UnitType.LANDER) {
-        const matrix: Matrix = [];
-        for (const row of tiles) {
-            const matrixRow: MatrixRow = [];
-            for (const tile of row) {
-                matrixRow.push(tile === TileType.WATER ? Walkable : Blocked);
+        for (const y in tiles) {
+            for (const x in tiles[y]) {
+                const tile = tiles[y][x];
+                grid.setWalkableAt(x, y, tile === TileType.WATER);
+                grid.setCostAt(x, y, 1);
             }
-            matrix.push(matrixRow);
         }
-        grid = new PF.Grid(matrix);
     } else if (unit.type === UnitType.TANK || unit.type === UnitType.ROCKET_TRUCK || unit.type === UnitType.APC) {
-        const matrix: Matrix = [];
-        for (const row of tiles) {
-            const matrixRow: MatrixRow = [];
-            for (const tile of row) {
+        for (const y in tiles) {
+            for (const x in tiles[y]) {
+                const tile = tiles[y][x];
                 switch (tile) {
                     case TileType.WATER:
                     case TileType.RIVER:
                     case TileType.MOUNTAIN:
-                        matrixRow.push(Blocked);
+                        grid.setWalkableAt(x, y, false);
+                        grid.setCostAt(x, y, 1);
+                        break;
+                    case TileType.ROAD:
+                        grid.setWalkableAt(x, y, true);
+                        grid.setCostAt(x, y, 0.5);
                         break;
                     default:
-                        matrixRow.push(Walkable);
+                        grid.setWalkableAt(x, y, true);
+                        grid.setCostAt(x, y, 1);
                         break;
                 }
             }
-            matrix.push(matrixRow);
         }
-        grid = new PF.Grid(matrix);
     } else {
-        const matrix: Matrix = [];
-        for (const row of tiles) {
-            const matrixRow: MatrixRow = [];
-            for (const tile of row) {
-                matrixRow.push(tile === TileType.WATER ? Blocked : Walkable);
+        for (const y in tiles) {
+            for (const x in tiles[y]) {
+                const tile = tiles[y][x];
+                switch (tile) {
+                    case TileType.WATER:
+                        grid.setWalkableAt(x, y, false);
+                        grid.setCostAt(x, y, 1);
+                        break;
+                    case TileType.ROAD:
+                        grid.setWalkableAt(x, y, true);
+                        grid.setCostAt(x, y, 0.5);
+                        break;
+                    default:
+                        grid.setWalkableAt(x, y, true);
+                        grid.setCostAt(x, y, 1);
+                        break;
+                }
             }
-            matrix.push(matrixRow);
         }
-        grid = new PF.Grid(matrix);
     }
 
     if (blockEnemyUnits) {
@@ -73,8 +84,10 @@ export function getPathFinder(unit: Unit, tiles?: TileType[][], units?: Unit[], 
             }
         }
     }
-    const finder = new PF.AStarFinder({
-        diagonalMovement: PF.DiagonalMovement.Never,
+    const finder = new AStarFinder({
+        diagonalMovement: DiagonalMovement.Never,
+        optimal: true,
+        useCost: true
     });
     return { finder, grid };
 }
