@@ -142,33 +142,33 @@ export class InGame extends Phaser.Scene {
         //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, state.game.tiles?.[tileY]?.[tileX]);
         // });
 
-        // this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
+        this.cameras.main.setZoom(2).setScroll(-300, -200);
 
-        //     if (deltaY > 0) {
-        //         const newZoom = this.cameras.main.zoom - .1;
-        //         if (newZoom > 0.3) {
-        //             this.cameras.main.zoom = newZoom;
-        //         }
-        //     }
+        this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
+            if (deltaY > 0) {
+                const newZoom = this.cameras.main.zoom - .1;
+                if (newZoom > 1) {
+                    this.cameras.main.zoom = newZoom;
+                }
+            }
 
-        //     if (deltaY < 0) {
-        //         const newZoom = this.cameras.main.zoom + .1;
-        //         if (newZoom < 2) {
-        //             this.cameras.main.zoom = newZoom;
-        //         }
-        //     }
+            if (deltaY < 0) {
+                const newZoom = this.cameras.main.zoom + .1;
+                if (newZoom < 3) {
+                    this.cameras.main.zoom = newZoom;
+                }
+            }
 
-        //     // this.cameras.main.centerOn(pointer.worldX, pointer.worldY);
-        //     // this.cameras.main.pan(pointer.worldX, pointer.worldY, 2000, "Power2");
+            // this.cameras.main.centerOn(pointer.worldX, pointer.worldY);
+            // this.cameras.main.pan(pointer.worldX, pointer.worldY, 2000, "Power2");
+        });
 
-        // });
+        this.input.on('pointermove', (pointer: any) => {
+            if (!pointer.isDown) return;
 
-        // this.input.on('pointermove', (pointer: any) => {
-        //     if (!pointer.isDown) return;
-
-        //     this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
-        //     this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
-        // });
+            this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
+            this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+        });
 
 
 
@@ -180,7 +180,6 @@ export class InGame extends Phaser.Scene {
     }
 
     update(delta: number) {
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
     }
 
     findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
@@ -218,7 +217,6 @@ export class InGame extends Phaser.Scene {
     fixSprite(sprite: Phaser.GameObjects.Sprite) {
         const owner = sprite.getData('owner')
         const type = sprite.type
-        console.log(sprite)
         switch (type) {
             case 'City':
                 switch (owner) {
@@ -320,14 +318,12 @@ export class InGame extends Phaser.Scene {
     }
 
     private updateGameState() {
-        console.log(state.game, this.created, state.game?.units);
         if (!state.game || !this.created) {
             return;
         }
         for (const unit of state.game?.units || []) {
             const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
             const frame = UnitsSprites[playerColor][unit.type] || 193;
-            console.log('unit', unit, playerColor, frame);
             const sprite = this.make.sprite({
                 x: unit.x * TILE_SIZE,
                 y: unit.y * TILE_SIZE,

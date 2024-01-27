@@ -189,6 +189,8 @@ export class Game {
                 name: player.name,
                 color: player.color,
             })),
+            width: this.gameMap?.width,
+            height: this.gameMap?.height,
             turn: this.turn,
             currentPlayer: this.currentPlayer?.name,
             tiles: this.gameMap?.tiles,
