@@ -4,6 +4,7 @@ import { GameState } from '../../../common/events/game-list';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, UnitType } from '../../../common/unit';
 import { state } from '../state';
+import { MoveUnitRequest } from '../../../common/events/turn';
 
 const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
@@ -51,12 +52,8 @@ const UnitSprites = {
 export class InGame extends Phaser.Scene {
     private cursorLayer!: Phaser.GameObjects.Layer;
     private cursorSprite!: Phaser.GameObjects.Sprite;
-    private gameObjects!: Phaser.GameObjects.Sprite[];
     private unitLayer!: Phaser.GameObjects.Layer;
     private created: boolean = false;
-
-    private gameState!: GameState;
-
 
     constructor() {
         super('InGame');
@@ -90,54 +87,9 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Trees', tileset)
         this.cameras.main.setZoom(2).setScroll(-300, -200);
 
-        // map.createLayer('Data', tileset)
-
-        // const townsLayer = map.getObjectLayer('Towns')
-        /*
-        this.gameObjects = map.createFromObjects('Towns', [{
-            type: 'City',
-            // frame: 8,
-            key: 'tiles2',
-        }, {
-            type: 'Dock',
-            frame: 12,
-            key: 'tiles2',
-        }, {
-            type: 'Factory',
-            frame: 11,
-            key: 'tiles2',
-        }, {
-            type: 'Airport',
-            frame: 15,
-            key: 'tiles2',
-        }, {
-            type: 'HQ',
-            frame: 9,
-            key: 'tiles2',
-        }, {
-            type: 'Infantry',
-            frame: 106,
-            key: 'tiles2',
-        }]) as Phaser.GameObjects.Sprite[]
-
-        for (const sprite of this.gameObjects) {
-            // console.log(gameObject);
-            this.fixSprite(sprite)
-        }
-        */
-
         // this.input.on('pointerdown', (pointer: Phaser.Input.Pointer) => {
         //     const tileX = Math.floor(pointer.worldX / TILE_SIZE / TILE_SCALE);
         //     const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
-        //     for (const gameObject of this.gameObjects) {
-        //         // Get game object at position
-        //         const x = Math.floor(gameObject.x / TILE_SIZE / TILE_SCALE);
-        //         const y = Math.floor(gameObject.y / TILE_SIZE / TILE_SCALE);
-        //         if (x === tileX && y === tileY) {
-        //             console.log('Clicked on game object at ', x, y, gameObject);
-        //         }
-        //     }
-
         //     // this.placeCursorAtPosition(tileX, tileY);
         //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, state.game.tiles?.[tileY]?.[tileX]);
         // });
@@ -197,8 +149,7 @@ export class InGame extends Phaser.Scene {
                     break;
                 case 'c':
                 case ' ':
-                    // TODO select it
-                    console.log('select')
+                    this.handleSelect(tileX, tileY);
                     break;
                 case 'x':
                     break;
@@ -219,7 +170,6 @@ export class InGame extends Phaser.Scene {
 
     onCursorPositionUpdate(tileX: number, tileY: number) {
         const unit = this.findObjectAtPosition(tileX, tileY);
-        console.log('?', unit);
     }
 
     findObjectAtPosition(tileX: number, tileY: number) {
@@ -237,106 +187,16 @@ export class InGame extends Phaser.Scene {
         this.onCursorPositionUpdate(tileX, tileY);
     }
 
-    fixSprite(sprite: Phaser.GameObjects.Sprite) {
-        const owner = sprite.getData('owner')
-        const type = sprite.type
-        switch (type) {
-            case 'City':
-                switch (owner) {
-                    case 'red':
-                        sprite.setFrame(60);
-                        break;
-                    case 'blue':
-                        sprite.setFrame(42);
-                        break;
-                    case 'green':
-                        sprite.setFrame(26);
-                        break;
-                    case 'yellow':
-                        sprite.setFrame(78);
-                        break;
-                }
-                break;
-            case 'Dock':
-                switch (owner) {
-                    case 'red':
-                        sprite.setFrame(8);
-                        break;
-                    case 'blue':
-                        sprite.setFrame(8 + 18);
-                        break;
-                    case 'green':
-                        sprite.setFrame(8 + (18 * 2));
-                        break;
-                    case 'yellow':
-                        sprite.setFrame(8 + (18 * 3));
-                        break;
-                }
-                break;
-            case 'Factory':
-                switch (owner) {
-                    case 'red':
-                        sprite.setFrame(8);
-                        break;
-                    case 'blue':
-                        sprite.setFrame(8 + 18);
-                        break;
-                    case 'green':
-                        sprite.setFrame(8 + (18 * 2));
-                        break;
-                    case 'yellow':
-                        sprite.setFrame(8 + (18 * 3));
-                        break;
-                }
-                break;
-            case 'Airport':
-                switch (owner) {
-                    case 'red':
-                        sprite.setFrame(8);
-                        break;
-                    case 'blue':
-                        sprite.setFrame(8 + 18);
-                        break;
-                    case 'green':
-                        sprite.setFrame(8 + (18 * 2));
-                        break;
-                    case 'yellow':
-                        sprite.setFrame(8 + (18 * 3));
-                        break;
-                }
-                break;
-            case 'HQ':
-                switch (owner) {
-                    case 'red':
-                        sprite.setFrame(8);
-                        break;
-                    case 'blue':
-                        sprite.setFrame(8 + 18);
-                        break;
-                    case 'green':
-                        sprite.setFrame(8 + (18 * 2));
-                        break;
-                    case 'yellow':
-                        sprite.setFrame(8 + (18 * 3));
-                        break;
-                }
-                break;
-            case 'Infantry':
-                switch (owner) {
-                    case 'red':
-                        sprite.setFrame(8);
-                        break;
-                    case 'blue':
-                        sprite.setFrame(8 + 18);
-                        break;
-                    case 'green':
-                        sprite.setFrame(8 + (18 * 2));
-                        break;
-                    case 'yellow':
-                        sprite.setFrame(8 + (18 * 3));
-                        break;
-                }
-                break;
+    private handleSelect(tileX: number, tileY: number) {
+        if (state.selectedUnit) {
+            if (state.selectedUnit.x === tileX && state.selectedUnit.y === tileY) {
+                state.selectedUnit = undefined;
+                return;
+            }
+            client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
+        } else {
+            const unit = this.findObjectAtPosition(tileX, tileY);
+            state.selectedUnit = unit;
         }
     }
 

@@ -67,6 +67,7 @@ export class UI extends Phaser.Scene {
                 ...state.game.players.map(player => `${player.name}: ${player.color} $${player.money}`),
                 `Current player: ${state.game.currentPlayer}`,
                 `Turn: ${state.game.turn}`,
+                state.selectedUnit ? `Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x} ${state.selectedUnit?.y}` : 'Nothing selected',
             ];
             this.text.setText(debugText.join('\n'));
             this.text.setPosition(
