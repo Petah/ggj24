@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import { client } from '../client';
-import { GameState } from '../../../common/events/game-list';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
-import { PlayerColor, Unit, UnitType } from '../../../common/unit';
+import { PlayerColor, Unit, UnitType, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { state } from '../state';
-import { MoveUnitRequest } from '../../../common/events/turn';
 import { UI } from './ui-scene';
+import { MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
+import { logError } from '../../../common/log';
 
 export const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
@@ -88,19 +88,21 @@ export const UnitSprites = {
 export class InGame extends Phaser.Scene {
     private cursorLayer!: Phaser.GameObjects.Layer;
     private cursorSprite!: Phaser.GameObjects.Sprite;
-    private shoppingLayer!: Phaser.GameObjects.Layer;
+    private buildingLayer!: Phaser.GameObjects.Layer;
     private unitLayer!: Phaser.GameObjects.Layer;
     private created: boolean = false;
     private ui!: UI;
+    private moving?: {
+        sprite: Phaser.GameObjects.Sprite;
+        pointsX: number[];
+        pointsY: number[];
+        time: number;
+        current: number;
+    };
 
     constructor() {
         super('InGame');
-
-        client.onGameStateChange((gameState: GameState) => {
-            state.game = gameState;
-            this.updateGameState();
-        });
-
+        state.scene = this
     }
 
     preload() {
@@ -189,6 +191,7 @@ export class InGame extends Phaser.Scene {
         });
 
 
+        this.buildingLayer = this.add.layer();
         this.unitLayer = this.add.layer();
 
         this.cursorLayer = this.add.layer();
@@ -198,6 +201,22 @@ export class InGame extends Phaser.Scene {
 
         this.created = true;
         this.updateGameState();
+    }
+
+    update(time: number, delta: number): void {
+        if (this.moving) {
+            this.moving.current += delta;
+            if (this.moving.current > this.moving.time) {
+                this.moving.current = this.moving.time;
+            }
+            const percent = this.moving.current / this.moving.time;
+            const currentX = Phaser.Math.Interpolation.Linear(this.moving.pointsX, percent);
+            const currentY = Phaser.Math.Interpolation.Linear(this.moving.pointsY, percent);
+            this.moving.sprite.setPosition(currentX, currentY);
+            if (percent >= 1) {
+                this.moving = undefined;
+            }
+        }
     }
 
     onCursorPositionUpdate(tileX: number, tileY: number) {
@@ -249,12 +268,32 @@ export class InGame extends Phaser.Scene {
         state.selectedUnit = undefined;
     }
 
-    private updateGameState() {
+
+    private onProductionBuildingSelected(unit: Unit) {
+        this.add.rectangle(
+            state.cursorX * TILE_SIZE * TILE_SCALE + 8,
+            state.cursorY * TILE_SIZE * TILE_SCALE + 8,
+            80,
+            160,
+            0xFCF3CF,
+        ).setOrigin(0, 0);
+    }
+
+    private getUnitSprite(unit: Unit) {
+        for (const layer of [this.buildingLayer, this.unitLayer]) {
+            const sprite = layer.getChildren().find(child => child.getData('unit') === unit.id) as Phaser.GameObjects.Sprite | undefined;
+            if (sprite) {
+                return sprite;
+            }
+        }
+    }
+
+    public updateGameState() {
         if (!state.game || !this.created) {
             return;
         }
         for (const unit of state.game?.units || []) {
-            const existingSprite = this.unitLayer.getChildren().find((child: any) => child.getData('unit') === unit.id) as Phaser.GameObjects.Sprite;
+            const existingSprite = this.getUnitSprite(unit);
             if (existingSprite) {
                 existingSprite.setPosition(unit.x * TILE_SIZE, unit.y * TILE_SIZE);
             } else {
@@ -269,8 +308,36 @@ export class InGame extends Phaser.Scene {
                     origin: 0,
                 }, false);
                 sprite.setData('unit', unit.id);
-                this.unitLayer.add(sprite);
+                if (isMoveableUnit(unit)) {
+                    this.unitLayer.add(sprite);
+                } else if (isBuilding(unit)) {
+                    this.buildingLayer.add(sprite);
+                } else {
+                    logError(`Unknown unit type ${unit.type}`);
+                }
             }
         }
+    }
+
+    public handleMoveUnitResponse(event: MoveUnitResponse) {
+        const unit = state.game?.units?.find(unit => unit.id === event.unitId);
+        if (!isMoveableUnit(unit)) {
+            return;
+        }
+        unit.movementPoints = event.remainingMovementPoints;
+        const sprite = this.getUnitSprite(unit);
+        if (!sprite) {
+            return;
+        }
+        const pointsX = event.path.map(point => point[0] * TILE_SIZE);
+        const pointsY = event.path.map(point => point[1] * TILE_SIZE);
+        this.moving = {
+            sprite,
+            pointsX,
+            pointsY,
+            time: event.path.length * 1000 / 4,
+            current: 0,
+        }
+        console.log('this.moving', this.moving);
     }
 }
