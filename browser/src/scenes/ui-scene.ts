@@ -1,7 +1,7 @@
 import { InGame, UnitSprites } from './in-game';
 import { client } from '../client';
 import { GameButton } from '../button';
-import { PlayerColor, Unit, UnitType } from '../../../common/unit';
+import { AntiTank, Infantry, PlayerColor, Tank, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
 import { state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
@@ -109,13 +109,14 @@ export class UI extends Phaser.Scene {
     public onProductionBuildingSelected(unit: Unit) {
         const building = unit as Building;
         const playerColor = state.game?.players.find(player => player.name === building.player)?.color || PlayerColor.NEUTRAL;
+        const playerMoney = state.game?.players.find(player => player.name === building.player)?.money || 0;
 
         const height = building.canBuild.length * 32
 
         this.menuBackground = this.add.rectangle(
-            (this.cameras.main.worldView.width / 2) - 65,
+            (this.cameras.main.worldView.width / 2) - 100,
             (this.cameras.main.worldView.height / 2) - height/2,
-            130,
+            200,
             height,
             0xFCF3CF,
         ).setOrigin(0, 0);
@@ -134,8 +135,10 @@ export class UI extends Phaser.Scene {
             );
             tempSprite.setOrigin(0, 0);
 
-            console.log(purchasableUnit,building)
-            const text = this.add.text(
+            // @ts-ignore
+            let cost: number = UnitTypeMap[purchasableUnit]?.cost;
+
+            const unitNameText = this.add.text(
                 x + 32,
                 y,
                 `${purchasableUnit}`,
@@ -153,10 +156,34 @@ export class UI extends Phaser.Scene {
                     },
                 }
             )
-            text.setOrigin(0, 0);
+            unitNameText.setOrigin(0, 0);
+
+            const unitCostText = this.add.text(
+                x + 140,
+                y,
+                `$${cost}`,
+                {
+                    font: '16px monospace',
+                    color: '#000',
+                    align: 'right',
+                    shadow: {
+                        offsetX: 1,
+                        offsetY: 1,
+                        color: '#000',
+                        blur: 1,
+                        stroke: true,
+                        fill: true,
+                    },
+                }
+            )
+
+            if (cost > playerMoney) {
+                tempSprite.setTint(0x808080);
+                unitNameText.setTint(0x808080);
+            }
 
             this.purchasableUnits.add(tempSprite);
-            this.purchasableUnits.add(text);
+            this.purchasableUnits.add(unitNameText);
         }
     }
 
@@ -167,10 +194,3 @@ export class UI extends Phaser.Scene {
         this.purchasableUnits = this.add.group();
     }
 }
-
-const config = {
-    width: 1920,
-    height: 1080,
-    physics: { default: 'arcade' },
-    scene: [InGame, UI],
-};
