@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { Airport, City, Dock, Factory, HQ, Infantry, PlayerColor, PlayerColors, Unit, UnitType } from '../../common/unit';
+import { Airport, Building, City, Dock, Factory, HQ, Infantry, PlayerColor, PlayerColors, Unit, UnitType } from '../../common/unit';
 import { TILE_SIZE } from '../../common/map';
 import { generateId } from './id';
 
@@ -131,6 +131,14 @@ export class Game {
 
             this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
         }
+
+        // Give players initial money
+        for (const player of this.players) {
+            const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
+            const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
+            player.money = income;
+            logInfo('Player money', player.name, player.money);
+        }
     }
 
     public endTurn() {
@@ -144,20 +152,7 @@ export class Game {
     }
 
     public moveUnit(unitId: number, x: number, y: number) {
-        if (!this.started) {
-            throw new GameError('Game not started');
-        }
-        const unit = this.units.find(unit => unit.id === unitId);
-        if (!unit) {
-            throw new GameError('Unit not found');
-        }
-        if (unit.player !== this.currentPlayer?.name) {
-            throw new GameError('Unit does not belong to current player');
-        }
-        const player = this.players.find(player => player.name === unit.player);
-        if (!player) {
-            throw new GameError('Player not found');
-        }
+        const { unit } = this.getPlayerUnit(unitId);
         // if (unit.movementPoints <= 0) {
         //     throw new GameError('Unit does not have enough movement points');
         // }
@@ -169,6 +164,44 @@ export class Game {
         unit.x = lastPathEntry[0];
         unit.y = lastPathEntry[1];
         this.broadcastGameState();
+    }
+
+    public buildUnit(buildingId: number, unitType: UnitType) {
+        const { player, unit } = this.getPlayerUnit(buildingId);
+        const building = unit as Building;
+        if (building.currentlyBuilding) {
+            throw new GameError('Building is already building');
+        }
+        if (!building.canBuild.includes(unitType)) {
+            throw new GameError('Building cannot build this unit');
+        }
+        // if (player.money < unitType.cost) {
+        //     throw new GameError('Player does not have enough money');
+        // }
+        building.currentlyBuilding = unitType;
+
+    }
+
+    private getPlayerUnit(unitId: number) {
+        this.assertStarted();
+        const unit = this.units.find(unit => unit.id === unitId);
+        if (!unit) {
+            throw new GameError('Unit not found');
+        }
+        if (unit.player !== this.currentPlayer?.name) {
+            throw new GameError('Unit does not belong to current player');
+        }
+        const player = this.players.find(player => player.name === unit.player);
+        if (!player) {
+            throw new GameError('Player not found');
+        }
+        return { player, unit };
+    }
+
+    private assertStarted() {
+        if (!this.started) {
+            throw new GameError('Game not started');
+        }
     }
 
     public broadcast(event: IEvent) {
