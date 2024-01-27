@@ -5,7 +5,7 @@ import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, UnitType } from '../../../common/unit';
 import { state } from '../state';
 
-const UnitsSprites = {
+const UnitSprites = {
     [PlayerColor.NEUTRAL]: {
         [UnitType.CITY]: 8,
         [UnitType.INFANTRY]: 106,
@@ -146,49 +146,33 @@ export class InGame extends Phaser.Scene {
         //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, state.game.tiles?.[tileY]?.[tileX]);
         // });
 
-        // this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
+        this.cameras.main.setZoom(2).setScroll(-300, -200);
 
-        //     if (deltaY > 0) {
-        //         const newZoom = this.cameras.main.zoom - .1;
-        //         if (newZoom > 0.3) {
-        //             this.cameras.main.zoom = newZoom;
-        //         }
-        //     }
+        this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
+            if (deltaY > 0) {
+                const newZoom = this.cameras.main.zoom - .1;
+                if (newZoom > 1) {
+                    this.cameras.main.zoom = newZoom;
+                }
+            }
 
-        //     if (deltaY < 0) {
-        //         const newZoom = this.cameras.main.zoom + .1;
-        //         if (newZoom < 2) {
-        //             this.cameras.main.zoom = newZoom;
-        //         }
-        //     }
+            if (deltaY < 0) {
+                const newZoom = this.cameras.main.zoom + .1;
+                if (newZoom < 3) {
+                    this.cameras.main.zoom = newZoom;
+                }
+            }
 
-        //     // this.cameras.main.centerOn(pointer.worldX, pointer.worldY);
-        //     // this.cameras.main.pan(pointer.worldX, pointer.worldY, 2000, "Power2");
+            // this.cameras.main.centerOn(pointer.worldX, pointer.worldY);
+            // this.cameras.main.pan(pointer.worldX, pointer.worldY, 2000, "Power2");
+        });
 
-        // });
+        this.input.on('pointermove', (pointer: any) => {
+            if (!pointer.isDown) return;
 
-        // this.input.on('pointermove', (pointer: any) => {
-        //     if (!pointer.isDown) return;
-
-        //     this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
-        //     this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
-        // });
-
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.C)
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
-        this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.X)
-
-        // this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { console.log('up')});
-        // this.input.keyboard?.on('keydown-' + 'DOWN', function (event: any) { console.log('down') });
-        // this.input.keyboard?.on('keydown-' + 'LEFT', function (event: any) { console.log('left') });
-        // this.input.keyboard?.on('keydown-' + 'RIGHT', function (event: any) { console.log('right') });
-        // this.input.keyboard?.on('keydown-' + 'C', function (event: any) { console.log('c') });
-        // this.input.keyboard?.on('keydown-' + 'SPACE', function (event: any) { console.log('space') });
-        // this.input.keyboard?.on('keydown-' + 'X', function (event: any) { console.log('x') });
+            this.cameras.main.scrollX -= (pointer.x - pointer.prevPosition.x) / this.cameras.main.zoom;
+            this.cameras.main.scrollY -= (pointer.y - pointer.prevPosition.y) / this.cameras.main.zoom;
+        });
 
         this.input.keyboard?.on('keydown', (event: any) => {
             const tileX = Math.floor(this.cursorSprite.x / TILE_SIZE / TILE_SCALE);
@@ -201,7 +185,7 @@ export class InGame extends Phaser.Scene {
                     }
                     break;
                 case 'ArrowDown':
-                    if (tileY < 40 - 1) {
+                    if (tileY < (state.game?.height || 40) - 1) {
                         this.placeCursorAtPosition(tileX, tileY + 1);
                     }
                     break;
@@ -211,7 +195,7 @@ export class InGame extends Phaser.Scene {
                     }
                     break;
                 case 'ArrowRight':
-                    if (tileX < 40 - 1) {
+                    if (tileX < (state.game?.width || 40) - 1) {
                         this.placeCursorAtPosition(tileX + 1, tileY );
                     }
                     break;
@@ -251,6 +235,7 @@ export class InGame extends Phaser.Scene {
 
     }
 
+
     findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
         const objectLayer = map.getObjectLayer('Towns');
         const objects = objectLayer?.objects;
@@ -286,7 +271,6 @@ export class InGame extends Phaser.Scene {
     fixSprite(sprite: Phaser.GameObjects.Sprite) {
         const owner = sprite.getData('owner')
         const type = sprite.type
-        console.log(sprite)
         switch (type) {
             case 'City':
                 switch (owner) {
@@ -388,14 +372,12 @@ export class InGame extends Phaser.Scene {
     }
 
     private updateGameState() {
-        console.log(state.game, this.created, state.game?.units);
         if (!state.game || !this.created) {
             return;
         }
         for (const unit of state.game?.units || []) {
             const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
-            const frame = UnitsSprites[playerColor][unit.type] || 193;
-            console.log('unit', unit, playerColor, frame);
+            const frame = UnitSprites[playerColor][unit.type] || 193;
             const sprite = this.make.sprite({
                 x: unit.x * TILE_SIZE,
                 y: unit.y * TILE_SIZE,

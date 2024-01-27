@@ -7,6 +7,8 @@ export interface GameState {
         name: string;
         color: PlayerColor;
     }[];
+    width: number;
+    height: number;
     turn: number;
     currentPlayer?: string;
     tiles?: TileType[][];
