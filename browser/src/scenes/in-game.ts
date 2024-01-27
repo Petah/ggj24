@@ -21,7 +21,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 0,
         [UnitType.JET]: 0,
         [UnitType.HELICOPTER]: 0,
-        [UnitType.TRANSPORT_COPTER]: 0,
+        [UnitType.TRANSPORT]: 0,
         [UnitType.APC]: 0,
         [UnitType.ANTI_TANK]: 0,
         [UnitType.LANDER]: 0,
@@ -38,7 +38,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 158,
         [UnitType.JET]: 154,
         [UnitType.HELICOPTER]: 155,
-        [UnitType.TRANSPORT_COPTER]: 156,
+        [UnitType.TRANSPORT]: 156,
         [UnitType.APC]: 150,
         [UnitType.ANTI_TANK]: 161,
         [UnitType.LANDER]: 157,
@@ -55,7 +55,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 140,
         [UnitType.JET]: 154,
         [UnitType.HELICOPTER]: 155,
-        [UnitType.TRANSPORT_COPTER]: 156,
+        [UnitType.TRANSPORT]: 156,
         [UnitType.APC]: 150,
         [UnitType.ANTI_TANK]: 161,
         [UnitType.LANDER]: 157,
@@ -72,7 +72,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 122,
         [UnitType.JET]: 118,
         [UnitType.HELICOPTER]: 119,
-        [UnitType.TRANSPORT_COPTER]: 120,
+        [UnitType.TRANSPORT]: 120,
         [UnitType.APC]: 114,
         [UnitType.ANTI_TANK]: 125,
         [UnitType.LANDER]: 121,
@@ -89,7 +89,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 176,
         [UnitType.JET]: 172,
         [UnitType.HELICOPTER]: 173,
-        [UnitType.TRANSPORT_COPTER]: 174,
+        [UnitType.TRANSPORT]: 174,
         [UnitType.APC]: 168,
         [UnitType.ANTI_TANK]: 179,
         [UnitType.LANDER]: 175,
@@ -133,6 +133,7 @@ export class InGame extends Phaser.Scene {
     private helicopter?: Phaser.Sound.BaseSound;
     private tank?: Phaser.Sound.BaseSound;
     private currentSound?: Phaser.Sound.BaseSound;
+    private backgroundMusic?: Phaser.Sound.BaseSound;
 
     constructor() {
         super('InGame');
@@ -154,6 +155,7 @@ export class InGame extends Phaser.Scene {
         this.load.audio('jet', ['assets/jet.ogg']);
         this.load.audio('helicopter', ['assets/helicopter.ogg']);
         this.load.audio('tank', ['assets/tank.ogg']);
+        this.load.audio('backgroundMusic', ['assets/country-rock.mp3']);
     }
 
     create() {
@@ -381,6 +383,11 @@ export class InGame extends Phaser.Scene {
         this.tank = this.sound.add('tank', {
             loop: true,
         });
+        this.backgroundMusic = this.sound.add('backgroundMusic', {
+            loop: true,
+            volume: 40,
+        });
+        this.backgroundMusic.play();
 
         this.created = true;
         this.updateGameState();

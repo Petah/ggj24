@@ -12,7 +12,7 @@ export enum UnitType {
     TANK = 'Tank',
     JET = 'Jet',
     HELICOPTER = 'Helicopter',
-    TRANSPORT_COPTER = 'Transport Copter',
+    TRANSPORT = 'Transport',
     SHIP = 'Ship',
     LANDER = 'Lander',
     ROCKET_TRUCK = 'Rocket Truck',
@@ -248,8 +248,8 @@ export class Helicopter extends MovableUnit {
     public armourType = ArmourType.HELICOPTER;
 }
 
-export class TransportCopter extends MovableUnit {
-    public readonly type = UnitType.TRANSPORT_COPTER;
+export class Transport extends MovableUnit {
+    public readonly type = UnitType.TRANSPORT;
     public static readonly cost = 5000;
     public maxMovementPoints = 6;
     public movementType = MovementType.AIR;
@@ -308,7 +308,7 @@ export class Factory extends Building {
 
 export class Airport extends Building {
     public readonly type = UnitType.AIRPORT;
-    public readonly canBuild = [UnitType.HELICOPTER, UnitType.TRANSPORT_COPTER, UnitType.JET];
+    public readonly canBuild = [UnitType.HELICOPTER, UnitType.TRANSPORT, UnitType.JET];
 }
 
 export class HQ extends Building {
@@ -323,7 +323,7 @@ export const UnitTypeMap: {
     [UnitType.SHIP]: Ship,
     [UnitType.JET]: Jet,
     [UnitType.HELICOPTER]: Helicopter,
-    [UnitType.TRANSPORT_COPTER]: TransportCopter,
+    [UnitType.TRANSPORT]: Transport,
     [UnitType.APC]: APC,
     [UnitType.ANTI_TANK]: AntiTank,
     [UnitType.LANDER]: Lander,

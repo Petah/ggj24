@@ -6,9 +6,10 @@ More sound
 
 UI
 Capture animation
+Aircraft - movement
 Boats - movement
 Range attacks
 fix map wrong tile
 boats on land
 Transport units
-Ranged detection broken for adjacent units
+Ranged detection broken for adjacent unitsgit 
