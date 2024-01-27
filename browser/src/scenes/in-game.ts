@@ -77,7 +77,6 @@ export class InGame extends Phaser.Scene {
     create() {
         this.scale.setGameSize(window.innerWidth, window.innerHeight)
         this.scene.launch('UI')
-        this.scale.on('resize', this.resize, this);
 
         // create the Tilemap
         const map = this.make.tilemap({ key: 'map' })
