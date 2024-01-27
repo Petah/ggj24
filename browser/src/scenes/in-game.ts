@@ -116,6 +116,9 @@ export class InGame extends Phaser.Scene {
     private healthSprite!: Phaser.GameObjects.Sprite;
     private healthNumber!: Phaser.GameObjects.Sprite;
     private steps!: Phaser.Sound.BaseSound;
+    private jet!: Phaser.Sound.BaseSound;
+    private helicopter?: Phaser.Sound.BaseSound;
+    private currentSound?: Phaser.Sound.BaseSound;
 
     constructor() {
         super('InGame');
@@ -134,6 +137,8 @@ export class InGame extends Phaser.Scene {
         this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 })
 
         this.load.audio('steps', ['assets/steps.ogg']);
+        this.load.audio('jet', ['assets/jet.ogg']);
+        this.load.audio('helicopter', ['assets/helicopter.ogg']);
     }
 
     create() {
@@ -324,6 +329,12 @@ export class InGame extends Phaser.Scene {
         this.steps = this.sound.add('steps', {
             loop: true,
         });
+        this.jet = this.sound.add('jet', {
+            loop: true,
+        });
+        this.helicopter = this.sound.add('helicopter', {
+            loop: true,
+        });
 
         this.created = true;
         this.updateGameState();
@@ -366,7 +377,7 @@ export class InGame extends Phaser.Scene {
             this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE);
             if (percent >= 1) {
                 this.moving = undefined;
-                this.steps.stop();
+                this.currentSound?.stop();
                 client.send(new ReloadGameState());
             }
         }
@@ -701,6 +712,19 @@ export class InGame extends Phaser.Scene {
         }
         const pointsX = event.path.map(point => point[0] * TILE_SIZE);
         const pointsY = event.path.map(point => point[1] * TILE_SIZE);
+
+        let movementSpeed = 4;
+        switch (unit.type) {
+            case UnitType.JET:
+                movementSpeed = 10;
+                break;
+            case UnitType.HELICOPTER:
+                movementSpeed = 7;
+                break;
+            default:
+                movementSpeed = 4;
+                break;
+        }
         this.moving = {
             sprite,
             startX: unit.x,
@@ -709,10 +733,25 @@ export class InGame extends Phaser.Scene {
             endY: event.path[event.path.length - 1][1],
             pointsX,
             pointsY,
-            time: event.path.length * 1000 / 4,
+            time: event.path.length * 1000 / movementSpeed,
             current: 0,
         }
-        this.steps.play();
+        switch (unit.type) {
+            case UnitType.INFANTRY:
+            case UnitType.ANTI_TANK:
+                this.currentSound = this.steps;
+                break;
+            case UnitType.JET:
+                this.currentSound = this.jet;
+                break;
+            case UnitType.HELICOPTER:
+                this.currentSound = this.helicopter;
+                break;
+            default:
+                this.currentSound = undefined;
+                break;
+        }
+        this.currentSound?.play();
 
         if (this.isCaptureAvailable()) {
             this.ui.enableCaptureButton();
