@@ -65,6 +65,7 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
         this.cameras.main.setZoom(2).setScroll(-300, -200);
+        this.placeCursorAtPosition(20,20)
 
         // map.createLayer('Data', tileset)
 
@@ -148,25 +149,59 @@ export class InGame extends Phaser.Scene {
 
 
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.UP)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.DOWN)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.LEFT)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.RIGHT)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.C)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
         this.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.X)
-        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { /* ... */ });
+
+        this.input.keyboard?.on('keydown-' + 'UP', function (event: any) { console.log('up')});
+        this.input.keyboard?.on('keydown-' + 'DOWN', function (event: any) { console.log('down') });
+        this.input.keyboard?.on('keydown-' + 'LEFT', function (event: any) { console.log('left') });
+        this.input.keyboard?.on('keydown-' + 'RIGHT', function (event: any) { console.log('right') });
+        this.input.keyboard?.on('keydown-' + 'C', function (event: any) { console.log('c') });
+        this.input.keyboard?.on('keydown-' + 'SPACE', function (event: any) { console.log('space') });
+        this.input.keyboard?.on('keydown-' + 'X', function (event: any) { console.log('x') });
+
+        this.input.keyboard?.on('keydown', function (event: any) {
+            console.log(event.key)
+            const tileX = Math.floor(this.cursorSprite.worldX / TILE_SIZE / TILE_SCALE);
+            const tileY = Math.floor(this.cursorSprite.worldY / TILE_SIZE / TILE_SCALE);
+
+            if (event.key === 'ArrowUp') {
+                console.log('up')
+            }
+            if (event.key === 'ArrowDown') {
+                console.log('down')
+            }
+            if (event.key === 'ArrowLeft') {
+                console.log('left')
+            }
+            if (event.key === 'ArrowRight') {
+                console.log('right')
+            }
+            if (event.key === 'c') {
+                console.log('c')
+            }
+            if (event.key === ' ') {
+                console.log('space')
+            }
+            if (event.key === 'x') {
+                console.log('x')
+            }
+         });
+
 
         this.cursorLayer = this.add.layer();
         this.unitLayer = this.add.layer();
 
         this.created = true;
         this.updateGameState();
+    }
+
+    updateCursorPosition(tileX: number, tileY: number) {
+        this.onCursorPositionUpdate(tileX, tileY);
     }
 
     onCursorPositionUpdate(tileX: number, tileY: number) {
