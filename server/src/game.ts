@@ -182,6 +182,12 @@ export class Game {
         ) {
             throw new GameError('Unit already at position');
         }
+
+        const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && unit instanceof Building) as Building | undefined;
+        if (buildingAtPosition) {
+            buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints
+        }
+
         const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid.clone());
         // Clone path for movement animation
         const clonePath = [...path];
