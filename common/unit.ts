@@ -81,7 +81,6 @@ export class Ship extends Unit {
 export abstract class Building extends Unit {
     public readonly income!: number;
     public readonly canBuild!: UnitType[];
-    public currentlyBuilding: UnitType | undefined;
 }
 
 export class City extends Building {

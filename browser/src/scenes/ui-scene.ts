@@ -63,7 +63,8 @@ export class UI extends Phaser.Scene {
         // Render debug info
         if (state.game) {
             const debugText = [
-                `Players: ${state.game.players.length} - ${state.game.players.map(player => player.name).join(', ')}`,
+                `Players: ${state.game.players.length}`,
+                ...state.game.players.map(player => `${player.name}: ${player.color} $${player.money}`),
                 `Current player: ${state.game.currentPlayer}`,
                 `Turn: ${state.game.turn}`,
             ];
