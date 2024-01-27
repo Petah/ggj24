@@ -122,7 +122,7 @@ export class UI extends Phaser.Scene {
 
         this.menuBackground = this.add.rectangle(
             (this.cameras.main.worldView.width / 2) - 100,
-            (this.cameras.main.worldView.height / 2) - height/2,
+            (this.cameras.main.worldView.height / 2) - height / 2,
             200,
             height,
             0xFCF3CF,
@@ -234,10 +234,14 @@ export class UI extends Phaser.Scene {
     }
 
     public enableCaptureButton() {
-        this.captureButton.setVisible(true);
+        if (this.captureButton) {
+            this.captureButton.setVisible(true);
+        }
     }
 
     public disableCaptureButton() {
-        this.captureButton.setVisible(false);
+        if (this.captureButton) {
+            this.captureButton.setVisible(false);
+        }
     }
 }

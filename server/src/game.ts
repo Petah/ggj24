@@ -160,7 +160,7 @@ export class Game {
         for (const unit of this.units) {
             if (unit instanceof MovableUnit) {
                 unit.movementPoints = unit.maxMovementPoints;
-                unit.hasCommitedActions = false;
+                unit.hasCommittedActions = false;
             }
         }
     }
@@ -185,7 +185,13 @@ export class Game {
             buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints
         }
 
-        const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid.clone());
+        const grid = this.gameMap.grid.clone();
+        for (const unit of this.units) {
+            if (isMoveableUnit(unit) && unit.player !== this.currentPlayer?.name) {
+                grid.setWalkableAt(unit.x, unit.y, false);
+            }
+        }
+        const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, grid);
         // Clone path for movement animation
         const clonePath = [...path];
         // Remove first entry, which is the current position
@@ -217,7 +223,7 @@ export class Game {
             throw new GameError('Unit cannot capture');
         }
 
-        if (unit.hasCommitedActions) {
+        if (unit.hasCommittedActions) {
             throw new GameError('Unit has already commited actions');
         }
 
@@ -229,7 +235,7 @@ export class Game {
             building.capturePoints = 20;
         }
 
-        unit.hasCommitedActions = true;
+        unit.hasCommittedActions = true;
         unit.movementPoints = 0;
 
         if (originalOwner && building.type == UnitType.HQ) {
@@ -310,11 +316,11 @@ export class Game {
         // if (unitAtPosition instanceof MovableUnit && unitAtPosition.movementPoints <= 0) {
         //     throw new GameError('Unit cannot move');
         // }
-        // if (unitAtPosition instanceof MovableUnit && unitAtPosition.hasCommitedActions) {
+        // if (unitAtPosition instanceof MovableUnit && unitAtPosition.hasCommittedActions) {
         //     throw new GameError('Unit already commited actions');
         // }
         unit.movementPoints = 0;
-        unit.hasCommitedActions = true;
+        unit.hasCommittedActions = true;
         unitAtPosition.health -= getDamageAmount(unit, unitAtPosition);
         if (unitAtPosition.health <= 0) {
             this.units = this.units.filter(unit => unit.id !== unitAtPosition.id);

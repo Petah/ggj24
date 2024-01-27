@@ -11,5 +11,4 @@ Range attacks
 Flip units based on direction
 fix map wrong tile
 boats on land
-drive through enemy units
 Transport units
