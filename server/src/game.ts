@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { Airport, Building, City, Dock, Factory, HQ, Infantry, PlayerColor, PlayerColors, Unit, UnitType } from '../../common/unit';
+import { Airport, Building, City, Dock, Factory, HQ, Infantry, Jet, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType } from '../../common/unit';
 import { TILE_SIZE } from '../../common/map';
 import { generateId } from './id';
 
@@ -46,6 +46,8 @@ export class Game {
         this.started = true;
         this.turn = 1;
         this.currentPlayer = this.players[0];
+        this.setupTurn();
+
         const tileMapData = await readFile('../browser/public/assets/test3.json', 'utf-8');
         const tileMap: TileMap = JSON.parse(tileMapData);
         const layer = tileMap.layers.find(layer => layer.name === 'Data');
@@ -146,8 +148,19 @@ export class Game {
         if (currentPlayerIndex === this.players.length - 1) {
             this.turn++;
             this.currentPlayer = this.players[0];
+            logInfo('New turn', this.turn, this.currentPlayer?.name)
         } else {
             this.currentPlayer = this.players[currentPlayerIndex + 1];
+            logInfo('Next player', this.currentPlayer?.name);
+        }
+        this.setupTurn();
+    }
+
+    private setupTurn() {
+        for (const unit of this.units) {
+            if (unit instanceof MovableUnit) {
+                unit.movementPoints = unit.maxMovementPoints;
+            }
         }
     }
 
@@ -166,20 +179,33 @@ export class Game {
         this.broadcastGameState();
     }
 
-    public buildUnit(buildingId: number, unitType: UnitType) {
+    public buildUnit(buildingId: number, unitType: UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET) {
         const { player, unit } = this.getPlayerUnit(buildingId);
-        const building = unit as Building;
-        if (building.currentlyBuilding) {
-            throw new GameError('Building is already building');
+        const unitsAvailable = {
+            [UnitType.INFANTRY]: Infantry,
+            [UnitType.TANK]: Tank,
+            [UnitType.SHIP]: Ship,
+            [UnitType.JET]: Jet,
         }
+        const building = unit as Building;
         if (!building.canBuild.includes(unitType)) {
             throw new GameError('Building cannot build this unit');
         }
-        // if (player.money < unitType.cost) {
-        //     throw new GameError('Player does not have enough money');
-        // }
-        building.currentlyBuilding = unitType;
-
+        if (!unitsAvailable[unitType]) {
+            throw new GameError('Unit type not found');
+        }
+        if (player.money < unitsAvailable[unitType].cost) {
+            throw new GameError('Player does not have enough money');
+        }
+        const unitOnTop = this.units.find(unit => unit.x === building.x && unit.y === building.y && unit.id !== building.id);
+        if (unitOnTop) {
+            throw new GameError('Unit already on top of building');
+        }
+        player.money -= unitsAvailable[unitType].cost;
+        const newUnit = new unitsAvailable[unitType](generateId(), building.x, building.y, player.name);
+        this.units.push(newUnit);
+        logInfo('Building unit', newUnit);
+        this.broadcastGameState();
     }
 
     private getPlayerUnit(unitId: number) {
@@ -221,6 +247,7 @@ export class Game {
             players: this.players.map(player => ({
                 name: player.name,
                 color: player.color,
+                money: player.money,
             })),
             width: this.gameMap?.width,
             height: this.gameMap?.height,

@@ -158,7 +158,6 @@ export class Ship extends MovableUnit {
 export abstract class Building extends MovableUnit {
     public readonly income: number = 1000;
     public readonly canBuild!: UnitType[];
-    public currentlyBuilding: UnitType | undefined;
 }
 
 export class City extends Building {

@@ -89,9 +89,6 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
         this.cameras.main.setZoom(2).setScroll(-300, -200);
-        this.cursorLayer = this.add.layer();
-
-        this.placeCursorAtPosition(20,20)
 
         // map.createLayer('Data', tileset)
 
@@ -195,53 +192,49 @@ export class InGame extends Phaser.Scene {
                     break;
                 case 'ArrowRight':
                     if (tileX < (state.game?.width || 40) - 1) {
-                        this.placeCursorAtPosition(tileX + 1, tileY );
+                        this.placeCursorAtPosition(tileX + 1, tileY);
                     }
                     break;
                 case 'c':
                 case ' ':
                     // TODO select it
-                    break;  
+                    console.log('select')
+                    break;
                 case 'x':
                     break;
             }
-         });
+        });
 
 
         this.unitLayer = this.add.layer();
+
+        this.cursorLayer = this.add.layer();
+        this.cursorSprite = this.add.sprite(state.cursorX * TILE_SIZE, state.cursorY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
+        this.cursorLayer.add(this.cursorSprite);
+        this.placeCursorAtPosition(state.cursorX, state.cursorY)
 
         this.created = true;
         this.updateGameState();
     }
 
-    updateCursorPosition(tileX: number, tileY: number) {
-        this.onCursorPositionUpdate(tileX, tileY);
-    }
-
     onCursorPositionUpdate(tileX: number, tileY: number) {
-
+        const unit = this.findObjectAtPosition(tileX, tileY);
+        console.log('?', unit);
     }
 
-
-    findObjectAtPosition(tileX: number, tileY: number, map: Phaser.Tilemaps.Tilemap) {
-        const objectLayer = map.getObjectLayer('Towns');
-        const objects = objectLayer?.objects;
-        if (!objects) {
-            return null;
-        }
-        for (let i = 0; i < objects.length; i++) {
-            const object = objects[i];
-            if (object.x === tileX && object.y === tileY) {
-                return object;
+    findObjectAtPosition(tileX: number, tileY: number) {
+        for (const unit of state.game?.units || []) {
+            if (unit.x === tileX && unit.y === tileY) {
+                return unit;
             }
         }
-        return null;
     }
 
     placeCursorAtPosition(tileX: number, tileY: number) {
-        this.cursorSprite?.destroy();
-        this.cursorSprite = this.add.sprite(tileX * TILE_SIZE, tileY * TILE_SIZE, 'tiles2', 61).setScale(TILE_SCALE).setOrigin(0, 0);
-        this.cursorLayer.add(this.cursorSprite);
+        this.cursorSprite.setPosition(tileX * TILE_SIZE * TILE_SCALE, tileY * TILE_SIZE * TILE_SCALE);
+        localStorage.setItem('cursorX', tileX.toString());
+        localStorage.setItem('cursorY', tileY.toString());
+        this.onCursorPositionUpdate(tileX, tileY);
     }
 
     fixSprite(sprite: Phaser.GameObjects.Sprite) {

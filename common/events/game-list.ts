@@ -6,6 +6,7 @@ export interface GameState {
     players: {
         name: string;
         color: PlayerColor;
+        money: number;
     }[];
     width: number;
     height: number;
