@@ -14,6 +14,7 @@ export enum UnitType {
     HELICOPTER = 'Helicopter',
     SHIP = 'Ship',
     LANDER = 'Lander',
+    ROCKET_TRUCK = 'Rocket Truck',
 }
 
 export enum PlayerColor {
@@ -175,6 +176,8 @@ export abstract class MovableUnit extends Unit {
     public movementType!: MovementType;
     public damageType?: DamageType;
     public armourType!: ArmourType;
+    public minRange = 1;
+    public maxRange = 1;
     public canCapture = false;
     public carryingCapacity = 0;
     public carriedUnits: MovableUnit[] = [];
@@ -184,7 +187,7 @@ export abstract class MovableUnit extends Unit {
 export class Infantry extends MovableUnit {
     public readonly type = UnitType.INFANTRY;
     public static readonly cost = 1000;
-    public maxMovementPoints = 30;
+    public maxMovementPoints = 3;
     public movementType = MovementType.INFANTRY;
     public damageType = DamageType.MACHINE_GUN;
     public armourType = ArmourType.INFANTRY;
@@ -201,9 +204,21 @@ export class AntiTank extends MovableUnit {
     public canCapture = true;
 }
 
+export class RocketTruck extends MovableUnit {
+    public readonly type = UnitType.ROCKET_TRUCK;
+    public static readonly cost = 9000;
+    public minRange = 3;
+    public maxRange = 5;
+    public maxMovementPoints = 4;
+    public movementType = MovementType.TREADS;
+    public damageType = DamageType.GROUND_ROCKETS;
+    public armourType = ArmourType.LIGHT_VEHICLE;
+}
+
 export class Tank extends MovableUnit {
     public readonly type = UnitType.TANK;
     public static readonly cost = 7000;
+    public maxRange = 2;
     public maxMovementPoints = 6;
     public movementType = MovementType.TREADS;
     public damageType = DamageType.TANK_CANNON;
@@ -274,7 +289,7 @@ export class Dock extends Building {
 
 export class Factory extends Building {
     public readonly type = UnitType.FACTORY;
-    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.APC, UnitType.TANK, UnitType.HELICOPTER, UnitType.JET];
+    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.APC, UnitType.TANK, UnitType.ROCKET_TRUCK, UnitType.HELICOPTER, UnitType.JET];
 }
 
 export class Airport extends Building {
@@ -286,7 +301,9 @@ export class HQ extends Building {
     public readonly type = UnitType.HQ;
 }
 
-export const UnitTypeMap = {
+export const UnitTypeMap: {
+    [key in UnitType]: typeof Unit;
+} = {
     [UnitType.INFANTRY]: Infantry,
     [UnitType.TANK]: Tank,
     [UnitType.SHIP]: Ship,
@@ -300,6 +317,7 @@ export const UnitTypeMap = {
     [UnitType.FACTORY]: Factory,
     [UnitType.AIRPORT]: Airport,
     [UnitType.HQ]: HQ,
+    [UnitType.ROCKET_TRUCK]: RocketTruck,
 }
 
 export function isBuilding(unit?: Unit): unit is Building {
@@ -330,6 +348,7 @@ export function isMoveableUnit(unit?: Unit): unit is MovableUnit {
         case UnitType.APC:
         case UnitType.ANTI_TANK:
         case UnitType.LANDER:
+        case UnitType.ROCKET_TRUCK:
             return true;
     }
     return false;

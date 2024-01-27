@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, getDamageAmount, isMoveableUnit } from '../../common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, RocketTruck, Ship, Tank, Unit, UnitType, getDamageAmount, isMoveableUnit } from '../../common/unit';
 import { TILE_SIZE, getPathFinder } from '../../common/map';
 import { generateId } from './id';
 import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
@@ -246,6 +246,7 @@ export class Game {
             [UnitType.SHIP]: Ship,
             [UnitType.JET]: Jet,
             [UnitType.LANDER]: Lander,
+            [UnitType.ROCKET_TRUCK]: RocketTruck,
         }
         const building = unit as Building;
         if (!building.canBuild.includes(unitType)) {

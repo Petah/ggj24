@@ -7,7 +7,6 @@ More sound
 UI
 Win conditions
 Capture animation
-Aircraft - movement
 Boats - movement
 Range attacks
 reset capture points walking off building

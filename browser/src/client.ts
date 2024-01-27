@@ -12,7 +12,6 @@ export class Client {
 
     constructor() {
         const currentHost = window.location.host.replace(/:.*/, '');
-        console.log(currentHost);
         this.ws = new WebSocket(`ws://${currentHost}:8080`);
         this.ws.onopen = () => {
             logInfo('Connected to server');
