@@ -10,6 +10,8 @@ export enum EventType {
     ERROR = 'error',
     MOVE_UNIT_REQUEST = 'move_unit_request',
     MOVE_UNIT_RESPONSE = 'move_unit_response',
+    CAPTURE_REQUEST = 'capture_request',
+    CAPTURE_RESPONSE = 'capture_response',
     RELOAD_GAME_STATE = 'reload_game_state',
     PURCHASE_UNIT_REQUEST = 'purchase_unit_request',
     PURCHASE_UNIT_RESPONSE = 'purchase_unit_response',

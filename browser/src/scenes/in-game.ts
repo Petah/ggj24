@@ -1,11 +1,11 @@
 import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
-import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
-import { EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
+import { CaptureRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
 import { logError } from '../../../common/log';
 import * as PF from 'pathfinding';
 
@@ -359,6 +359,16 @@ export class InGame extends Phaser.Scene {
         }
         this.selectedArrow.setPosition(unit.x * TILE_SIZE * TILE_SCALE, (unit.y - 1) * TILE_SIZE * TILE_SCALE);
         this.selectedArrow.setVisible(true);
+        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
+        if (
+            (unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
+            && building && building.player !== state.playerName
+        ) {
+            console.log('enable capture button in selectUnit', building);
+            this.ui.enableCaptureButton();
+        } else {
+            this.ui.disableCaptureButton();
+        }
     }
 
     private unselectUnit() {
@@ -397,11 +407,25 @@ export class InGame extends Phaser.Scene {
         const units = state.game?.units || [];
         for (const unit of units) {
             const existingSprite = this.getUnitSprite(unit);
+            const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
+            const frame = UnitSprites[playerColor][unit.type] || 193;
             if (existingSprite) {
                 existingSprite.setPosition(unit.x * TILE_SIZE, unit.y * TILE_SIZE);
+                // TODO check if they can shoot, check if they capture
+                if (
+                    isMoveableUnit(unit)
+                    && (unit.movementPoints === 0 || unit.hasCommitedActions)
+                ) {
+                    existingSprite.setTint(0x888888);
+                } else {
+                    existingSprite.clearTint();
+                }
+
+                if (isBuilding(unit)) {
+                    existingSprite.setFrame(frame)
+                }
             } else {
-                const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
-                const frame = UnitSprites[playerColor][unit.type] || 193;
+
                 const sprite = this.make.sprite({
                     x: unit.x * TILE_SIZE,
                     y: unit.y * TILE_SIZE,
@@ -413,6 +437,7 @@ export class InGame extends Phaser.Scene {
                 sprite.setData('unit', unit.id);
                 if (isMoveableUnit(unit)) {
                     this.unitLayer.add(sprite);
+                    
                 } else if (isBuilding(unit)) {
                     this.buildingLayer.add(sprite);
                 } else {
@@ -433,6 +458,10 @@ export class InGame extends Phaser.Scene {
         }
         unit.movementPoints = event.remainingMovementPoints;
         const sprite = this.getUnitSprite(unit);
+        if (unit.movementPoints === 0) {
+            this.unselectUnit();
+        }
+
         if (!sprite) {
             return;
         }
@@ -444,6 +473,14 @@ export class InGame extends Phaser.Scene {
             pointsY,
             time: event.path.length * 1000 / 4,
             current: 0,
+        }
+
+        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
+        if (isMoveableUnit(unit) 
+        && (((unit as MovableUnit).type == UnitType.INFANTRY) || (unit as MovableUnit).type == UnitType.ANTI_TANK)
+        && building?.player !== state.playerName) {
+            console.log('enable capture button in selectUnit');
+            this.ui.enableCaptureButton();
         }
         console.log('this.moving', this.moving);
     }

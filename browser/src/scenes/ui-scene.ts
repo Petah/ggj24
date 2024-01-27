@@ -4,7 +4,7 @@ import { GameButton } from '../button';
 import { PlayerColor, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
 import { isOurTurn, state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
-import { EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
+import { CaptureRequest, EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
 import { ucFirst } from '../../../common/util';
 
 export class UI extends Phaser.Scene {
@@ -17,6 +17,7 @@ export class UI extends Phaser.Scene {
     private purchasableUnits!: Phaser.GameObjects.Group;
     private purchaseCursor!: Phaser.GameObjects.Sprite;
     private reloadGameStateButton!: GameButton;
+    private captureButton!: GameButton;
     private purchasableUnitList!: UnitType[];
     private selectedPurchaseListIndex = 0;
 
@@ -39,6 +40,12 @@ export class UI extends Phaser.Scene {
         this.reloadGameStateButton = new GameButton(this, 'Reload Game State', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 180, () => {
             client.send(new ReloadGameState());
         });
+        this.captureButton = new GameButton(this, 'Capture', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 240, () => {
+            if (state.selectedUnit) {
+                client.send(new CaptureRequest(state.selectedUnit.id, state.selectedUnit.x, state.selectedUnit.y));
+            }
+        });
+        this.captureButton.setVisible(false);
 
         this.text = this.add.text(10, 10, '', {
             font: '16px monospace',
@@ -101,6 +108,7 @@ export class UI extends Phaser.Scene {
         this.startGameButton.update();
         this.endTurnButton.update();
         this.reloadGameStateButton.update();
+        this.captureButton.update();
     }
 
     public onProductionBuildingSelected(unit: Unit) {
@@ -217,5 +225,13 @@ export class UI extends Phaser.Scene {
         if (this.endTurnButton) {
             this.endTurnButton.setVisible(isOurTurn());
         }
+    }
+
+    public enableCaptureButton() {
+        this.captureButton.setVisible(true);
+    }
+
+    public disableCaptureButton() {
+        this.captureButton.setVisible(false);
     }
 }

@@ -3,7 +3,7 @@ import { IEvent } from '../../common/event';
 import { logError, logInfo } from '../../common/log';
 import { Player } from './player';
 import { GameState } from './events/game-list';
-import { GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
+import { CaptureResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { GameError } from './error';
 import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
@@ -162,6 +162,7 @@ export class Game {
         for (const unit of this.units) {
             if (unit instanceof MovableUnit) {
                 unit.movementPoints = unit.maxMovementPoints;
+                unit.hasCommitedActions = false;
             }
         }
     }
@@ -195,6 +196,32 @@ export class Game {
         unit.y = lastPathEntry[1];
         unit.movementPoints -= path.length;
         this.broadcast(new MoveUnitResponse(unitId, clonePath, unit.movementPoints));
+    }
+
+    public captureBuilding(unitId: number, x: number, y: number) {
+        // @ts-ignore
+        const { unit } = this.getPlayerUnit(unitId) as MovableUnit;
+        const building = this.units.find(unit => unit.x === x && unit.y === y && unit instanceof Building) as Building;
+        if (building.player == unit.player) {
+            throw new GameError('Cannot capture own buildings');
+        }
+
+        if (!unit.canCapture) {
+            throw new GameError('Unit cannot capture');
+        }
+
+        const unitCaptureValue = Math.max(unit.health / 10, 1);
+        building.capturePoints -= unitCaptureValue;
+
+        if (building.capturePoints <= 0) {
+            building.player = unit.player;
+            building.capturePoints = 20;
+        }
+
+        unit.hasCommitedActions = true;
+        unit.movementPoints = 0;
+
+        this.broadcastGameState();
     }
 
     public buildUnit(buildingId: number, unitType: UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET | UnitType.ANTI_TANK | UnitType.APC | UnitType.HELICOPTER | UnitType.LANDER) {

@@ -37,6 +37,10 @@ export class Client {
                 case EventType.PURCHASE_UNIT_RESPONSE:
                     this.handlePurchaseUnitResponse(event as PurchaseUnitResponse);
                     break;
+                case EventType.CAPTURE_RESPONSE:
+                    this.handleGameStateChange((event as GameStateUpdate).game);
+                    // TODO
+                    break;
                 case EventType.ERROR:
                     logError('Received error from server:', (event as ErrorEvent).message);
                     break;

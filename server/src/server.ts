@@ -6,7 +6,7 @@ import { Client } from './client';
 import { EventType, IEvent } from '../../common/event';
 import { GameListRequest, GameListResponse } from '../../common/events/game-list';
 import { JoinGameRequest, PlayerJoinedEvent } from '../../common/events/join-game';
-import { EndTurn, MoveUnitRequest, ReloadGameState, StartGame } from '../../common/events/turn';
+import { EndTurn, MoveUnitRequest, ReloadGameState, StartGame, CaptureRequest } from '../../common/events/turn';
 import { GameError } from './error';
 import { ErrorEvent } from '../../common/events/error';
 import { PurchaseUnitRequest } from '../../common/events/unit-purchase';
@@ -44,11 +44,13 @@ export class Server {
                         case EventType.MOVE_UNIT_REQUEST:
                             await this.handleMoveUnitRequest(client, event as MoveUnitRequest);
                             break;
+                        case EventType.CAPTURE_REQUEST:
+                            await this.handleCaptureRequest(client, event as CaptureRequest);
+                            break;
                         case EventType.RELOAD_GAME_STATE:
                             await this.handleReloadGameState(client, event as ReloadGameState);
                             break;
                         case EventType.PURCHASE_UNIT_REQUEST:
-                        // TODO
                             await this.handlePurchaseUnitRequest(client, event as PurchaseUnitRequest);
                             break;
                         default:
@@ -121,6 +123,11 @@ export class Server {
     private async handleMoveUnitRequest(client: Client, event: MoveUnitRequest) {
         const game = this.getGameByClient(client);
         game?.moveUnit(event.unitId, event.x, event.y);
+    }
+
+    private async handleCaptureRequest(client: Client, event: CaptureRequest) {
+        const game = this.getGameByClient(client);
+        game?.captureBuilding(event.unitId, event.x, event.y)
     }
 
     private async handleReloadGameState(client: Client, event: ReloadGameState) {
