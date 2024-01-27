@@ -158,6 +158,8 @@ export class Ship extends MovableUnit {
 export abstract class Building extends Unit {
     public readonly income: number = 1000;
     public readonly canBuild!: UnitType[];
+    public maxCapturePoints = 20;
+    public capturePoints = 20;
 }
 
 export class City extends Building {

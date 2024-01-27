@@ -60,17 +60,31 @@ export class UI extends Phaser.Scene {
 
         // @ts-ignore Hack to make the camera position update properly
         this.cameras.main.preRender(1);
-
+        const information = []
+        
         // Render debug info
         if (state.game) {
-            const debugText = [
-                `Players: ${state.game.players.length}`,
-                ...state.game.players.map(player => `${player.name}: ${player.color} $${player.money}`),
-                `Current player: ${state.game.currentPlayer}`,
-                `Turn: ${state.game.turn}`,
-                state.selectedUnit ? `Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x}x${state.selectedUnit?.y} MP:${(state.selectedUnit as MovableUnit)?.movementPoints}` : 'Nothing selected',
-            ];
-            this.text.setText(debugText.join('\n'));
+            information.push(`Current player: ${state.game.currentPlayer}`)
+            information.push(`Turn: ${state.game.turn}`)
+
+            for (const player of state.game.players) {
+                information.push(`
+                    ${player.name}
+                    \$${player.money}
+                    Units: 1
+                    Buildings: 4
+
+                `)
+            }
+
+            // const debugText = [
+            //     `Players: ${state.game.players.length}`,
+            //     ...state.game.players.map(player => `${player.name}: ${player.color} $${player.money}`),
+            //     `Current player: ${state.game.currentPlayer}`,
+            //     `Turn: ${state.game.turn}`,
+            //     state.selectedUnit ? `Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x} ${state.selectedUnit?.y}` : 'Nothing selected',
+            // ];
+            this.text.setText(information.join('\n'));
             this.text.setPosition(
                 this.cameras.main.worldView.x + this.cameras.main.worldView.width - this.text.width - 10,
                 this.cameras.main.worldView.y + 10,
