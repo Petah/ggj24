@@ -323,6 +323,7 @@ export const UnitTypeMap: {
     [UnitType.SHIP]: Ship,
     [UnitType.JET]: Jet,
     [UnitType.HELICOPTER]: Helicopter,
+    [UnitType.TRANSPORT_COPTER]: TransportCopter,
     [UnitType.APC]: APC,
     [UnitType.ANTI_TANK]: AntiTank,
     [UnitType.LANDER]: Lander,
