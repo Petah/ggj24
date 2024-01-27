@@ -72,7 +72,10 @@ export class Client {
 
     public sendGameStateChange(gameState: GameState) {
         for (const callback of this.eventListeners[EventType.GAME_STATE_CHANGE]) {
+            console.log('Sending game state change', callback)
             callback(gameState);
         }
     }
 }
+
+export const client = new Client();
