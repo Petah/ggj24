@@ -13,6 +13,7 @@ export enum UnitType {
     JET = 'Jet',
     HELICOPTER = 'Helicopter',
     SHIP = 'Ship',
+    LANDER = 'Lander',
 }
 
 export enum PlayerColor {
@@ -35,7 +36,8 @@ export enum DamageType {
     MACHINE_GUN = 'machine gun',
     BAZOOKA = 'bazooka',
     TANK_CANNON = 'tank cannon',
-    ROCKETS = 'rockets',
+    GROUD_ROCKETS = 'rockets',
+    MISSILES = 'missiles',
     BOMBS = 'bombs',
 }
 
@@ -74,6 +76,8 @@ export abstract class MovableUnit extends Unit {
     public damageType?: DamageType;
     public armourType!: ArmourType;
     public canCapture = false;
+    public carryingCapacity = 0;
+    public carriedUnits: MovableUnit[] = [];
 }
 
 export class Infantry extends MovableUnit {
@@ -111,6 +115,7 @@ export class APC extends MovableUnit {
     public maxMovementPoints = 6;
     public movementType = MovementType.WHEELS;
     public armourType = ArmourType.LIGHT_VEHICLE;
+    public carryingCapacity = 1;
 }
 
 export class Helicopter extends MovableUnit {
@@ -118,58 +123,63 @@ export class Helicopter extends MovableUnit {
     public static readonly cost = 8000;
     public maxMovementPoints = 7;
     public movementType = MovementType.AIR;
-    public damageType = DamageType.ROCKETS;
+    public damageType = DamageType.GROUD_ROCKETS;
     public armourType = ArmourType.HELICOPTER;
 }
 
-export class Jet extends Unit {
+export class Jet extends MovableUnit {
     public readonly type = UnitType.JET;
-    public static readonly cost = 1000;
-    public maxMovementPoints = 6;
-    public movementPoints = 6;
-    public maxHealth = 5;
-    public health = 5;
+    public static readonly cost = 20000;
+    public maxMovementPoints = 9;
+    public movementType = MovementType.AIR;
+    public damageType = DamageType.GROUD_ROCKETS;
+    public armourType = ArmourType.PLANE;
 }
 
-export class Ship extends Unit {
+export class LANDER extends MovableUnit {
     public readonly type = UnitType.SHIP;
-    public static readonly cost = 1000;
-    public maxMovementPoints = 5;
-    public movementPoints = 5;
-    public maxHealth = 10;
-    public health = 10;
+    public static readonly cost = 15000;
+    public maxMovementPoints = 7;
+    public movementType = MovementType.SHIP;
+    public damageType = DamageType.TANK_CANNON;
+    public armourType = ArmourType.SHIP;
+    public carryingCapacity = 2
 }
 
-export abstract class Building extends Unit {
-    public readonly income!: number;
+export class Ship extends MovableUnit {
+    public readonly type = UnitType.SHIP;
+    public static readonly cost = 15000;
+    public maxMovementPoints = 7;
+    public movementType = MovementType.SHIP;
+    public damageType = DamageType.TANK_CANNON;
+    public armourType = ArmourType.SHIP;
+}
+
+export abstract class Building extends MovableUnit {
+    public readonly income: number = 1000;
     public readonly canBuild!: UnitType[];
     public currentlyBuilding: UnitType | undefined;
 }
 
 export class City extends Building {
     public readonly type = UnitType.CITY;
-    public readonly income = 1000;
 }
 
 export class Dock extends Building {
     public readonly type = UnitType.DOCK;
-    public readonly income = 1000;
-    public readonly canBuild = [UnitType.SHIP];
+    public readonly canBuild = [UnitType.LANDER, UnitType.SHIP];
 }
 
 export class Factory extends Building {
     public readonly type = UnitType.FACTORY;
-    public readonly income = 1000;
-    public readonly canBuild = [UnitType.TANK, UnitType.INFANTRY];
+    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK_INFANTRY, UnitType.APC, UnitType.TANK];
 }
 
 export class Airport extends Building {
     public readonly type = UnitType.AIRPORT;
-    public readonly income = 1000;
-    public readonly canBuild = [UnitType.JET];
+    public readonly canBuild = [UnitType.HELICOPTER, UnitType.JET];
 }
 
 export class HQ extends Building {
     public readonly type = UnitType.HQ;
-    public readonly income = 1000;
 }
