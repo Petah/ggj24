@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
-import { PlayerColor, Unit, UnitType, isBuilding, isMoveableUnit } from '../../../common/unit';
+import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { state } from '../state';
 import { UI } from './ui-scene';
 import { EndTurn, MoveUnitRequest, MoveUnitResponse } from '../../../common/events/turn';
@@ -168,7 +168,7 @@ export class InGame extends Phaser.Scene {
             const tileY = Math.floor(pointer.worldY / TILE_SIZE / TILE_SCALE);
             this.placeCursorAtPosition(tileX, tileY);
             const unitAtPosition = this.findObjectAtPosition(tileX, tileY);
-            if (unitAtPosition && this.isPlayersUnit(unitAtPosition)) {
+            if (unitAtPosition && this.isSelectable(unitAtPosition)) {
                 this.selectUnit(unitAtPosition);
             } else {
                 this.unselectUnit();
@@ -251,7 +251,7 @@ export class InGame extends Phaser.Scene {
     }
 
     onCursorPositionUpdate(tileX: number, tileY: number) {
-        const unit = this.findObjectAtPosition(tileX, tileY);
+        // const unit = this.findObjectAtPosition(tileX, tileY);
     }
 
     findObjectAtPosition(tileX: number, tileY: number) {
@@ -285,8 +285,18 @@ export class InGame extends Phaser.Scene {
         }
     }
 
+    private isSelectable(unit?: Unit) {
+        if (!unit) {
+            return false;
+        }
+        if (!this.isPlayersUnit(unit)) {
+            return false;
+        }
+        return isFactory(unit) || isMoveableUnit(unit);
+    }
+
     private selectUnit(unit?: Unit) {
-        if (!unit || !this.isPlayersUnit(unit)) {
+        if (!this.isSelectable(unit)) {
             return;
         }
         if (state.selectedUnit) {
