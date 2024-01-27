@@ -9,7 +9,7 @@ import { readFile } from 'fs/promises';
 import { GameMap } from './game-map';
 import { TileMap } from './tiled';
 import { TileType } from '../../common/events/game-list';
-import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, isMoveableUnit } from '../../common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, Ship, Tank, Unit, UnitType, getDamageAmount, isMoveableUnit } from '../../common/unit';
 import { TILE_SIZE } from '../../common/map';
 import { generateId } from './id';
 import { PurchaseUnitResponse } from '../../common/events/unit-purchase';
@@ -154,7 +154,7 @@ export class Game {
         for (const player of this.players) {
             const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
             const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
-            player.money = income;
+            player.money += income;
             logInfo('Player money', player.name, player.money);
         }
 
@@ -259,6 +259,40 @@ export class Game {
         this.units.push(newUnit);
         logInfo('Building unit', newUnit);
         player.client?.send(new PurchaseUnitResponse(newUnit.id, this.serialize()));
+        this.broadcastGameState();
+    }
+
+    public attackUnit(unitId: number, x: number, y: number) {
+        const { unit } = this.getPlayerUnit(unitId);
+        if (!(unit instanceof MovableUnit)) {
+            throw new GameError('Unit is not movable');
+        }
+        // @todo allow attacking with 0 if in range and has not made action
+        // if (unit.movementPoints <= 0) {
+        //     throw new GameError('Unit does not have enough movement points');
+        // }
+        const unitAtPosition = this.units.find(unit => unit.x === x && unit.y === y && isMoveableUnit(unit));
+        if (!unitAtPosition) {
+            throw new GameError('No unit at position');
+        }
+        if (unitAtPosition.player === unit.player) {
+            throw new GameError('Cannot attack own units');
+        }
+        if (!(unitAtPosition instanceof MovableUnit)) {
+            throw new GameError('Cannot attack buildings');
+        }
+        // if (unitAtPosition instanceof MovableUnit && unitAtPosition.movementPoints <= 0) {
+        //     throw new GameError('Unit cannot move');
+        // }
+        // if (unitAtPosition instanceof MovableUnit && unitAtPosition.hasCommitedActions) {
+        //     throw new GameError('Unit already commited actions');
+        // }
+        unit.movementPoints = 0;
+        unit.hasCommitedActions = true;
+        unitAtPosition.health -= getDamageAmount(unit, unitAtPosition);
+        if (unitAtPosition.health <= 0) {
+            this.units = this.units.filter(unit => unit.id !== unitAtPosition.id);
+        }
         this.broadcastGameState();
     }
 

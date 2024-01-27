@@ -50,6 +50,106 @@ export enum ArmourType {
     PLANE = "plane",
 }
 
+export function getDamageAmount(attackingUnit: MovableUnit, defendingUnit: MovableUnit): number {
+    return getDamageAmountBase(attackingUnit, defendingUnit) * (attackingUnit.health / attackingUnit.maxHealth);
+}
+
+export function getDamageAmountBase(attackingUnit: MovableUnit, defendingUnit: MovableUnit): number {
+    switch (attackingUnit.damageType) {
+        case DamageType.MACHINE_GUN:
+            switch (defendingUnit.armourType) {
+                case ArmourType.INFANTRY:
+                    return 70;
+                case ArmourType.LIGHT_VEHICLE:
+                    return 30;
+                case ArmourType.TANK:
+                case ArmourType.SHIP:
+                    return 5;
+                case ArmourType.HELICOPTER:
+                    return 40;
+                case ArmourType.PLANE:
+                    return 0;
+            }
+            break;
+        case DamageType.BAZOOKA:
+            switch (defendingUnit.armourType) {
+                case ArmourType.INFANTRY:
+                    return 90;
+                case ArmourType.LIGHT_VEHICLE:
+                    return 70;
+                case ArmourType.TANK:
+                case ArmourType.SHIP:
+                    return 40;
+                case ArmourType.HELICOPTER:
+                    return 80;
+                case ArmourType.PLANE:
+                    return 50;
+            }
+            break;
+        case DamageType.TANK_CANNON:
+            switch (defendingUnit.armourType) {
+                case ArmourType.INFANTRY:
+                    return 100;
+                case ArmourType.LIGHT_VEHICLE:
+                    return 80;
+                case ArmourType.TANK:
+                case ArmourType.SHIP:
+                    return 60;
+                case ArmourType.HELICOPTER:
+                    return 90;
+                case ArmourType.PLANE:
+                    return 70;
+            }
+            break;
+        case DamageType.GROUND_ROCKETS:
+            switch (defendingUnit.armourType) {
+                case ArmourType.INFANTRY:
+                    return 100;
+                case ArmourType.LIGHT_VEHICLE:
+                    return 90;
+                case ArmourType.TANK:
+                case ArmourType.SHIP:
+                    return 80;
+                case ArmourType.HELICOPTER:
+                    return 100;
+                case ArmourType.PLANE:
+                    return 90;
+            }
+            break;
+        case DamageType.MISSILES:
+            switch (defendingUnit.armourType) {
+                case ArmourType.INFANTRY:
+                    return 100;
+                case ArmourType.LIGHT_VEHICLE:
+                    return 100;
+                case ArmourType.TANK:
+                case ArmourType.SHIP:
+                    return 100;
+                case ArmourType.HELICOPTER:
+                    return 100;
+                case ArmourType.PLANE:
+                    return 100;
+            }
+            break;
+        case DamageType.BOMBS:
+            switch (defendingUnit.armourType) {
+                case ArmourType.INFANTRY:
+                    return 100;
+                case ArmourType.LIGHT_VEHICLE:
+                    return 100;
+                case ArmourType.TANK:
+                case ArmourType.SHIP:
+                    return 100;
+                case ArmourType.HELICOPTER:
+                    return 100;
+                case ArmourType.PLANE:
+                    return 100;
+            }
+            break;
+    }
+    return 50;
+}
+
 export const PlayerColors = [
     PlayerColor.RED,
     PlayerColor.BLUE,
@@ -84,7 +184,7 @@ export abstract class MovableUnit extends Unit {
 export class Infantry extends MovableUnit {
     public readonly type = UnitType.INFANTRY;
     public static readonly cost = 1000;
-    public maxMovementPoints = 3;
+    public maxMovementPoints = 100;
     public movementType = MovementType.INFANTRY;
     public damageType = DamageType.MACHINE_GUN;
     public armourType = ArmourType.INFANTRY;
