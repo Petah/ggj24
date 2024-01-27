@@ -175,7 +175,7 @@ export class UI extends Phaser.Scene {
             this.menuBackground.x,
             this.menuBackground.y,
             'bigCursor',
-            1
+            0
         ).setOrigin(0, 0);
     }
 
