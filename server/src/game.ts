@@ -129,9 +129,8 @@ export class Game {
             if (unit) {
                 this.units.push(unit);
             }
-
-            this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
         }
+        this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
 
         this.setupTurn();
     }
@@ -177,8 +176,7 @@ export class Game {
         if (unit.movementPoints <= 0) {
             throw new GameError('Unit does not have enough movement points');
         }
-        const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid);
-        console.log('path', path, unit);
+        const path = this.gameMap.finder.findPath(unit.x, unit.y, x, y, this.gameMap.grid.clone());
         // Remove first entry, which is the current position
         path.shift();
         if (path.length <= 0) {
