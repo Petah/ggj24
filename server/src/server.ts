@@ -107,6 +107,13 @@ export class Server {
 
     private async handleEndTurn(client: Client, event: EndTurn) {
         const game = this.getGameByClient(client);
+        const player = game?.players.find(p => p.client === client);
+        if (!player) {
+            throw new GameError('Player not found');
+        }
+        if (player !== game?.currentPlayer) {
+            throw new GameError('Not your turn');
+        }
         game?.endTurn();
         game.broadcastGameState();
     }
