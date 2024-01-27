@@ -227,6 +227,12 @@ export class UI extends Phaser.Scene {
         }
     }
 
+    public submitCapture() {
+        if (state.selectedUnit) {
+            client.send(new CaptureRequest(state.selectedUnit.id, state.selectedUnit.x, state.selectedUnit.y));
+        }
+    }
+
     public enableCaptureButton() {
         this.captureButton.setVisible(true);
     }

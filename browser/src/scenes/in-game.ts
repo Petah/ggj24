@@ -244,6 +244,10 @@ export class InGame extends Phaser.Scene {
                     }
                     break;
                 case 'c':
+                    if (this.isCaptureAvailable()) {
+                        this.ui.submitCapture();
+                    }
+                    break;
                 case ' ':
                     this.handleSelect(tileX, tileY);
                     break;
@@ -367,12 +371,7 @@ export class InGame extends Phaser.Scene {
         }
         this.selectedArrow.setPosition(unit.x * TILE_SIZE, (unit.y - 1) * TILE_SIZE);
         this.selectedArrow.setVisible(true);
-        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
-        if (
-            (unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
-            && building && building.player !== state.playerName
-        ) {
-            console.log('enable capture button in selectUnit', building);
+        if (this.isCaptureAvailable()) {
             this.ui.enableCaptureButton();
         } else {
             this.ui.disableCaptureButton();
@@ -443,6 +442,7 @@ export class InGame extends Phaser.Scene {
         }
         state.selectedUnit = undefined;
         this.selectedArrow.setVisible(false);
+        this.updateHighlight();
     }
 
     private getUnitSprite(unit: Unit) {
@@ -489,7 +489,6 @@ export class InGame extends Phaser.Scene {
                     existingSprite.setFrame(frame)
                 }
             } else {
-
                 const sprite = this.make.sprite({
                     x: unit.x * TILE_SIZE,
                     y: unit.y * TILE_SIZE,
@@ -558,6 +557,18 @@ export class InGame extends Phaser.Scene {
         }
     }
 
+    public isCaptureAvailable() {
+        const unit = state.selectedUnit;
+        if (!unit) return false
+        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
+        if ((unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
+        && (building && building?.player !== state.playerName)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     public handleMoveUnitResponse(event: MoveUnitResponse) {
         const unit = state.game?.units?.find(unit => unit.id === event.unitId);
         if (!isMoveableUnit(unit)) {
@@ -565,7 +576,7 @@ export class InGame extends Phaser.Scene {
         }
         unit.movementPoints = event.remainingMovementPoints;
         const sprite = this.getUnitSprite(unit);
-        if (unit.movementPoints === 0) {
+        if (unit.movementPoints === 0 && !this.isCaptureAvailable()) {
             this.unselectUnit();
         }
 
@@ -582,12 +593,10 @@ export class InGame extends Phaser.Scene {
             current: 0,
         }
 
-        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
-        if (isMoveableUnit(unit) 
-        && (((unit as MovableUnit).type == UnitType.INFANTRY) || (unit as MovableUnit).type == UnitType.ANTI_TANK)
-        && building?.player !== state.playerName) {
-            console.log('enable capture button in selectUnit');
+        if (this.isCaptureAvailable()) {
             this.ui.enableCaptureButton();
+        } else {
+            this.ui.disableCaptureButton();
         }
         console.log('this.moving', this.moving);
     }
