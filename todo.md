@@ -2,6 +2,9 @@ TODO:
 
 Moment cost, and prevent tank driving through mountains
 More sound
+ - aircraft
+ - tanks
+
 UI
 Win conditions
 Capture animation
