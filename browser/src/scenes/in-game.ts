@@ -1,10 +1,9 @@
 import Phaser from 'phaser';
-import { Client } from '../client';
+import { client } from '../client';
 import { GameState } from '../../../common/events/game-list';
-import { EndTurn, StartGame } from '../../../common/events/turn';
-import { GameButton } from '../button';
 import { TILE_SCALE, TILE_SIZE } from '../../../common/map';
 import { PlayerColor, UnitType } from '../../../common/unit';
+import { state } from '../state';
 
 const UnitsSprites = {
     [PlayerColor.NEUTRAL]: {
@@ -31,17 +30,14 @@ export class InGame extends Phaser.Scene {
     private unitLayer!: Phaser.GameObjects.Layer;
     private created: boolean = false;
 
-    private client: Client;
     private gameState!: GameState;
 
 
     constructor() {
         super('InGame');
 
-        this.client = new Client();
-
-        this.client.onGameStateChange((gameState: GameState) => {
-            this.gameState = gameState;
+        client.onGameStateChange((gameState: GameState) => {
+            state.game = gameState;
             this.updateGameState();
         });
 
@@ -119,7 +115,7 @@ export class InGame extends Phaser.Scene {
         //     }
 
         //     // this.placeCursorAtPosition(tileX, tileY);
-        //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, this.gameState.tiles?.[tileY]?.[tileX]);
+        //     console.log('Click', pointer.worldX, pointer.worldY, tileX, tileY, state.game.tiles?.[tileY]?.[tileX]);
         // });
 
         // this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
@@ -314,12 +310,12 @@ export class InGame extends Phaser.Scene {
     }
 
     private updateGameState() {
-        console.log(this.gameState, this.created);
-        if (!this.gameState || !this.created) {
+        console.log(state.game, this.created, state.game?.units);
+        if (!state.game || !this.created) {
             return;
         }
-        for (const unit of this.gameState?.units || []) {
-            const playerColor = this.gameState.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
+        for (const unit of state.game?.units || []) {
+            const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
             const frame = UnitsSprites[playerColor][unit.type] || 193;
             console.log('unit', unit, playerColor, frame);
             const sprite = this.make.sprite({

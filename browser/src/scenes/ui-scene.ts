@@ -1,35 +1,26 @@
-import { InGame } from "./in-game";
-import { Client } from '../client';
+import { InGame } from './in-game';
+import { client } from '../client';
 import { GameButton } from '../button';
 import { EndTurn, StartGame } from '../../../common/events/turn';
-import { GameState } from '../../../common/events/game-list';
+import { state } from '../state';
 
 export class UI extends Phaser.Scene {
 
     private text!: Phaser.GameObjects.Text;
-    private controls!: Phaser.Cameras.Controls.SmoothedKeyControl;
-
-    private client: Client;
-    private gameState!: GameState;
 
     private startGameButton!: GameButton;
     private endTurnButton!: GameButton;
 
     constructor() {
         super({ key: 'UI' });
-        this.client = new Client();
-
-        this.client.onGameStateChange((gameState: GameState) => {
-            this.gameState = gameState;
-        });
     }
 
     create() {
         this.startGameButton = new GameButton(this, 'Start Game', 900, 740, () => {
-            this.client.send(new StartGame());
+            client.send(new StartGame());
         });
         this.endTurnButton = new GameButton(this, 'End Turn', 900, 800, () => {
-            this.client.send(new EndTurn());
+            client.send(new EndTurn());
         });
         // this.cameras.main.setZoom(2);
 
@@ -50,7 +41,7 @@ export class UI extends Phaser.Scene {
     }
 
     resize (gameSize:any, baseSize:any, displaySize:any, resolution:any) {
-        console.log("resizing: " + baseSize)
+        console.log(`resizing: ${  baseSize}`)
 
         const width = baseSize.width;
         const height = baseSize.height;
@@ -66,11 +57,11 @@ export class UI extends Phaser.Scene {
         this.cameras.main.preRender(1);
 
         // Render debug info
-        if (this.gameState) {
+        if (state.game) {
             const debugText = [
-                `Players: ${this.gameState.players.length} - ${this.gameState.players.map(player => player.name).join(', ')}`,
-                `Current player: ${this.gameState.currentPlayer}`,
-                `Turn: ${this.gameState.turn}`,
+                `Players: ${state.game.players.length} - ${state.game.players.map(player => player.name).join(', ')}`,
+                `Current player: ${state.game.currentPlayer}`,
+                `Turn: ${state.game.turn}`,
             ];
             this.text.setText(debugText.join('\n'));
             this.text.setPosition(
@@ -89,6 +80,6 @@ const config = {
     width: 1920,
     height: 1080,
     physics: {  default: 'arcade' },
-    scene: [InGame, UI]
-}; 
+    scene: [InGame, UI],
+};
 
