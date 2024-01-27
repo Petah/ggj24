@@ -118,6 +118,7 @@ export class InGame extends Phaser.Scene {
     private steps!: Phaser.Sound.BaseSound;
     private jet!: Phaser.Sound.BaseSound;
     private helicopter?: Phaser.Sound.BaseSound;
+    private tank?: Phaser.Sound.BaseSound;
     private currentSound?: Phaser.Sound.BaseSound;
 
     constructor() {
@@ -139,6 +140,7 @@ export class InGame extends Phaser.Scene {
         this.load.audio('steps', ['assets/steps.ogg']);
         this.load.audio('jet', ['assets/jet.ogg']);
         this.load.audio('helicopter', ['assets/helicopter.ogg']);
+        this.load.audio('tank', ['assets/tank.ogg']);
     }
 
     create() {
@@ -333,6 +335,9 @@ export class InGame extends Phaser.Scene {
             loop: true,
         });
         this.helicopter = this.sound.add('helicopter', {
+            loop: true,
+        });
+        this.tank = this.sound.add('tank', {
             loop: true,
         });
 
@@ -721,6 +726,9 @@ export class InGame extends Phaser.Scene {
             case UnitType.HELICOPTER:
                 movementSpeed = 7;
                 break;
+            case UnitType.TANK:
+                movementSpeed = 5;
+                break;
             default:
                 movementSpeed = 4;
                 break;
@@ -746,6 +754,9 @@ export class InGame extends Phaser.Scene {
                 break;
             case UnitType.HELICOPTER:
                 this.currentSound = this.helicopter;
+                break;
+            case UnitType.TANK:
+                this.currentSound = this.tank;
                 break;
             default:
                 this.currentSound = undefined;

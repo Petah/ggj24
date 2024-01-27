@@ -2,7 +2,7 @@ TODO:
 
 Moment cost, and prevent tank driving through mountains
 More sound
- - tanks
+ - ships
 
 UI
 Win conditions
