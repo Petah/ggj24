@@ -133,7 +133,7 @@ export class Game {
         }
         this.gameMap = new GameMap(tileMap.width, tileMap.height, tiles);
 
-        this.setupTurn(true);
+        this.setupTurn(this.currentPlayer);
     }
 
     public endTurn() {
@@ -142,22 +142,19 @@ export class Game {
             this.turn++;
             this.currentPlayer = this.players[0];
             logInfo('New turn', this.turn, this.currentPlayer?.name)
-            this.setupTurn(true);
         } else {
             this.currentPlayer = this.players[currentPlayerIndex + 1];
             logInfo('Next player', this.currentPlayer?.name);
-            this.setupTurn(false);
         }
+        this.setupTurn(this.currentPlayer);
     }
 
-    private setupTurn(nextRound: boolean) {
+    private setupTurn(player: Player) {
         // Give players money
-        for (const player of this.players) {
-            const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
-            const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
-            player.money += income;
-            logInfo('Player money', player.name, player.money);
-        }
+        const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
+        const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
+        player.money += income;
+        logInfo('Player money', player.name, player.money);
 
         // Set movement points
         for (const unit of this.units) {
