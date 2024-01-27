@@ -5,11 +5,9 @@ More sound
  - ships
 
 UI
-Win conditions
 Capture animation
 Boats - movement
 Range attacks
-reset capture points walking off building
 fix map wrong tile
 boats on land
 Transport units

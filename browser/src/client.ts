@@ -70,6 +70,11 @@ export class Client {
     }
 
     private handleGameStateChange(gameState: GameState) {
+        const remainingPlayers = gameState.players.filter(player => !player.hasLost);
+        if (remainingPlayers.length === 1) {
+            state.winningPlayer = remainingPlayers[0].name;
+        }
+
         state.game = gameState;
         state.scene?.updateGameState();
     }

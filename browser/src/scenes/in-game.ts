@@ -596,6 +596,15 @@ export class InGame extends Phaser.Scene {
         if (!state.game || !this.created) {
             return;
         }
+
+        const player = state.game?.players?.find(player => player.name === state.playerName)
+        if (state.winningPlayer || (player && player.hasLost)) {
+            this.scene.start('EndGame')
+            // this.ui.scene.stop()
+            // this.scene.stop()
+            return
+        }
+
         this.ui.updateGameState();
 
         if (!isOurTurn()) {

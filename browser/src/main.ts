@@ -4,6 +4,7 @@ import { config } from './config';
 import { InGame } from './scenes/in-game';
 import { UI } from './scenes/ui-scene';
 import { Menu } from './scenes/menu';
+import { EndGame } from './scenes/end-game';
 
 new Phaser.Game({
     ...config,
@@ -11,5 +12,6 @@ new Phaser.Game({
         // Menu,
         InGame,
         UI,
+        EndGame
     ],
 });
