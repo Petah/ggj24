@@ -1,4 +1,3 @@
-import { UnitSprites } from './in-game';
 import { client } from '../client';
 import { GameButton } from '../button';
 import { PlayerColor, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
@@ -6,10 +5,51 @@ import { isOurTurn, state } from '../state';
 import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
 import { CaptureRequest, EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
 import { ucFirst } from '../../../common/util';
+import { Dialog } from '../dialog';
+import { formatNumber } from '../../../common/util';
+import { UnitSprites } from '../unit-sprites';
+
+const textConfig = {
+    font: '16px',
+    align: 'left',
+    shadow: {
+        offsetX: 1,
+        offsetY: 1,
+        color: '#000',
+        blur: 1,
+        stroke: true,
+        fill: true,
+    },
+};
+
+const unitInfo = {
+    [UnitType.TANK]: [
+        'Strong all round unit',
+        'Small range',
+    ],
+    [UnitType.INFANTRY]: [
+        'Can capture buildings',
+    ],
+    [UnitType.ANTI_TANK]: [
+        'Can capture buildings',
+        'Strong against tanks',
+    ],
+    [UnitType.ROCKET_TRUCK]: [
+        'Long range',
+    ],
+    [UnitType.JET]: [
+        'Can fly over sea',
+        'Fast',
+    ],
+    [UnitType.HELICOPTER]: [
+        'Can fly over sea',
+    ],
+}
 
 export class UI extends Phaser.Scene {
 
     private text!: Phaser.GameObjects.Text;
+    // private money!: Phaser.GameObjects.Text;
 
     private startGameButton!: GameButton;
     private endTurnButton!: GameButton;
@@ -20,45 +60,74 @@ export class UI extends Phaser.Scene {
     private captureButton!: GameButton;
     private purchasableUnitList!: UnitType[];
     private selectedPurchaseListIndex = 0;
+    private windowRed!: Dialog;
+    private windowBlue!: Dialog;
+    private avatarRed!: Phaser.GameObjects.Sprite;
+    private avatarBlue!: Phaser.GameObjects.Sprite;
+    private selectedUnitSprite!: Phaser.GameObjects.Sprite;
+    private selectedUnitName!: Phaser.GameObjects.Text;
+    private selectedUnitInfo!: Phaser.GameObjects.Text;
 
     constructor() {
         super({ key: 'UI' });
     }
 
     preload() {
-        this.load.image('button', 'assets/green_button00.png');
+        this.load.image('buttonGreen', 'assets/button-green.png');
+        this.load.image('dialog', 'assets/dialog.png');
+        this.load.image('avatarRed', 'assets/avatar-red.png');
+        this.load.image('avatarBlue', 'assets/avatar-blue.png');
+        this.load.image('avatarGreen', 'assets/avatar-green.png');
+        this.load.image('windowRed', 'assets/window-red.png');
+        this.load.image('windowBlue', 'assets/window-blue.png');
+        this.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
     }
 
     create() {
+        const screenWidth = this.cameras.main.worldView.width;
+        const screenHeight = this.cameras.main.worldView.height;
+
+        const sidebar = new Dialog(this, 'dialog', screenWidth - 300, 0, 300, screenHeight);
+        this.windowRed = new Dialog(this, 'windowRed', screenWidth - 280, 20, 260, 260);
+        this.windowBlue = new Dialog(this, 'windowBlue', screenWidth - 280, 20, 260, 260);
+        this.avatarRed = this.add.sprite(screenWidth - 225, 40, 'avatarRed').setScale(1.5).setOrigin(0, 0);
+        this.avatarBlue = this.add.sprite(screenWidth - 225, 40, 'avatarBlue').setScale(1.5).setOrigin(0, 0);
+
+        this.selectedUnitSprite = this.add.sprite(screenWidth - 100, 450, 'tiles2', UnitSprites[PlayerColor.RED][UnitType.TANK]).setScale(4).setOrigin(0);
+        this.selectedUnitName = this.add.text(screenWidth - 280, 480, 'Tank', {
+            ...textConfig,
+            font: '32px',
+        });
+        this.selectedUnitInfo = this.add.text(screenWidth - 280, 520, 'Strong all round unit', {
+            ...textConfig,
+            font: '16px',
+        });
+
         this.purchasableUnits = this.add.group();
-        this.startGameButton = new GameButton(this, 'Start Game', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 120, () => {
+        this.startGameButton = new GameButton(this, 'Start Game', screenWidth - 280, screenHeight - 70, () => {
             client.send(new StartGame());
         });
-        this.endTurnButton = new GameButton(this, 'End Turn', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 60, () => {
+        this.endTurnButton = new GameButton(this, 'End Turn', screenWidth - 280, screenHeight - 70, () => {
             client.send(new EndTurn());
         });
-        this.reloadGameStateButton = new GameButton(this, 'Reload Game State', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 180, () => {
-            client.send(new ReloadGameState());
-        });
-        this.captureButton = new GameButton(this, 'Capture', this.cameras.main.worldView.width - 200, this.cameras.main.worldView.height - 240, () => {
+        // this.reloadGameStateButton = new GameButton(this, 'Reload Game State', screenWidth - 400, screenHeight - 180, () => {
+        //     client.send(new ReloadGameState());
+        // });
+        this.captureButton = new GameButton(this, 'Capture', screenWidth - 280, screenHeight - 130, () => {
             if (state.selectedUnit) {
                 client.send(new CaptureRequest(state.selectedUnit.id, state.selectedUnit.x, state.selectedUnit.y));
             }
         });
-        this.captureButton.setVisible(false);
+        this.captureButton.setEnabled(false);
 
-        this.text = this.add.text(10, 10, '', {
-            font: '16px monospace',
-            align: 'right',
-            shadow: {
-                offsetX: 1,
-                offsetY: 1,
-                color: '#000',
-                blur: 1,
-                stroke: true,
-                fill: true,
-            },
+        this.text = this.add.text(screenWidth - 280, 300, '', {
+            ...textConfig,
+            font: '32px',
         });
+        // this.money = this.add.text(0, 0, '', {
+        //     ...textConfig,
+        //     font: '32px',
+        // });
 
         this.scale.on('resize', this.resize, this);
 
@@ -73,42 +142,57 @@ export class UI extends Phaser.Scene {
 
     }
 
-    update(delta: number) {
-        const information = []
+    update() {
+        if (!state.game) {
+            return;
+        }
+        const currentPlayer = state.game.players.find(player => player.name === state.game?.currentPlayer);
+        if (!currentPlayer) {
+            return;
+        }
+        // this.money.setText(`$ ${formatNumber(currentPlayer?.money)}`);
+        // this.positionInSidebar(this.money, 20, 20);
+
+        const information: string[] = [];
+        const selectedUnitInfo: string[] = [];
 
         // Render debug info
         if (state.game) {
-            information.push(`Current player: ${state.game.currentPlayer} ${ucFirst(state.game.players.find(player => player.name === state.game?.currentPlayer)?.color)}`)
-            information.push(`Turn: ${state.game.turn}`)
-            const unit = state.selectedUnit
+            const money = currentPlayer.money.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            information.push(`${currentPlayer.name}`)
+            information.push(`$ ${money}`)
+            information.push(`Units: ${state.game?.units?.filter(unit => isMoveableUnit(unit) && unit.player === currentPlayer.name)?.length}`)
+            information.push(`Buildings: ${state.game?.units?.filter(unit => isBuilding(unit) && unit.player === currentPlayer.name)?.length}`)
 
-            if (unit) {
-                information.push(`Selected unit: ${state.selectedUnit?.type} ${state.selectedUnit?.x}x${state.selectedUnit?.y} MP:${(state.selectedUnit as MovableUnit)?.movementPoints}`)
-
-            }
-
-            for (const player of state.game.players) {
-                information.push(`
-                    ${player.name}
-                    ${ucFirst(player.color)}
-                    $${player.money}
-                    Units: ${state.game?.units?.filter(unit => isMoveableUnit(unit) && unit.player === player.name)?.length}
-                    Buildings: ${state.game?.units?.filter(unit => isBuilding(unit) && unit.player === player.name)?.length}
-                `)
-            }
 
             this.text.setText(information.join('\n'));
-            this.text.setPosition(
-                this.cameras.main.worldView.x + this.cameras.main.worldView.width - this.text.width - 10,
-                this.cameras.main.worldView.y + 10,
-            );
+
+            if (state.selectedUnit) {
+                if (unitInfo[state.selectedUnit.type]) {
+                    selectedUnitInfo.push(...unitInfo[state.selectedUnit.type]);
+                }
+                this.selectedUnitSprite.setFrame(UnitSprites[currentPlayer.color][state.selectedUnit.type]).setVisible(true);
+                this.selectedUnitName.setText(state.selectedUnit.type).setVisible(true);
+                this.selectedUnitInfo.setText(selectedUnitInfo.join('\n')).setVisible(true);
+            } else {
+                this.selectedUnitSprite.setVisible(false);
+                this.selectedUnitName.setVisible(false);
+                this.selectedUnitInfo.setVisible(false);
+            }
         }
 
         // Render UI
         this.startGameButton.update();
         this.endTurnButton.update();
-        this.reloadGameStateButton.update();
+        // this.reloadGameStateButton.update();
         this.captureButton.update();
+    }
+
+    private positionInSidebar(gameObject: Phaser.GameObjects.Sprite | Phaser.GameObjects.Text, x: number, y: number) {
+        gameObject.setPosition(
+            this.cameras.main.worldView.x + this.cameras.main.worldView.width - 300 + x,
+            this.cameras.main.worldView.y + y,
+        );
     }
 
     public onProductionBuildingSelected(unit: Unit) {
@@ -143,7 +227,7 @@ export class UI extends Phaser.Scene {
             tempSprite.setOrigin(0, 0);
 
             // @ts-ignore
-            let cost: number = UnitTypeMap[purchasableUnit]?.cost;
+            const cost: number = UnitTypeMap[purchasableUnit]?.cost;
 
             const unitNameText = this.add.text(
                 x + 32,
@@ -219,11 +303,15 @@ export class UI extends Phaser.Scene {
     }
 
     public updateGameState() {
-        if (this.startGameButton) {
-            this.startGameButton.setVisible(!state.game?.started);
-        }
-        if (this.endTurnButton) {
-            this.endTurnButton.setVisible(isOurTurn());
+        this.startGameButton?.setVisible(!state.game?.started);
+        this.endTurnButton?.setEnabled(isOurTurn());
+        const currentPlayer = state.game?.players.find(player => player.name === state.game?.currentPlayer);
+        console.log(currentPlayer);
+        if (currentPlayer) {
+            this.windowRed?.setVisible(currentPlayer.color === PlayerColor.RED);
+            this.windowBlue?.setVisible(currentPlayer.color === PlayerColor.BLUE);
+            this.avatarRed?.setVisible(currentPlayer.color === PlayerColor.RED);
+            this.avatarBlue?.setVisible(currentPlayer.color === PlayerColor.BLUE);
         }
     }
 
@@ -235,13 +323,13 @@ export class UI extends Phaser.Scene {
 
     public enableCaptureButton() {
         if (this.captureButton) {
-            this.captureButton.setVisible(true);
+            this.captureButton.setEnabled(true);
         }
     }
 
     public disableCaptureButton() {
         if (this.captureButton) {
-            this.captureButton.setVisible(false);
+            this.captureButton.setEnabled(false);
         }
     }
 }
