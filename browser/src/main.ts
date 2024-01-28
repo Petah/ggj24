@@ -12,6 +12,6 @@ new Phaser.Game({
         // Menu,
         InGame,
         UI,
-        EndGame
+        EndGame,
     ],
 });

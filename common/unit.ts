@@ -303,7 +303,7 @@ export class Dock extends Building {
 
 export class Factory extends Building {
     public readonly type = UnitType.FACTORY;
-    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.APC, UnitType.TANK, UnitType.ROCKET_TRUCK, UnitType.HELICOPTER, UnitType.JET];
+    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.TANK, UnitType.ROCKET_TRUCK];
 }
 
 export class Airport extends Building {
