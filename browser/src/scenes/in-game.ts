@@ -604,7 +604,7 @@ export class InGame extends Phaser.Scene {
     }
 
     private canUnitAttack(unit: Unit, x: number, y: number) {
-        if (!isMoveableUnit(unit)) {
+        if (!isMoveableUnit(unit) || unit.hasCommittedActions) {
             return false;
         }
         if (unit.type == UnitType.ROCKET_TRUCK && (unit as MovableUnit).movementPoints != (unit as MovableUnit).maxMovementPoints) {
