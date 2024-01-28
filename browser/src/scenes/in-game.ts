@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SIZE, getPathFinder } from '../../../common/map';
-import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
@@ -607,6 +607,10 @@ export class InGame extends Phaser.Scene {
         if (!isMoveableUnit(unit)) {
             return false;
         }
+        if (unit.type == UnitType.ROCKET_TRUCK && (unit as MovableUnit).movementPoints != (unit as MovableUnit).maxMovementPoints) {
+            return false;
+        }
+
         const enemyUnit = state.game?.units?.find(unit => unit.x === x && unit.y === y && !this.isPlayersUnit(unit) && isMoveableUnit(unit));
         if (!enemyUnit || (unit.type == UnitType.ROCKET_TRUCK) && (enemyUnit.type == UnitType.JET || enemyUnit.type == UnitType.HELICOPTER || enemyUnit.type == UnitType.TRANSPORT)) {
             return false;
