@@ -26,5 +26,6 @@ export class Dialog {
 
     public setVisible(visible: boolean) {
         this.nineslice.setVisible(visible);
+        return this;
     }
 }

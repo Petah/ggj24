@@ -44,6 +44,8 @@ export class InGame extends Phaser.Scene {
     private jet!: Phaser.Sound.BaseSound;
     private helicopter?: Phaser.Sound.BaseSound;
     private tank?: Phaser.Sound.BaseSound;
+    private tankShot?: Phaser.Sound.BaseSound;
+    private machineGun?: Phaser.Sound.BaseSound;
     private currentSound?: Phaser.Sound.BaseSound;
     private backgroundMusic?: Phaser.Sound.BaseSound;
 
@@ -68,6 +70,8 @@ export class InGame extends Phaser.Scene {
         this.load.audio('helicopter', ['assets/helicopter.ogg']);
         this.load.audio('tank', ['assets/tank.ogg']);
         this.load.audio('backgroundMusic', ['assets/country-rock.mp3']);
+        this.load.audio('tankShot', ['assets/tank-shot.ogg']);
+        this.load.audio('machineGun', ['assets/machine-gun.ogg']);
     }
 
     create() {
@@ -296,9 +300,15 @@ export class InGame extends Phaser.Scene {
         this.tank = this.sound.add('tank', {
             loop: true,
         });
+        this.tankShot = this.sound.add('tankShot', {
+            loop: false,
+        });
+        this.machineGun = this.sound.add('machineGun', {
+            loop: false,
+        });
         this.backgroundMusic = this.sound.add('backgroundMusic', {
             loop: true,
-            volume: 0.1,
+            volume: 0.05,
         });
         this.backgroundMusic.play();
 

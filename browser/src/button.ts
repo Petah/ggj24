@@ -47,11 +47,13 @@ export class GameButton {
     public setVisible(visible: boolean) {
         this.nineSlice.setVisible(visible);
         this.textObject.setVisible(visible);
+        return this;
     }
 
     public setEnabled(enabled: boolean) {
         this.nineSlice.setAlpha(enabled ? 1 : 0.5);
         this.textObject.setAlpha(enabled ? 1 : 0.5);
         this.nineSlice.setInteractive(enabled);
+        return this;
     }
 }

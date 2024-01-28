@@ -89,19 +89,19 @@ export class UI extends Phaser.Scene {
 
         const sidebar = new Dialog(this, 'dialog', screenWidth - 300, 0, 300, screenHeight);
         this.windowRed = new Dialog(this, 'windowRed', screenWidth - 280, 20, 260, 260);
-        this.windowBlue = new Dialog(this, 'windowBlue', screenWidth - 280, 20, 260, 260);
+        this.windowBlue = new Dialog(this, 'windowBlue', screenWidth - 280, 20, 260, 260).setVisible(false);
         this.avatarRed = this.add.sprite(screenWidth - 225, 40, 'avatarRed').setScale(1.5).setOrigin(0, 0);
-        this.avatarBlue = this.add.sprite(screenWidth - 225, 40, 'avatarBlue').setScale(1.5).setOrigin(0, 0);
+        this.avatarBlue = this.add.sprite(screenWidth - 225, 40, 'avatarBlue').setScale(1.5).setOrigin(0, 0).setVisible(false);
 
-        this.selectedUnitSprite = this.add.sprite(screenWidth - 100, 450, 'tiles2', UnitSprites[PlayerColor.RED][UnitType.TANK]).setScale(4).setOrigin(0);
+        this.selectedUnitSprite = this.add.sprite(screenWidth - 100, 450, 'tiles2', UnitSprites[PlayerColor.RED][UnitType.TANK]).setScale(4).setOrigin(0).setVisible(false);
         this.selectedUnitName = this.add.text(screenWidth - 280, 480, 'Tank', {
             ...textConfig,
             font: '32px',
-        });
+        }).setVisible(false);
         this.selectedUnitInfo = this.add.text(screenWidth - 280, 520, 'Strong all round unit', {
             ...textConfig,
             font: '16px',
-        });
+        }).setVisible(false);
 
         this.purchasableUnits = this.add.group();
         this.startGameButton = new GameButton(this, 'Start Game', screenWidth - 280, screenHeight - 70, () => {
@@ -304,9 +304,9 @@ export class UI extends Phaser.Scene {
 
     public updateGameState() {
         this.startGameButton?.setVisible(!state.game?.started);
-        this.endTurnButton?.setEnabled(isOurTurn());
+        this.endTurnButton?.setEnabled(isOurTurn()).setVisible(!!state.game?.started);
+        this.captureButton?.setVisible(!!state.game?.started);
         const currentPlayer = state.game?.players.find(player => player.name === state.game?.currentPlayer);
-        console.log(currentPlayer);
         if (currentPlayer) {
             this.windowRed?.setVisible(currentPlayer.color === PlayerColor.RED);
             this.windowBlue?.setVisible(currentPlayer.color === PlayerColor.BLUE);
