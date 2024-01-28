@@ -85,7 +85,7 @@ export class Client {
     }
 
     private handleAttackUnitResponse(event: AttackUnitResponse) {
-        state.scene?.explode(event.x, event.y);
+        state.scene?.explode(event.x, event.y, event.attackingUnitType);
     }
 }
 

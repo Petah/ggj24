@@ -1,4 +1,5 @@
 import { EventType, IEvent } from '../event';
+import { UnitType } from '../unit';
 import { GameState } from './game-list';
 
 export class StartGame implements IEvent {
@@ -50,5 +51,5 @@ export class AttackUnitRequest implements IEvent {
 
 export class AttackUnitResponse implements IEvent {
     public type = EventType.ATTACK_UNIT_RESPONSE;
-    constructor(public x: number, public y: number) { }
+    constructor(public x: number, public y: number, public attackingUnitType: UnitType) { }
 }

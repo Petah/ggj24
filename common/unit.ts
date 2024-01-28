@@ -190,7 +190,7 @@ export abstract class MovableUnit extends Unit {
 export class Infantry extends MovableUnit {
     public readonly type = UnitType.INFANTRY;
     public static readonly cost = 1000;
-    public maxMovementPoints = 3;
+    public maxMovementPoints = 30;
     public movementType = MovementType.INFANTRY;
     public damageType = DamageType.MACHINE_GUN;
     public armourType = ArmourType.INFANTRY;

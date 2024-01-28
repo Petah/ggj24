@@ -152,19 +152,6 @@ export class InGame extends Phaser.Scene {
                         const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
                         if (this.canUnitAttack(state.selectedUnit, tileX, tileY)) {
                             client.send(new AttackUnitRequest(state.selectedUnit.id, tileX, tileY));
-                            switch (state.selectedUnit.type) {
-                                case UnitType.TANK:
-                                case UnitType.ROCKET_TRUCK:
-                                case UnitType.JET:
-                                    this.tankShot?.play();
-                                    break;
-                                case UnitType.APC:
-                                case UnitType.INFANTRY:
-                                case UnitType.ANTI_TANK:
-                                case UnitType.HELICOPTER:
-                                    this.machineGun?.play();
-                                    break;
-                            }
                         } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY, true, finder, grid)) {
                             this.placeCursorAtPosition(tileX, tileY);
                             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));
@@ -839,7 +826,7 @@ export class InGame extends Phaser.Scene {
         }
     }
 
-    public explode(x: number, y: number) {
+    public explode(x: number, y: number, attackingUnitType: UnitType) {
         const explosion = this.make.sprite({
             x: x * TILE_SIZE,
             y: y * TILE_SIZE,
@@ -851,6 +838,20 @@ export class InGame extends Phaser.Scene {
             explosion.destroy();
         });
         this.cursorLayer.add(explosion);
+
+        switch (attackingUnitType) {
+            case UnitType.TANK:
+            case UnitType.ROCKET_TRUCK:
+            case UnitType.JET:
+                this.tankShot?.play();
+                break;
+            case UnitType.APC:
+            case UnitType.INFANTRY:
+            case UnitType.ANTI_TANK:
+            case UnitType.HELICOPTER:
+                this.machineGun?.play();
+                break;
+        }
     }
 
     public playCaptureAnimation() {

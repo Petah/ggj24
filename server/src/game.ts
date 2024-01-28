@@ -331,7 +331,7 @@ export class Game {
         if (unitAtPosition.health <= 0) {
             this.units = this.units.filter(unit => unit.id !== unitAtPosition.id);
         }
-        this.broadcast(new AttackUnitResponse(unitAtPosition.x, unitAtPosition.y));
+        this.broadcast(new AttackUnitResponse(unitAtPosition.x, unitAtPosition.y, unit.type));
         this.broadcastGameState();
     }
 
