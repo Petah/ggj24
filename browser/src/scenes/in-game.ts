@@ -81,7 +81,8 @@ export class InGame extends Phaser.Scene {
         this.scene.launch('UI')
         this.ui = this.scene.manager.getScene('UI') as UI;
 
-        // create the Tilemap
+        this.add.tileSprite(-5000, -5000, 10000, 10000, 'tiles2', 37).setOrigin(0, 0);
+
         const map = this.make.tilemap({ key: 'map' })
         const tilesetName = map.tilesets[0].name
         // add the tileset image we are using
@@ -91,7 +92,9 @@ export class InGame extends Phaser.Scene {
         map.createLayer('Road', tileset)
         map.createLayer('Mountains', tileset)
         map.createLayer('Trees', tileset)
-        this.cameras.main.setZoom(2).setScroll(-300, -200);
+        this.cameras.main.setZoom(2).setScroll(map.widthInPixels / 2 - (window.innerWidth - 150) / 2, map.heightInPixels / 2 - window.innerHeight / 2);
+            // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
+
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
             if (deltaY > 0) {
@@ -127,7 +130,7 @@ export class InGame extends Phaser.Scene {
             worldY: number;
             button: number;
         }) => {
-            this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
+            // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
             if (!isOurTurn()) {
                 return;
             }
@@ -149,6 +152,19 @@ export class InGame extends Phaser.Scene {
                         const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
                         if (this.canUnitAttack(state.selectedUnit, tileX, tileY)) {
                             client.send(new AttackUnitRequest(state.selectedUnit.id, tileX, tileY));
+                            switch (state.selectedUnit.type) {
+                                case UnitType.TANK:
+                                case UnitType.ROCKET_TRUCK:
+                                case UnitType.JET:
+                                    this.tankShot?.play();
+                                    break;
+                                case UnitType.APC:
+                                case UnitType.INFANTRY:
+                                case UnitType.ANTI_TANK:
+                                case UnitType.HELICOPTER:
+                                    this.machineGun?.play();
+                                    break;
+                            }
                         } else if (this.canUnitMoveTo(state.selectedUnit, tileX, tileY, true, finder, grid)) {
                             this.placeCursorAtPosition(tileX, tileY);
                             client.send(new MoveUnitRequest(state.selectedUnit.id, tileX, tileY));

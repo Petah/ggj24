@@ -36,6 +36,8 @@ const unitInfo = {
     ],
     [UnitType.ROCKET_TRUCK]: [
         'Long range',
+        'Can\'t move and fire',
+        'Can\'t shoot air',
     ],
     [UnitType.JET]: [
         'Can fly over sea',
