@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { client } from '../client';
 import { TILE_SIZE, getPathFinder } from '../../../common/map';
-import { PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
+import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
 import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
@@ -21,7 +21,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 0,
         [UnitType.JET]: 0,
         [UnitType.HELICOPTER]: 0,
-        [UnitType.TRANSPORT_COPTER]: 0,
+        [UnitType.TRANSPORT]: 0,
         [UnitType.APC]: 0,
         [UnitType.ANTI_TANK]: 0,
         [UnitType.LANDER]: 0,
@@ -38,7 +38,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 158,
         [UnitType.JET]: 154,
         [UnitType.HELICOPTER]: 155,
-        [UnitType.TRANSPORT_COPTER]: 156,
+        [UnitType.TRANSPORT]: 156,
         [UnitType.APC]: 150,
         [UnitType.ANTI_TANK]: 161,
         [UnitType.LANDER]: 157,
@@ -53,12 +53,12 @@ export const UnitSprites = {
         [UnitType.DOCK]: 48,
         [UnitType.TANK]: 134,
         [UnitType.SHIP]: 140,
-        [UnitType.JET]: 154,
-        [UnitType.HELICOPTER]: 155,
-        [UnitType.TRANSPORT_COPTER]: 156,
-        [UnitType.APC]: 150,
-        [UnitType.ANTI_TANK]: 161,
-        [UnitType.LANDER]: 157,
+        [UnitType.JET]: 136,
+        [UnitType.HELICOPTER]: 137,
+        [UnitType.TRANSPORT]: 138,
+        [UnitType.APC]: 132,
+        [UnitType.ANTI_TANK]: 143,
+        [UnitType.LANDER]: 139,
         [UnitType.ROCKET_TRUCK]: 135,
     },
     [PlayerColor.GREEN]: {
@@ -72,7 +72,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 122,
         [UnitType.JET]: 118,
         [UnitType.HELICOPTER]: 119,
-        [UnitType.TRANSPORT_COPTER]: 120,
+        [UnitType.TRANSPORT]: 120,
         [UnitType.APC]: 114,
         [UnitType.ANTI_TANK]: 125,
         [UnitType.LANDER]: 121,
@@ -89,7 +89,7 @@ export const UnitSprites = {
         [UnitType.SHIP]: 176,
         [UnitType.JET]: 172,
         [UnitType.HELICOPTER]: 173,
-        [UnitType.TRANSPORT_COPTER]: 174,
+        [UnitType.TRANSPORT]: 174,
         [UnitType.APC]: 168,
         [UnitType.ANTI_TANK]: 179,
         [UnitType.LANDER]: 175,
@@ -133,6 +133,7 @@ export class InGame extends Phaser.Scene {
     private helicopter?: Phaser.Sound.BaseSound;
     private tank?: Phaser.Sound.BaseSound;
     private currentSound?: Phaser.Sound.BaseSound;
+    private backgroundMusic?: Phaser.Sound.BaseSound;
 
     constructor() {
         super('InGame');
@@ -154,6 +155,7 @@ export class InGame extends Phaser.Scene {
         this.load.audio('jet', ['assets/jet.ogg']);
         this.load.audio('helicopter', ['assets/helicopter.ogg']);
         this.load.audio('tank', ['assets/tank.ogg']);
+        this.load.audio('backgroundMusic', ['assets/country-rock.mp3']);
     }
 
     create() {
@@ -381,6 +383,11 @@ export class InGame extends Phaser.Scene {
         this.tank = this.sound.add('tank', {
             loop: true,
         });
+        this.backgroundMusic = this.sound.add('backgroundMusic', {
+            loop: true,
+            volume: 0.1,
+        });
+        this.backgroundMusic.play();
 
         this.created = true;
         this.updateGameState();
@@ -392,7 +399,7 @@ export class InGame extends Phaser.Scene {
         const buildingAtPosition = state.game?.units?.find(unit => unit.x === tileX && unit.y === tileY && isBuilding(unit));
 
         if (isMoveableUnit(this.hoveringUnit)) {
-            const health = Math.round(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10);
+            const health = Math.round(Math.max(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10, 1));
             this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
             this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
         } else {
@@ -441,7 +448,7 @@ export class InGame extends Phaser.Scene {
     }
 
     onCursorPositionUpdate(tileX: number, tileY: number) {
-
+        // this.updateHover(tileX, tileY);
     }
 
     findObjectAtPosition(tileX: number, tileY: number) {
@@ -597,11 +604,15 @@ export class InGame extends Phaser.Scene {
     }
 
     private canUnitAttack(unit: Unit, x: number, y: number) {
-        if (!isMoveableUnit(unit)) {
+        if (!isMoveableUnit(unit) || unit.hasCommittedActions) {
             return false;
         }
+        if (unit.type == UnitType.ROCKET_TRUCK && (unit as MovableUnit).movementPoints != (unit as MovableUnit).maxMovementPoints) {
+            return false;
+        }
+
         const enemyUnit = state.game?.units?.find(unit => unit.x === x && unit.y === y && !this.isPlayersUnit(unit) && isMoveableUnit(unit));
-        if (!enemyUnit) {
+        if (!enemyUnit || (unit.type == UnitType.ROCKET_TRUCK) && (enemyUnit.type == UnitType.JET || enemyUnit.type == UnitType.HELICOPTER || enemyUnit.type == UnitType.TRANSPORT)) {
             return false;
         }
         const distance = Math.sqrt(Math.pow(unit.x - x, 2) + Math.pow(unit.y - y, 2));

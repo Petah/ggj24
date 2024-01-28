@@ -12,7 +12,7 @@ export enum UnitType {
     TANK = 'Tank',
     JET = 'Jet',
     HELICOPTER = 'Helicopter',
-    TRANSPORT_COPTER = 'Transport Copter',
+    TRANSPORT = 'Transport',
     SHIP = 'Ship',
     LANDER = 'Lander',
     ROCKET_TRUCK = 'Rocket Truck',
@@ -76,14 +76,14 @@ export function getDamageAmountBase(attackingUnit: MovableUnit, defendingUnit: M
         case DamageType.BAZOOKA:
             switch (defendingUnit.armourType) {
                 case ArmourType.INFANTRY:
-                    return 90;
+                    return 40;
                 case ArmourType.LIGHT_VEHICLE:
-                    return 70;
+                    return 80;
                 case ArmourType.TANK:
                 case ArmourType.SHIP:
-                    return 40;
+                    return 60;
                 case ArmourType.HELICOPTER:
-                    return 80;
+                    return 60;
                 case ArmourType.PLANE:
                     return 50;
             }
@@ -98,9 +98,9 @@ export function getDamageAmountBase(attackingUnit: MovableUnit, defendingUnit: M
                 case ArmourType.SHIP:
                     return 60;
                 case ArmourType.HELICOPTER:
-                    return 90;
+                    return 0;
                 case ArmourType.PLANE:
-                    return 70;
+                    return 0;
             }
             break;
         case DamageType.GROUND_ROCKETS:
@@ -111,11 +111,11 @@ export function getDamageAmountBase(attackingUnit: MovableUnit, defendingUnit: M
                     return 90;
                 case ArmourType.TANK:
                 case ArmourType.SHIP:
-                    return 80;
+                    return 60;
                 case ArmourType.HELICOPTER:
-                    return 100;
+                    return 80;
                 case ArmourType.PLANE:
-                    return 90;
+                    return 60;
             }
             break;
         case DamageType.MISSILES:
@@ -143,9 +143,9 @@ export function getDamageAmountBase(attackingUnit: MovableUnit, defendingUnit: M
                 case ArmourType.SHIP:
                     return 100;
                 case ArmourType.HELICOPTER:
-                    return 100;
+                    return 0;
                 case ArmourType.PLANE:
-                    return 100;
+                    return 0;
             }
             break;
     }
@@ -201,7 +201,7 @@ export class Infantry extends MovableUnit {
 export class AntiTank extends MovableUnit {
     public readonly type = UnitType.ANTI_TANK;
     public static readonly cost = 3000;
-    public maxMovementPoints = 2;
+    public maxMovementPoints = 3;
     public movementType = MovementType.INFANTRY;
     public damageType = DamageType.BAZOOKA;
     public armourType = ArmourType.INFANTRY;
@@ -248,8 +248,8 @@ export class Helicopter extends MovableUnit {
     public armourType = ArmourType.HELICOPTER;
 }
 
-export class TransportCopter extends MovableUnit {
-    public readonly type = UnitType.TRANSPORT_COPTER;
+export class Transport extends MovableUnit {
+    public readonly type = UnitType.TRANSPORT;
     public static readonly cost = 5000;
     public maxMovementPoints = 6;
     public movementType = MovementType.AIR;
@@ -308,7 +308,7 @@ export class Factory extends Building {
 
 export class Airport extends Building {
     public readonly type = UnitType.AIRPORT;
-    public readonly canBuild = [UnitType.HELICOPTER, UnitType.TRANSPORT_COPTER, UnitType.JET];
+    public readonly canBuild = [UnitType.HELICOPTER, UnitType.TRANSPORT, UnitType.JET];
 }
 
 export class HQ extends Building {
@@ -323,7 +323,7 @@ export const UnitTypeMap: {
     [UnitType.SHIP]: Ship,
     [UnitType.JET]: Jet,
     [UnitType.HELICOPTER]: Helicopter,
-    [UnitType.TRANSPORT_COPTER]: TransportCopter,
+    [UnitType.TRANSPORT]: Transport,
     [UnitType.APC]: APC,
     [UnitType.ANTI_TANK]: AntiTank,
     [UnitType.LANDER]: Lander,
