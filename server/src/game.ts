@@ -3,7 +3,7 @@ import { IEvent } from '../../common/event';
 import { logError, logInfo } from '../../common/log';
 import { Player } from './player';
 import { GameState } from './events/game-list';
-import { AttackUnitResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
+import { AttackUnitResponse, CaptureResponse, GameStateUpdate, MoveUnitResponse } from '../../common/events/turn';
 import { GameError } from './error';
 import { readFile } from 'fs/promises';
 import { TileMap } from './tiled';
@@ -260,6 +260,7 @@ export class Game {
         unit.hasCommittedActions = true;
         unit.movementPoints = 0;
 
+        this.broadcast(new CaptureResponse(building.x, building.y))
         this.broadcastGameState();
     }
 
@@ -292,6 +293,7 @@ export class Game {
         }
         player.money -= unitsAvailable[unitType].cost;
         const newUnit = new unitsAvailable[unitType](generateId(), building.x, building.y, player.name);
+        newUnit.hasCommittedActions = true;
         this.units.push(newUnit);
         logInfo('Building unit', newUnit);
         player.client?.send(new PurchaseUnitResponse(newUnit.id, this.serialize()));
