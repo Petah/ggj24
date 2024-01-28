@@ -784,7 +784,9 @@ export class InGame extends Phaser.Scene {
         }
         unit.movementPoints = event.remainingMovementPoints;
         const sprite = this.getUnitSprite(unit);
-        if (unit.movementPoints === 0 && !this.isCaptureAvailable()) {
+        const end = event.path[event.path.length - 1];
+        const buildingAtEnd = state.game?.units?.find(unit => unit.x === end[0] && unit.y === end[1] && isBuilding(unit));
+        if (unit.movementPoints === 0 && !buildingAtEnd) {
             this.unselectUnit();
         }
 
