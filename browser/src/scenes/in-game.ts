@@ -404,6 +404,7 @@ export class InGame extends Phaser.Scene {
         const buildingAtPosition = state.game?.units?.find(unit => unit.x === tileX && unit.y === tileY && isBuilding(unit));
 
         if (isMoveableUnit(this.hoveringUnit)) {
+            // @ts-ignore
             const health = Math.round(Math.max(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10, 1));
             this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
             this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
@@ -460,6 +461,7 @@ export class InGame extends Phaser.Scene {
         const units = [];
         for (const unit of state.game?.units || []) {
             if (unit.x === tileX && unit.y === tileY) {
+                // @ts-ignore
                 units.push(unit);
             }
         }
@@ -486,6 +488,7 @@ export class InGame extends Phaser.Scene {
     private handleSelect(tileX: number, tileY: number) {
         const unit = this.findObjectAtPosition(tileX, tileY)
         if (state.selectedUnit) {
+            // @ts-ignore
             if (this.isSelectable(unit) && unit.id !== state.selectedUnit.id) {
                 this.selectUnit(unit);
                 return;
@@ -734,7 +737,7 @@ export class InGame extends Phaser.Scene {
                         key: 'fog',
                         origin: 0,
                     }, false);
-                    row.push(sprite);
+                    // row.push(sprite);
                     this.fogLayer.add(sprite);
                 }
                 this.fogSprites.push(row);
@@ -785,7 +788,7 @@ export class InGame extends Phaser.Scene {
     public isCaptureAvailable(unit?: Unit) {
         unit = unit || state.selectedUnit;
         if (!unit) return false
-        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
+        const building = state.game?.units?.find(u => u.x === unit!.x && u.y === unit!.y && isBuilding(u));
         if ((unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
             && (building && building?.player !== state.playerName)) {
             return true;
@@ -801,8 +804,9 @@ export class InGame extends Phaser.Scene {
         }
         unit.movementPoints = event.remainingMovementPoints;
         const sprite = this.getUnitSprite(unit);
-        if (unit.movementPoints === 0 && !this.isCaptureAvailable(unit)) {
-            console.log('no more movement points');
+        const end = event.path[event.path.length - 1];
+        const buildingAtEnd = state.game?.units?.find(unit => unit.x === end[0] && unit.y === end[1] && isBuilding(unit));
+        if (unit.movementPoints === 0 && !buildingAtEnd) {
             this.unselectUnit();
         }
 
