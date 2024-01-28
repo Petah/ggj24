@@ -44,6 +44,7 @@ export class InGame extends Phaser.Scene {
     private jet!: Phaser.Sound.BaseSound;
     private helicopter?: Phaser.Sound.BaseSound;
     private tank?: Phaser.Sound.BaseSound;
+    private capture?: Phaser.Sound.BaseSound;
     private tankShot?: Phaser.Sound.BaseSound;
     private machineGun?: Phaser.Sound.BaseSound;
     private currentSound?: Phaser.Sound.BaseSound;
@@ -70,6 +71,7 @@ export class InGame extends Phaser.Scene {
         this.load.audio('helicopter', ['assets/helicopter.ogg']);
         this.load.audio('tank', ['assets/tank.ogg']);
         this.load.audio('backgroundMusic', ['assets/country-rock.mp3']);
+        this.load.audio('capture', ['assets/capture.mp3']);
         this.load.audio('tankShot', ['assets/tank-shot.ogg']);
         this.load.audio('machineGun', ['assets/machine-gun.ogg']);
     }
@@ -287,6 +289,33 @@ export class InGame extends Phaser.Scene {
             frameRate: 16,
         });
 
+        this.anims.create({
+            key: 'greenCapture',
+            frames: this.anims.generateFrameNumbers('tiles2', { start: 34, end: 35 }),
+            frameRate: 8,
+            repeat: 5
+        })
+
+        this.anims.create({
+            key: 'redCapture',
+            frames: this.anims.generateFrameNumbers('tiles2', { start: 70, end: 71 }),
+            frameRate: 8,
+            repeat: 5
+        })
+
+        this.anims.create({
+            key: 'blueCapture',
+            frames: this.anims.generateFrameNumbers('tiles2', { start: 52, end: 53 }),
+            frameRate: 8,
+            repeat: 5
+        })
+
+        this.anims.create({
+            key: 'yellowCapture',
+            frames: this.anims.generateFrameNumbers('tiles2', { start: 88, end: 89 }),
+            frameRate: 8,
+            repeat: 5
+        })
 
         this.steps = this.sound.add('steps', {
             loop: true,
@@ -299,6 +328,9 @@ export class InGame extends Phaser.Scene {
         });
         this.tank = this.sound.add('tank', {
             loop: true,
+        });
+        this.capture = this.sound.add('capture', {
+            loop: false,
         });
         this.tankShot = this.sound.add('tankShot', {
             loop: false,
@@ -331,7 +363,7 @@ export class InGame extends Phaser.Scene {
         }
 
         if (isBuilding(buildingAtPosition)) {
-            const health = buildingAtPosition.capturePoints;
+            const health = Math.round(buildingAtPosition.capturePoints);
             // const health = Math.round(buildingAtPosition.capturePoints / buildingAtPosition.maxCapturePoints * 10);
             this.captureSprite.setPosition((tileX + 1) * TILE_SIZE, (tileY) * TILE_SIZE).setVisible(health < 20);
             this.captureNumberOne.setPosition((tileX + 1) * TILE_SIZE, (tileY) * TILE_SIZE).setVisible(health < 20 && health >= 10).setFrame(180 + (health / 10));
@@ -378,6 +410,7 @@ export class InGame extends Phaser.Scene {
         const units: Unit[] = [];
         for (const unit of state.game?.units || []) {
             if (unit.x === tileX && unit.y === tileY) {
+                // @ts-ignore
                 units.push(unit);
             }
         }
@@ -404,6 +437,7 @@ export class InGame extends Phaser.Scene {
     private handleSelect(tileX: number, tileY: number) {
         const unit = this.findObjectAtPosition(tileX, tileY)
         if (state.selectedUnit) {
+            // @ts-ignore
             if (this.isSelectable(unit) && unit.id !== state.selectedUnit.id) {
                 this.selectUnit(unit);
                 return;
@@ -668,7 +702,7 @@ export class InGame extends Phaser.Scene {
         // TODO check if they can shoot, check if they capture
         if (
             isMoveableUnit(unit)
-            && (unit.movementPoints === 0 || unit.hasCommittedActions)
+            && (unit.hasCommittedActions || (unit.movementPoints === 0 && this.isCaptureAvailable()))
         ) {
             sprite.setTint(0x888888);
         } else {
@@ -699,10 +733,10 @@ export class InGame extends Phaser.Scene {
         }
     }
 
-    public isCaptureAvailable() {
-        const unit = state.selectedUnit;
+    public isCaptureAvailable(unit?: Unit) {
+        unit = unit || state.selectedUnit;
         if (!unit) return false
-        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
+        const building = state.game?.units?.find(u => u.x === unit!.x && u.y === unit!.y && isBuilding(u));
         if ((unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
             && (building && building?.player !== state.playerName)) {
             return true;
@@ -801,5 +835,44 @@ export class InGame extends Phaser.Scene {
             explosion.destroy();
         });
         this.cursorLayer.add(explosion);
+    }
+
+    public playCaptureAnimation() {
+        const unit = state.selectedUnit;
+        if (!unit) {
+            return;
+        }
+
+        const unitColor = state.game?.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
+        let anim: string = "";
+        switch (unitColor) {
+            case PlayerColor.GREEN:
+                anim = "greenCapture";
+                break;
+            case PlayerColor.RED:
+                anim = "redCapture";
+                break;
+            case PlayerColor.BLUE:
+                anim = "blueCapture";
+                break;
+            case PlayerColor.YELLOW:
+                anim = "yellowCapture";
+                break;
+        }
+
+        const explosion = this.make.sprite({
+            x: unit.x * TILE_SIZE,
+            y: unit.y * TILE_SIZE,
+            key: anim,
+            origin: 0,
+        }, false);
+        explosion.play(anim, true);
+        explosion.on(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+            explosion.destroy();
+        });
+        this.cursorLayer.add(explosion);
+
+        this.currentSound = this.capture;
+        this.currentSound?.play();
     }
 }

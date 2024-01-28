@@ -39,7 +39,7 @@ export class Client {
                     this.handlePurchaseUnitResponse(event as PurchaseUnitResponse);
                     break;
                 case EventType.CAPTURE_RESPONSE:
-                    this.handleGameStateChange((event as GameStateUpdate).game);
+                    state.scene?.playCaptureAnimation();
                     break;
                 case EventType.ATTACK_UNIT_RESPONSE:
                     this.handleAttackUnitResponse(event as AttackUnitResponse);
