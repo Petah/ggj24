@@ -399,7 +399,8 @@ export class InGame extends Phaser.Scene {
         const buildingAtPosition = state.game?.units?.find(unit => unit.x === tileX && unit.y === tileY && isBuilding(unit));
 
         if (isMoveableUnit(this.hoveringUnit)) {
-            const health = Math.max(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10, 1);
+            const health = Math.round(Math.max(this.hoveringUnit.health / this.hoveringUnit.maxHealth * 10, 1));
+            console.log("health", health);
             this.healthSprite.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10);
             this.healthNumber.setPosition(tileX * TILE_SIZE, (tileY - 1) * TILE_SIZE).setVisible(health < 10).setFrame(180 + health);
         } else {
