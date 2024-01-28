@@ -132,6 +132,7 @@ export class InGame extends Phaser.Scene {
     private jet!: Phaser.Sound.BaseSound;
     private helicopter?: Phaser.Sound.BaseSound;
     private tank?: Phaser.Sound.BaseSound;
+    private capture?: Phaser.Sound.BaseSound;
     private currentSound?: Phaser.Sound.BaseSound;
     private backgroundMusic?: Phaser.Sound.BaseSound;
 
@@ -156,6 +157,7 @@ export class InGame extends Phaser.Scene {
         this.load.audio('helicopter', ['assets/helicopter.ogg']);
         this.load.audio('tank', ['assets/tank.ogg']);
         this.load.audio('backgroundMusic', ['assets/country-rock.mp3']);
+        this.load.audio('capture', ['assets/capture.mp3']);
     }
 
     create() {
@@ -382,6 +384,9 @@ export class InGame extends Phaser.Scene {
         });
         this.tank = this.sound.add('tank', {
             loop: true,
+        });
+        this.capture = this.sound.add('capture', {
+            loop: false
         });
         this.backgroundMusic = this.sound.add('backgroundMusic', {
             loop: true,
@@ -623,6 +628,7 @@ export class InGame extends Phaser.Scene {
     }
 
     private unselectUnit() {
+        console.trace();
         const type = state.selectedUnit?.type;
         if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
             this.isInMenuState = false;
@@ -745,7 +751,7 @@ export class InGame extends Phaser.Scene {
         // TODO check if they can shoot, check if they capture
         if (
             isMoveableUnit(unit)
-            && (unit.movementPoints === 0 || unit.hasCommittedActions)
+            && (unit.hasCommittedActions || (unit.movementPoints === 0 && this.isCaptureAvailable()))
         ) {
             sprite.setTint(0x888888);
         } else {
@@ -776,8 +782,8 @@ export class InGame extends Phaser.Scene {
         }
     }
 
-    public isCaptureAvailable() {
-        const unit = state.selectedUnit;
+    public isCaptureAvailable(unit?: Unit) {
+        unit = unit || state.selectedUnit;
         if (!unit) return false
         const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u));
         if ((unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
@@ -795,7 +801,8 @@ export class InGame extends Phaser.Scene {
         }
         unit.movementPoints = event.remainingMovementPoints;
         const sprite = this.getUnitSprite(unit);
-        if (unit.movementPoints === 0 && !this.isCaptureAvailable()) {
+        if (unit.movementPoints === 0 && !this.isCaptureAvailable(unit)) {
+            console.log('no more movement points');
             this.unselectUnit();
         }
 
