@@ -161,6 +161,13 @@ export const PlayerColors = [
 
 export abstract class Unit {
     public readonly type!: UnitType;
+
+    public canCapture = false;
+    public canBeTransported = false;
+    public maxMovementPoints!: number;
+    public movementPoints: number = 0;
+    public hasCommittedActions: boolean = false;
+
     constructor(
         public readonly id: number,
         public x: number,
@@ -170,8 +177,6 @@ export abstract class Unit {
 }
 
 export abstract class MovableUnit extends Unit {
-    public maxMovementPoints!: number;
-    public movementPoints: number = 0;
     public maxHealth: number = 100;
     public health: number = 100;
     public movementType!: MovementType;
@@ -179,18 +184,15 @@ export abstract class MovableUnit extends Unit {
     public armourType!: ArmourType;
     public minRange = 1;
     public maxRange = 1;
-    public canCapture = false;
-    public canBeTransported = false;
     public isInTransport = false;
     public carryingCapacity = 0;
     public carriedUnits: MovableUnit[] = [];
-    public hasCommittedActions: boolean = false;
 }
 
 export class Infantry extends MovableUnit {
     public readonly type = UnitType.INFANTRY;
     public static readonly cost = 1000;
-    public maxMovementPoints = 30;
+    public maxMovementPoints = 3;
     public movementType = MovementType.INFANTRY;
     public damageType = DamageType.MACHINE_GUN;
     public armourType = ArmourType.INFANTRY;

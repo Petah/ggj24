@@ -26,7 +26,7 @@ export class MoveUnitRequest implements IEvent {
 
 export class MoveUnitResponse implements IEvent {
     public type = EventType.MOVE_UNIT_RESPONSE;
-    constructor(public unitId: number, public path: number[][], public remainingMovementPoints: number) { }
+    constructor(public unitId: number, public path: number[][], public remainingMovementPoints: number, public game: GameState) { }
 }
 
 export class CaptureRequest implements IEvent {
@@ -36,7 +36,7 @@ export class CaptureRequest implements IEvent {
 
 export class CaptureResponse implements IEvent {
     public type = EventType.CAPTURE_RESPONSE;
-    constructor(public unitId: number, public buildingId: number) { }
+    constructor(public unitId: number, public buildingId: number, public game: GameState) { }
 }
 
 export class ReloadGameState implements IEvent {
@@ -51,5 +51,15 @@ export class AttackUnitRequest implements IEvent {
 
 export class AttackUnitResponse implements IEvent {
     public type = EventType.ATTACK_UNIT_RESPONSE;
-    constructor(public x: number, public y: number, public attackingUnitType: UnitType) { }
+    constructor(public x: number, public y: number, public attackingUnitType: UnitType, public game: GameState) { }
+}
+
+export class WaitRequest implements IEvent {
+    public type = EventType.WAIT_REQUEST;
+    constructor(public unitId: number) { }
+}
+
+export class WaitResponse implements IEvent {
+    public type = EventType.WAIT_RESPONSE;
+    constructor(public game: GameState) { }
 }

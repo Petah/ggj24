@@ -1,3 +1,5 @@
+const scale = 3;
+
 export class Dialog {
     private nineslice!: Phaser.GameObjects.NineSlice;
 
@@ -9,20 +11,27 @@ export class Dialog {
         public width: number,
         public height: number,
     ) {
-        const scale = 3;
         this.nineslice = scene.add.nineslice(100, 100, spriteName, 0, 16 * 3, 16 * 3, 16, 16, 16, 16)
             .setPosition(x, y)
-            .setSize(width / scale, height / scale)
             .setOrigin(0)
             .setScale(scale);
+
+        this.setSize(width, height);
     }
 
-    // public update() {
-    //     this.nineslice.setPosition(
-    //         this.scene.cameras.main.worldView.x + this.x,
-    //         this.scene.cameras.main.worldView.y + this.y,
-    //     );
-    // }
+    public setPosition(x: number, y: number) {
+        this.x = x;
+        this.y = y;
+        this.nineslice.setPosition(x, y);
+        return this;
+    }
+
+    public setSize(width: number, height: number) {
+        this.width = width;
+        this.height = height;
+        this.nineslice.setSize(width / scale, height / scale);
+        return this;
+    }
 
     public setVisible(visible: boolean) {
         this.nineslice.setVisible(visible);

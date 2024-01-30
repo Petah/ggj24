@@ -22,9 +22,14 @@
     "noFallthroughCasesInSwitch": true,
     "noImplicitAny": false,
     "rootDirs": [
-      "src",
-      "../common"
-    ]
+      "src"
+    ],
+    "paths": {
+      "common": [
+        "../common"
+      ]
+    },
+    "baseUrl": "./"
   },
   "include": [
     "src"

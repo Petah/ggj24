@@ -1,5 +1,5 @@
-import { Client } from './client';
-import { PlayerColor, Unit } from '../../common/unit';
+import { IClient } from 'common/client';
+import { PlayerColor, Unit } from 'common/unit';
 
 export class Player {
     public units: Unit[] = [];
@@ -8,7 +8,7 @@ export class Player {
 
     constructor(
         public name: string,
-        public client: Client | undefined,
+        public client: IClient,
         public color: PlayerColor,
     ) {
 

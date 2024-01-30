@@ -1,13 +1,14 @@
 import Phaser from 'phaser';
 import { client } from '../client';
-import { TILE_SIZE, getPathFinder } from '../../../common/map';
-import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from '../../../common/unit';
-import { PurchaseUnitRequest } from '../../../common/events/unit-purchase';
+import { TILE_SIZE, getPathFinder } from 'common/map';
+import { MovableUnit, PlayerColor, Unit, UnitType, isBuilding, isFactory, isMoveableUnit } from 'common/unit';
+import { PurchaseUnitRequest } from 'common/events/unit-purchase';
 import { isOurTurn, state } from '../state';
 import { UI } from './ui-scene';
-import { AttackUnitRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from '../../../common/events/turn';
-import { logError } from '../../../common/log';
+import { AttackUnitRequest, EndTurn, MoveUnitRequest, MoveUnitResponse, ReloadGameState } from 'common/events/turn';
+import { logError } from 'common/log';
 import { UnitSprites } from '../unit-sprites';
+import { GameState } from 'common/events/game-list';
 
 export class InGame extends Phaser.Scene {
     private cursorLayer!: Phaser.GameObjects.Layer;
@@ -20,8 +21,8 @@ export class InGame extends Phaser.Scene {
     private fogEnabled: boolean = false;
     private fogSprites: Phaser.GameObjects.Sprite[][] = [];
     private created: boolean = false;
-    private ui!: UI;
-    private moving?: {
+    private ui?: UI;
+    private moving: {
         sprite: Phaser.GameObjects.Sprite;
         startX: number;
         startY: number;
@@ -31,7 +32,8 @@ export class InGame extends Phaser.Scene {
         pointsY: number[];
         time: number;
         current: number;
-    };
+        game: GameState;
+    }[] = [];
     private selectedArrow!: Phaser.GameObjects.Sprite;
     private isInMenuState: boolean = false;
     private hoveringUnit?: Unit;
@@ -64,7 +66,7 @@ export class InGame extends Phaser.Scene {
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
         this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
-        this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 })
+        this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 });
 
         this.load.audio('steps', ['assets/steps.ogg']);
         this.load.audio('jet', ['assets/jet.ogg']);
@@ -77,23 +79,23 @@ export class InGame extends Phaser.Scene {
     }
 
     create() {
-        this.scale.setGameSize(window.innerWidth, window.innerHeight)
-        this.scene.launch('UI')
+        this.scale.setGameSize(window.innerWidth, window.innerHeight);
+        this.scene.launch('UI');
         this.ui = this.scene.manager.getScene('UI') as UI;
 
-        this.add.tileSprite(-5000, -5000, 10000, 10000, 'tiles2', 37).setOrigin(0, 0);
+        this.add.tileSprite(-1000, -1000, 2000, 2000, 'tiles2', 37).setOrigin(0, 0);
 
-        const map = this.make.tilemap({ key: 'map' })
-        const tilesetName = map.tilesets[0].name
+        const map = this.make.tilemap({ key: 'map' });
+        const tilesetName = map.tilesets[0].name;
         // add the tileset image we are using
         const tileset = map.addTilesetImage(tilesetName, 'tiles') as Phaser.Tilemaps.Tileset;
 
-        map.createLayer('Map', tileset)
-        map.createLayer('Road', tileset)
-        map.createLayer('Mountains', tileset)
-        map.createLayer('Trees', tileset)
+        map.createLayer('Map', tileset);
+        map.createLayer('Road', tileset);
+        map.createLayer('Mountains', tileset);
+        map.createLayer('Trees', tileset);
         this.cameras.main.setZoom(2).setScroll(map.widthInPixels / 2 - (window.innerWidth - 150) / 2, map.heightInPixels / 2 - window.innerHeight / 2);
-            // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
+        // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
 
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
@@ -131,9 +133,6 @@ export class InGame extends Phaser.Scene {
             button: number;
         }) => {
             // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
-            if (!isOurTurn()) {
-                return;
-            }
             const tileX = Math.floor(pointer.worldX / TILE_SIZE);
             const tileY = Math.floor(pointer.worldY / TILE_SIZE);
             switch (pointer.button) {
@@ -165,17 +164,17 @@ export class InGame extends Phaser.Scene {
             if (this.isInMenuState && state.selectedUnit) {
                 switch (event.key) {
                     case 'ArrowUp':
-                        this.ui.movePurchaseCursorUp();
+                        this.ui?.movePurchaseCursorUp();
                         break;
                     case 'ArrowDown':
-                        this.ui.movePurchaseCursorDown();
+                        this.ui?.movePurchaseCursorDown();
                         break;
                     case 'x':
                         this.unselectUnit();
                         break;
                     case 'c':
                     case ' ':
-                        client.send(new PurchaseUnitRequest(state.selectedUnit.id, this.ui.getSelectedUnitTypeFromPurchaseList()))
+                        client.send(new PurchaseUnitRequest(state.selectedUnit.id, this.ui.getSelectedUnitTypeFromPurchaseList()));
                         this.unselectUnit();
                         break;
                 }
@@ -206,8 +205,8 @@ export class InGame extends Phaser.Scene {
                     }
                     break;
                 case 'c':
-                    if (this.isCaptureAvailable()) {
-                        this.ui.submitCapture();
+                    if (this.isCaptureAvailable(state.selectedUnit)) {
+                        this.ui?.submitCapture();
                     }
                     break;
                 case ' ':
@@ -218,7 +217,7 @@ export class InGame extends Phaser.Scene {
                     break;
                 case 'e':
                 case 'Enter':
-                    client.send(new EndTurn())
+                    client.send(new EndTurn());
             }
         });
 
@@ -226,65 +225,19 @@ export class InGame extends Phaser.Scene {
         this.buildingLayer = this.add.layer();
         this.highlightLayer = this.add.layer().setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5);
         this.rangeCircle = [
-            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2).setVisible(false),
-            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(1, 0xff0000, 0.2).setVisible(false),
+            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(2, 0xff0000, 0.2).setVisible(false),
+            this.add.circle(0, 0, 100, 0x000000, 0.5).setFillStyle(0x000000, 0).setStrokeStyle(2, 0xff0000, 0.2).setVisible(false),
         ];
         this.unitLayer = this.add.layer();
 
         this.cursorLayer = this.add.layer();
-        this.cursorSprite = this.add.sprite(state.cursorX * TILE_SIZE, state.cursorY * TILE_SIZE, 'tiles2', 61).setOrigin(0, 0);
-        this.cursorLayer.add(this.cursorSprite);
-        this.placeCursorAtPosition(state.cursorX, state.cursorY)
-        this.selectedArrow = this.make.sprite({
-            x: 0,
-            y: 0,
-            key: 'uiTiles1',
-            frame: 715,
-            origin: 0,
-        }, false);
-        this.cursorLayer.add(this.selectedArrow);
-
-        this.healthSprite = this.make.sprite({
-            x: 0,
-            y: 0,
-            key: 'tiles2',
-            frame: 195,
-            origin: 0,
-        }, false);
-        this.captureSprite = this.make.sprite({
-            x: 0,
-            y: 0,
-            key: 'tiles2',
-            frame: 194,
-            origin: 0,
-        }, false);
-        this.cursorLayer.add(this.healthSprite);
-        this.healthNumber = this.make.sprite({
-            x: 0,
-            y: 0,
-            key: 'tiles2',
-            frame: 181,
-            origin: 0,
-        }, false);
-        this.captureNumberOne = this.make.sprite({
-            x: 0,
-            y: 0,
-            key: 'tiles2',
-            frame: 181,
-            origin: 0,
-        }, false);
-        this.captureNumberTwo = this.make.sprite({
-            x: 0,
-            y: 0,
-            key: 'tiles2',
-            frame: 181,
-            origin: 0,
-        }, false);
-        this.cursorLayer.add(this.healthNumber);
-        this.cursorLayer.add(this.captureSprite);
-        this.cursorLayer.add(this.captureNumberOne);
-        this.cursorLayer.add(this.captureNumberTwo);
-
+        this.cursorLayer.add(this.cursorSprite = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 61, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.selectedArrow = this.make.sprite({ x: 0, y: 0, key: 'uiTiles1', frame: 715, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.healthSprite = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 61, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.captureSprite = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 194, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.healthNumber = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 181, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.captureNumberOne = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 181, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.captureNumberTwo = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 181, origin: 0 }, false).setVisible(false));
 
         this.anims.create({
             key: 'explosion',
@@ -296,29 +249,29 @@ export class InGame extends Phaser.Scene {
             key: 'greenCapture',
             frames: this.anims.generateFrameNumbers('tiles2', { start: 34, end: 35 }),
             frameRate: 8,
-            repeat: 5
-        })
+            repeat: 5,
+        });
 
         this.anims.create({
             key: 'redCapture',
             frames: this.anims.generateFrameNumbers('tiles2', { start: 70, end: 71 }),
             frameRate: 8,
-            repeat: 5
-        })
+            repeat: 5,
+        });
 
         this.anims.create({
             key: 'blueCapture',
             frames: this.anims.generateFrameNumbers('tiles2', { start: 52, end: 53 }),
             frameRate: 8,
-            repeat: 5
-        })
+            repeat: 5,
+        });
 
         this.anims.create({
             key: 'yellowCapture',
             frames: this.anims.generateFrameNumbers('tiles2', { start: 88, end: 89 }),
             frameRate: 8,
-            repeat: 5
-        })
+            repeat: 5,
+        });
 
         this.steps = this.sound.add('steps', {
             loop: true,
@@ -348,7 +301,7 @@ export class InGame extends Phaser.Scene {
         this.backgroundMusic.play();
 
         this.created = true;
-        this.updateGameState();
+        client.send(new ReloadGameState());
     }
 
     // TODO
@@ -379,28 +332,31 @@ export class InGame extends Phaser.Scene {
     }
 
     update(time: number, delta: number): void {
-        if (this.moving) {
-            this.moving.current += delta;
-            if (this.moving.current > this.moving.time) {
-                this.moving.current = this.moving.time;
+        for (let i = 0; i < this.moving.length; i++) {
+            const moving = this.moving[i];
+            moving.current += delta;
+            if (moving.current > moving.time) {
+                moving.current = moving.time;
             }
-            const percent = this.moving.current / this.moving.time;
-            const previousX = this.moving.sprite.x;
-            const currentX = Phaser.Math.Interpolation.Linear(this.moving.pointsX, percent);
-            const currentY = Phaser.Math.Interpolation.Linear(this.moving.pointsY, percent);
+            const percent = moving.current / moving.time;
+            const previousX = moving.sprite.x;
+            const currentX = Phaser.Math.Interpolation.Linear(moving.pointsX, percent);
+            const currentY = Phaser.Math.Interpolation.Linear(moving.pointsY, percent);
             if (currentX < previousX) {
-                this.moving.sprite.setFlipX(true);
+                moving.sprite.setFlipX(true);
             } else if (currentX === previousX) {
-                this.moving.sprite.setFlipX(this.moving.endX < this.moving.startX);
+                moving.sprite.setFlipX(moving.endX < moving.startX);
             } else {
-                this.moving.sprite.setFlipX(false);
+                moving.sprite.setFlipX(false);
             }
-            this.moving.sprite.setPosition(currentX, currentY);
+            moving.sprite.setPosition(currentX, currentY);
             this.selectedArrow.setPosition(currentX, currentY - TILE_SIZE);
             if (percent >= 1) {
-                this.moving = undefined;
-                this.currentSound?.stop();
-                client.send(new ReloadGameState());
+                this.moving.splice(i, 1);
+                if (this.moving.length === 0) {
+                    this.updateGameState(moving.game);
+                    this.currentSound?.stop();
+                }
             }
         }
     }
@@ -428,8 +384,6 @@ export class InGame extends Phaser.Scene {
     placeCursorAtPosition(tileX: number, tileY: number) {
         this.cursorSprite.setPosition(tileX * TILE_SIZE, tileY * TILE_SIZE);
         this.cursorSprite.setVisible(true);
-        localStorage.setItem('cursorX', tileX.toString());
-        localStorage.setItem('cursorY', tileY.toString());
         this.onCursorPositionUpdate(tileX, tileY);
     }
 
@@ -438,9 +392,8 @@ export class InGame extends Phaser.Scene {
     }
 
     private handleSelect(tileX: number, tileY: number) {
-        const unit = this.findObjectAtPosition(tileX, tileY)
+        const unit = this.findObjectAtPosition(tileX, tileY);
         if (state.selectedUnit) {
-            // @ts-ignore
             if (this.isSelectable(unit) && unit.id !== state.selectedUnit.id) {
                 this.selectUnit(unit);
                 return;
@@ -459,31 +412,31 @@ export class InGame extends Phaser.Scene {
         if (!unit) {
             return false;
         }
-        if (!this.isPlayersUnit(unit)) {
-            return false;
-        }
-        return isFactory(unit) || isMoveableUnit(unit);
+        return true;
+        // if (!this.isPlayersUnit(unit)) {
+        //     return false;
+        // }
+        // return isFactory(unit) || isMoveableUnit(unit);
     }
 
     public selectUnit(unit?: Unit) {
-        if (!this.isSelectable(unit) || !isOurTurn()) {
+        if (!this.isSelectable(unit)) {
             return;
         }
         if (state.selectedUnit) {
             this.unselectUnit();
         }
         state.selectedUnit = unit;
-        const type = unit?.type;
-        if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
+        if (isFactory(unit) && unit.player === state.playerName) {
             this.isInMenuState = true;
-            this.ui.onProductionBuildingSelected(unit);
+            this.ui?.onProductionBuildingSelected(unit);
         }
         this.selectedArrow.setPosition(unit.x * TILE_SIZE, (unit.y - 1) * TILE_SIZE);
         this.selectedArrow.setVisible(true);
-        if (this.isCaptureAvailable()) {
-            this.ui.enableCaptureButton();
+        if (this.isCaptureAvailable(state.selectedUnit)) {
+            this.ui?.enableCaptureButton();
         } else {
-            this.ui.disableCaptureButton();
+            this.ui?.disableCaptureButton();
         }
         this.updateHighlight();
     }
@@ -506,7 +459,7 @@ export class InGame extends Phaser.Scene {
             this.rangeCircle[1].setVisible(false);
         }
         if (isMoveableUnit(state.selectedUnit)) {
-            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.playerName);
+            const { finder, grid } = getPathFinder(state.selectedUnit, state.game?.tiles, state.game?.units, state.selectedUnit.player);
             for (let y = state.selectedUnit.y - state.selectedUnit.movementPoints; y <= state.selectedUnit.y + state.selectedUnit.movementPoints; y++) {
                 for (let x = state.selectedUnit.x - state.selectedUnit.movementPoints; x <= state.selectedUnit.x + state.selectedUnit.movementPoints; x++) {
                     if ((x === state.selectedUnit.x && y === state.selectedUnit.y && state.selectedUnit.movementPoints > 0) || this.canUnitMoveTo(state.selectedUnit, x, y, true, finder, grid)) {
@@ -571,7 +524,7 @@ export class InGame extends Phaser.Scene {
             return false;
         }
 
-        const enemyUnit = state.game?.units?.find(unit => unit.x === x && unit.y === y && !this.isPlayersUnit(unit) && isMoveableUnit(unit));
+        const enemyUnit = state.game?.units?.find(u => u.x === x && u.y === y && u.player !== unit.player && isMoveableUnit(u));
         if (!enemyUnit || (unit.type == UnitType.ROCKET_TRUCK) && (enemyUnit.type == UnitType.JET || enemyUnit.type == UnitType.HELICOPTER || enemyUnit.type == UnitType.TRANSPORT)) {
             return false;
         }
@@ -586,12 +539,12 @@ export class InGame extends Phaser.Scene {
         const type = state.selectedUnit?.type;
         if (type === UnitType.FACTORY || type === UnitType.AIRPORT || type === UnitType.DOCK) {
             this.isInMenuState = false;
-            this.ui.onProductionBuildingUnselected();
+            this.ui?.onProductionBuildingUnselected();
         }
         state.selectedUnit = undefined;
         this.selectedArrow.setVisible(false);
         this.updateHighlight();
-        this.ui.disableCaptureButton();
+        this.ui?.disableCaptureButton();
     }
 
     private getUnitSprite(unit: Unit) {
@@ -603,36 +556,44 @@ export class InGame extends Phaser.Scene {
         }
     }
 
-    public updateGameState() {
-        if (!state.game || !this.created) {
+    public updateGameState(game: GameState) {
+        if (state.latestGameState && game.tick < state.latestGameState.tick) {
+            return this.updateGameState(state.latestGameState);
+        }
+        if (!state.latestGameState || game.tick > state.latestGameState.tick) {
+            state.latestGameState = game;
+        }
+        if (!this.created || state.tick > game.tick || this.moving.length) {
+            return;
+        }
+        state.game = game;
+        state.tick = game.tick;
+
+        const remainingPlayers = game.players.filter(player => !player.hasLost);
+        if (remainingPlayers.length === 1 && game.players.length > 1) {
+            state.winningPlayer = remainingPlayers[0].name;
+            this.scene.start('EndGame');
             return;
         }
 
-        const remainingPlayers = state.game.players.filter(player => !player.hasLost);
-        if (remainingPlayers.length === 1 && state.game.players.length > 1) {
-            state.winningPlayer = remainingPlayers[0].name;
-            this.scene.start('EndGame')
-            return
-        }
-
-        this.ui.updateGameState();
+        this.ui?.updateGameState();
 
         if (!isOurTurn()) {
             this.unselectUnit();
         }
 
         // Setup sprites
-        const units = state.game?.units || [];
+        const units = game?.units || [];
         for (const unit of units) {
             const existingSprite = this.getUnitSprite(unit);
-            const playerColor = state.game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
+            const playerColor = game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
             const frame = UnitSprites[playerColor][unit.type] || 193;
             if (existingSprite) {
                 existingSprite.setPosition(unit.x * TILE_SIZE, unit.y * TILE_SIZE);
                 this.tintSprite(existingSprite, unit);
 
                 if (isBuilding(unit)) {
-                    existingSprite.setFrame(frame)
+                    existingSprite.setFrame(frame);
                 }
             } else {
                 const sprite = this.make.sprite({
@@ -670,18 +631,18 @@ export class InGame extends Phaser.Scene {
             state.selectedUnit = units.find(unit => unit.id === state.selectedUnit?.id);
         }
         this.updateHighlight();
-        if (this.isCaptureAvailable()) {
-            this.ui.enableCaptureButton();
+        if (this.isCaptureAvailable(state.selectedUnit)) {
+            this.ui?.enableCaptureButton();
         } else {
-            this.ui.disableCaptureButton();
+            this.ui?.disableCaptureButton();
         }
 
         if (!this.fogLayer) {
             this.fogLayer = this.add.layer().setAlpha(this.fogEnabled ? 1 : 0);
             this.fogSprites = [];
-            for (let y = 0; y < state.game.height; y++) {
+            for (let y = 0; y < game.height; y++) {
                 const row: Phaser.GameObjects.Sprite[] = [];
-                for (let x = 0; x < state.game.width; x++) {
+                for (let x = 0; x < game.width; x++) {
                     const sprite = this.make.sprite({
                         x: x * TILE_SIZE,
                         y: y * TILE_SIZE,
@@ -702,11 +663,10 @@ export class InGame extends Phaser.Scene {
     }
 
     private tintSprite(sprite: Phaser.GameObjects.Sprite, unit: Unit) {
-        // TODO check if they can shoot, check if they capture
-        if (
-            isMoveableUnit(unit)
-            && (unit.hasCommittedActions || (unit.movementPoints === 0 && this.isCaptureAvailable()))
-        ) {
+        if (!isMoveableUnit(unit)) {
+            return;
+        }
+        if (unit.hasCommittedActions || unit.movementPoints === 0) {
             sprite.setTint(0x888888);
         } else {
             sprite.clearTint();
@@ -737,15 +697,14 @@ export class InGame extends Phaser.Scene {
     }
 
     public isCaptureAvailable(unit?: Unit) {
-        unit = unit || state.selectedUnit;
-        if (!unit) return false
-        const building = state.game?.units?.find(u => u.x === unit!.x && u.y === unit!.y && isBuilding(u));
-        if ((unit.type == UnitType.INFANTRY || unit.type == UnitType.ANTI_TANK)
-            && (building && building?.player !== state.playerName)) {
-            return true;
-        } else {
+        if (!unit || !unit.canCapture) {
             return false;
         }
+        const building = state.game?.units?.find(u => u.x === unit.x && u.y === unit.y && isBuilding(u) && u.player !== state.playerName);
+        if (building) {
+            return true;
+        }
+        return false;
     }
 
     public handleMoveUnitResponse(event: MoveUnitResponse) {
@@ -784,7 +743,7 @@ export class InGame extends Phaser.Scene {
                 movementSpeed = 4;
                 break;
         }
-        this.moving = {
+        this.moving.push({
             sprite,
             startX: unit.x,
             startY: unit.y,
@@ -794,7 +753,8 @@ export class InGame extends Phaser.Scene {
             pointsY,
             time: event.path.length * 1000 / movementSpeed,
             current: 0,
-        }
+            game: event.game,
+        });
         this.rangeCircle[0].setVisible(false);
         this.rangeCircle[1].setVisible(false);
         switch (unit.type) {
@@ -819,10 +779,10 @@ export class InGame extends Phaser.Scene {
         }
         this.currentSound?.play();
 
-        if (this.isCaptureAvailable()) {
-            this.ui.enableCaptureButton();
+        if (this.isCaptureAvailable(state.selectedUnit)) {
+            this.ui?.enableCaptureButton();
         } else {
-            this.ui.disableCaptureButton();
+            this.ui?.disableCaptureButton();
         }
     }
 
@@ -861,19 +821,19 @@ export class InGame extends Phaser.Scene {
         }
 
         const unitColor = state.game?.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
-        let anim: string = "";
+        let anim: string = '';
         switch (unitColor) {
             case PlayerColor.GREEN:
-                anim = "greenCapture";
+                anim = 'greenCapture';
                 break;
             case PlayerColor.RED:
-                anim = "redCapture";
+                anim = 'redCapture';
                 break;
             case PlayerColor.BLUE:
-                anim = "blueCapture";
+                anim = 'blueCapture';
                 break;
             case PlayerColor.YELLOW:
-                anim = "yellowCapture";
+                anim = 'yellowCapture';
                 break;
         }
 

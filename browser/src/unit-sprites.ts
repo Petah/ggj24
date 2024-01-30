@@ -1,4 +1,4 @@
-import { PlayerColor, UnitType } from '../../common/unit';
+import { PlayerColor, UnitType } from 'common/unit';
 
 export const UnitSprites = {
     [PlayerColor.NEUTRAL]: {

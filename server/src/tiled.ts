@@ -1,4 +1,4 @@
-import { UnitType } from '../../common/unit';
+import { UnitType } from 'common/unit';
 
 export interface TileMap {
     width: number;

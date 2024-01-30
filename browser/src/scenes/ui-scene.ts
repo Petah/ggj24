@@ -1,13 +1,13 @@
 import { client } from '../client';
 import { GameButton } from '../button';
-import { PlayerColor, Unit, UnitType, UnitTypeMap } from '../../../common/unit';
+import { PlayerColor, Tank, Unit, UnitType, UnitTypeMap } from 'common/unit';
 import { isOurTurn, state } from '../state';
-import { Building, MovableUnit, isBuilding, isMoveableUnit } from '../../../common/unit';
-import { CaptureRequest, EndTurn, ReloadGameState, StartGame } from '../../../common/events/turn';
-import { ucFirst } from '../../../common/util';
+import { Building, isBuilding, isMoveableUnit } from 'common/unit';
+import { CaptureRequest, EndTurn, ReloadGameState, StartGame } from 'common/events/turn';
 import { Dialog } from '../dialog';
-import { formatNumber } from '../../../common/util';
 import { UnitSprites } from '../unit-sprites';
+import { Ai } from 'common/ai';
+import { TILE_SIZE } from 'common/map';
 
 const textConfig = {
     font: '16px',
@@ -46,16 +46,17 @@ const unitInfo = {
     [UnitType.HELICOPTER]: [
         'Can fly over sea',
     ],
-}
+};
 
 export class UI extends Phaser.Scene {
 
     private text!: Phaser.GameObjects.Text;
+    private debugText!: Phaser.GameObjects.Text;
     // private money!: Phaser.GameObjects.Text;
 
     private startGameButton!: GameButton;
     private endTurnButton!: GameButton;
-    private menuBackground!: Phaser.GameObjects.Rectangle;
+    private menuBackground!: Dialog;
     private purchasableUnits!: Phaser.GameObjects.Group;
     private purchaseCursor!: Phaser.GameObjects.Sprite;
     private reloadGameStateButton!: GameButton;
@@ -69,9 +70,14 @@ export class UI extends Phaser.Scene {
     private selectedUnitSprite!: Phaser.GameObjects.Sprite;
     private selectedUnitName!: Phaser.GameObjects.Text;
     private selectedUnitInfo!: Phaser.GameObjects.Text;
+    private ai: Ai;
+    private hoverX = 0;
+    private hoverY = 0;
 
     constructor() {
         super({ key: 'UI' });
+
+        this.ai = new Ai('AI');
     }
 
     preload() {
@@ -112,9 +118,13 @@ export class UI extends Phaser.Scene {
         this.endTurnButton = new GameButton(this, 'End Turn', screenWidth - 280, screenHeight - 70, () => {
             client.send(new EndTurn());
         });
-        // this.reloadGameStateButton = new GameButton(this, 'Reload Game State', screenWidth - 400, screenHeight - 180, () => {
-        //     client.send(new ReloadGameState());
-        // });
+        this.reloadGameStateButton = new GameButton(this, 'Reload Game State', screenWidth - 280, screenHeight - 190, () => {
+            if (client.ws.readyState !== WebSocket.OPEN) {
+                window.location.reload();
+                return;
+            }
+            client.send(new ReloadGameState());
+        });
         this.captureButton = new GameButton(this, 'Capture', screenWidth - 280, screenHeight - 130, () => {
             if (state.selectedUnit) {
                 client.send(new CaptureRequest(state.selectedUnit.id, state.selectedUnit.x, state.selectedUnit.y));
@@ -130,8 +140,19 @@ export class UI extends Phaser.Scene {
         //     ...textConfig,
         //     font: '32px',
         // });
+        this.debugText = this.add.text(10, 10, 'Debug', {
+            ...textConfig,
+            font: '16px',
+        });
+
+        this.menuBackground = new Dialog(this, 'dialog', 100, 100, 200, 200).setVisible(false);
 
         this.scale.on('resize', this.resize, this);
+
+        this.input.on('pointermove', (pointer: any) => {
+            this.hoverX = Math.floor(pointer.worldX / TILE_SIZE);
+            this.hoverY = Math.floor(pointer.worldY / TILE_SIZE);
+        });
 
         this.updateGameState();
     }
@@ -161,10 +182,10 @@ export class UI extends Phaser.Scene {
         // Render debug info
         if (state.game) {
             const money = currentPlayer.money.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-            information.push(`${currentPlayer.name}`)
-            information.push(`$ ${money}`)
-            information.push(`Units: ${state.game?.units?.filter(unit => isMoveableUnit(unit) && unit.player === currentPlayer.name)?.length}`)
-            information.push(`Buildings: ${state.game?.units?.filter(unit => isBuilding(unit) && unit.player === currentPlayer.name)?.length}`)
+            information.push(`${currentPlayer.name}`);
+            information.push(`$ ${money}`);
+            information.push(`Units: ${state.game?.units?.filter(unit => isMoveableUnit(unit) && unit.player === currentPlayer.name)?.length}`);
+            information.push(`Buildings: ${state.game?.units?.filter(unit => isBuilding(unit) && unit.player === currentPlayer.name)?.length}`);
 
 
             this.text.setText(information.join('\n'));
@@ -173,7 +194,8 @@ export class UI extends Phaser.Scene {
                 if (unitInfo[state.selectedUnit.type]) {
                     selectedUnitInfo.push(...unitInfo[state.selectedUnit.type]);
                 }
-                this.selectedUnitSprite.setFrame(UnitSprites[currentPlayer.color][state.selectedUnit.type]).setVisible(true);
+                const unitPlayer = state.game.players.find(player => player.name === state.selectedUnit!.player);
+                this.selectedUnitSprite.setFrame(UnitSprites[unitPlayer?.color || PlayerColor.NEUTRAL][state.selectedUnit.type]).setVisible(true);
                 this.selectedUnitName.setText(state.selectedUnit.type).setVisible(true);
                 this.selectedUnitInfo.setText(selectedUnitInfo.join('\n')).setVisible(true);
             } else {
@@ -183,18 +205,35 @@ export class UI extends Phaser.Scene {
             }
         }
 
-        // Render UI
-        this.startGameButton.update();
-        this.endTurnButton.update();
-        // this.reloadGameStateButton.update();
-        this.captureButton.update();
+        this.updateDebugText();
     }
 
-    private positionInSidebar(gameObject: Phaser.GameObjects.Sprite | Phaser.GameObjects.Text, x: number, y: number) {
-        gameObject.setPosition(
-            this.cameras.main.worldView.x + this.cameras.main.worldView.width - 300 + x,
-            this.cameras.main.worldView.y + y,
-        );
+    private updateDebugText() {
+        const debugText = ['Debug'];
+        debugText.push(`Tile: ${this.hoverX},${this.hoverY}`);
+        if (state.game) {
+            debugText.push(`Tick: ${state.game.tick}`);
+            debugText.push(`Turn: ${state.game.turn}`);
+            debugText.push(`Current Player: ${state.game.currentPlayer}`);
+
+            if (state.selectedUnit) {
+                debugText.push('');
+                debugText.push(`Selected Unit: ${state.selectedUnit.type}`);
+                debugText.push(`Owner: ${state.selectedUnit.player}`);
+
+                if (isMoveableUnit(state.selectedUnit)) {
+                    debugText.push(`Moves: ${state.selectedUnit.movementPoints}/${state.selectedUnit.maxMovementPoints}`);
+                    debugText.push(`Committed: ${state.selectedUnit.hasCommittedActions ? 'Yes' : 'No'}`);
+                }
+
+                (async () => {
+                    if (state.selectedUnit?.type === UnitType.TANK) {
+                        console.log(await this.ai.processTank(state.selectedUnit as Tank, state.game));
+                    }
+                })();
+            }
+        }
+        this.debugText.setText(debugText.join('\n'));
     }
 
     public onProductionBuildingSelected(unit: Unit) {
@@ -204,15 +243,11 @@ export class UI extends Phaser.Scene {
         this.purchasableUnitList = building.canBuild;
         this.selectedPurchaseListIndex = 0;
 
-        const height = building.canBuild.length * 32
+        const height = building.canBuild.length * 32;
 
-        this.menuBackground = this.add.rectangle(
-            (this.cameras.main.worldView.width / 2) - 100,
-            (this.cameras.main.worldView.height / 2) - height / 2,
-            200,
-            height,
-            0xFCF3CF,
-        ).setOrigin(0, 0);
+        this.menuBackground.setPosition((this.cameras.main.worldView.width / 2) - 100, (this.cameras.main.worldView.height / 2) - height / 2);
+        this.menuBackground.setSize(200, height);
+        this.menuBackground.setVisible(true);
 
         for (let index = 0; index < building.canBuild.length; index++) {
             const purchasableUnit = building.canBuild[index];
@@ -240,7 +275,7 @@ export class UI extends Phaser.Scene {
                     color: '#000',
                     align: 'left',
                 }
-            )
+            );
             unitNameText.setOrigin(0, 0);
 
             const unitCostText = this.add.text(
@@ -252,7 +287,7 @@ export class UI extends Phaser.Scene {
                     color: '#000',
                     align: 'right',
                 }
-            )
+            );
 
             if (cost > playerMoney) {
                 tempSprite.setTint(0x808080);
@@ -274,7 +309,7 @@ export class UI extends Phaser.Scene {
     }
 
     public onProductionBuildingUnselected() {
-        this.menuBackground.destroy(true);
+        this.menuBackground.setVisible(false);
         this.purchasableUnits.destroy(true);
         this.purchasableUnits = this.add.group();
         this.purchaseCursor.destroy(true);
@@ -287,7 +322,7 @@ export class UI extends Phaser.Scene {
         this.purchaseCursor.setPosition(
             this.purchaseCursor.x,
             this.purchaseCursor.y - 32,
-        )
+        );
     }
 
     public movePurchaseCursorDown() {
@@ -297,7 +332,7 @@ export class UI extends Phaser.Scene {
         this.purchaseCursor.setPosition(
             this.purchaseCursor.x,
             this.purchaseCursor.y + 32,
-        )
+        );
     }
 
     public getSelectedUnitTypeFromPurchaseList() {

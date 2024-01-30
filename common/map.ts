@@ -12,7 +12,10 @@ const Walkable = 0;
 type MatrixRow = (typeof Walkable | typeof Blocked | typeof Road)[];
 type Matrix = MatrixRow[];
 
-export function getPathFinder(unit: Unit, tiles?: TileType[][], units?: Unit[], currentPlayer?: string, blockEnemyUnits = true) {
+export function getPathFinder(unit: Unit, tiles?: TileType[][], units?: Unit[], currentPlayer?: string, blockEnemyUnits = true): {
+    finder: AStarFinder,
+    grid: Grid,
+} {
     if (!tiles?.[0] || !units) {
         throw new Error('Game not loaded');
     }

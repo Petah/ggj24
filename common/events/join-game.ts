@@ -18,3 +18,8 @@ export class PlayerJoinedEvent implements IEvent {
     public type = EventType.PLAYER_JOINED;
     constructor(public game: GameState) { }
 }
+
+export class CreateGameRequest implements IEvent {
+    public type = EventType.CREATE_GAME_REQUEST;
+    constructor(public gameName: string) { }
+}

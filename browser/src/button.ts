@@ -32,18 +32,6 @@ export class GameButton {
         this.nineSlice.on('pointerdown', callback);
     }
 
-    public update() {
-        // this.nineSlice.setPosition(
-        //     this.scene.cameras.main.worldView.x + this.x,
-        //     this.scene.cameras.main.worldView.y + this.y,
-        // );
-
-        // this.textObject.setPosition(
-        //     this.scene.cameras.main.worldView.x + this.x + 10,
-        //     this.scene.cameras.main.worldView.y + this.y + 10,
-        // );
-    }
-
     public setVisible(visible: boolean) {
         this.nineSlice.setVisible(visible);
         this.textObject.setVisible(visible);

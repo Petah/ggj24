@@ -8,25 +8,39 @@
  * @param {boolean} [walkable] - Whether this node is walkable.
  * @param {number} [cost] - node cost used by finders that allow non-uniform node costs
  */
-export function Node(x, y, walkable?, cost?) {
-    /**
-     * The x coordinate of the node on the grid.
-     * @type number
-     */
-    this.x = x;
-    /**
-     * The y coordinate of the node on the grid.
-     * @type number
-     */
-    this.y = y;
-    /**
-     * Whether this node can be walked through.
-     * @type boolean
-     */
-    this.walkable = (walkable === undefined ? true : walkable);
-    /**
-     * Cost to walk this node if its walkable
-     * @type number
-     */
-    this.cost = (cost === undefined) ? 0 : cost;
+export class Node {
+    public x: number;
+    public y: number;
+    public walkable: boolean;
+    public cost: number;
+    public g!: number;
+    public f!: number;
+    public opened!: boolean;
+    public closed!: boolean;
+    public h!: number;
+    public parent!: Node;
+
+
+    constructor(x, y, walkable?, cost?) {
+        /**
+         * The x coordinate of the node on the grid.
+         * @type number
+         */
+        this.x = x;
+        /**
+         * The y coordinate of the node on the grid.
+         * @type number
+         */
+        this.y = y;
+        /**
+         * Whether this node can be walked through.
+         * @type boolean
+         */
+        this.walkable = (walkable === undefined ? true : walkable);
+        /**
+         * Cost to walk this node if its walkable
+         * @type number
+         */
+        this.cost = (cost === undefined) ? 0 : cost;
+    }
 }

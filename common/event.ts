@@ -17,6 +17,9 @@ export enum EventType {
     PURCHASE_UNIT_RESPONSE = 'purchase_unit_response',
     ATTACK_UNIT_REQUEST = 'attack_unit_request',
     ATTACK_UNIT_RESPONSE = 'attack_unit_response',
+    CREATE_GAME_REQUEST = 'create_game_request',
+    WAIT_REQUEST = 'wait_request',
+    WAIT_RESPONSE = 'wait_response',
 }
 
 export interface IEvent {

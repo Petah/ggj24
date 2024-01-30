@@ -12,7 +12,7 @@ capture sound
 Boats - movement
 boats on land
 Transport units
-Ranged detection broken for adjacent unitsgit 
+Ranged detection broken for adjacent unitsgit
 Ranged detection broken for adjacent units
 
 rocket tank cant shoot air
@@ -22,3 +22,5 @@ can shoot unlimited times
 if damage would be zero, dont allow targetting
 if unit can shoot, don't apply tint to them
 if a unit dies, reset the buildings capture status
+click build menu
+end turn sound
