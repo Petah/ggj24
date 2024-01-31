@@ -1,5 +1,3 @@
-import exp from "constants";
-
 export enum UnitType {
     AIRPORT = 'Airport',
     CITY = 'City',
@@ -51,6 +49,8 @@ export enum ArmourType {
     HELICOPTER = "copter",
     PLANE = "plane",
 }
+
+export type UnitTypePurchasable = UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET | UnitType.ANTI_TANK | UnitType.APC | UnitType.HELICOPTER | UnitType.LANDER | UnitType.ROCKET_TRUCK;
 
 export function getDamageAmount(attackingUnit: MovableUnit, defendingUnit: MovableUnit): number {
     return getDamageAmountBase(attackingUnit, defendingUnit) * (attackingUnit.health / attackingUnit.maxHealth);
@@ -177,6 +177,7 @@ export abstract class Unit {
 }
 
 export abstract class MovableUnit extends Unit {
+    public static readonly cost: number;
     public maxHealth: number = 100;
     public health: number = 100;
     public movementType!: MovementType;
@@ -289,7 +290,7 @@ export class Ship extends MovableUnit {
 
 export abstract class Building extends Unit {
     public readonly income: number = 1000;
-    public readonly canBuild!: UnitType[];
+    public readonly canBuild!: UnitTypePurchasable[];
     public maxCapturePoints = 20;
     public capturePoints = 20;
 }
@@ -300,17 +301,17 @@ export class City extends Building {
 
 export class Dock extends Building {
     public readonly type = UnitType.DOCK;
-    public readonly canBuild = [UnitType.LANDER, UnitType.SHIP];
+    public readonly canBuild: UnitTypePurchasable[] = [UnitType.LANDER, UnitType.SHIP];
 }
 
 export class Factory extends Building {
     public readonly type = UnitType.FACTORY;
-    public readonly canBuild = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.TANK, UnitType.ROCKET_TRUCK];
+    public readonly canBuild: UnitTypePurchasable[] = [UnitType.INFANTRY, UnitType.ANTI_TANK, UnitType.TANK, UnitType.ROCKET_TRUCK];
 }
 
 export class Airport extends Building {
     public readonly type = UnitType.AIRPORT;
-    public readonly canBuild = [UnitType.HELICOPTER, UnitType.TRANSPORT, UnitType.JET];
+    public readonly canBuild: UnitTypePurchasable[] = [UnitType.HELICOPTER, UnitType.JET];
 }
 
 export class HQ extends Building {

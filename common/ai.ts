@@ -3,7 +3,7 @@ import { EventType, IEvent } from './event';
 import { CaptureRequest, CaptureResponse, EndTurn, GameStateUpdate, MoveUnitRequest, MoveUnitResponse, WaitRequest, WaitResponse } from './events/turn';
 import { logError, logInfo } from './log';
 import { GameState } from './events/game-list';
-import { Tank, Unit, UnitType, isBuilding, isMoveableUnit } from './unit';
+import { Building, MovableUnit, Tank, Unit, UnitType, UnitTypeMap, UnitTypePurchasable, isBuilding, isMoveableUnit } from './unit';
 import { getPathFinder } from './map';
 import { PurchaseUnitRequest, PurchaseUnitResponse } from './events/unit-purchase';
 import { Path } from './pf/finders/AStarFinder';
@@ -95,16 +95,24 @@ export class Ai implements IClient {
         if (money < 1000) {
             return;
         }
-        const factories = game.units.filter(unit => unit.type === UnitType.FACTORY && unit.player === this.playerName);
+        const factories = game.units.filter(unit => unit.type === UnitType.FACTORY && unit.player === this.playerName) as Building[];
+        console.log('factories', factories)
         for (const factory of factories) {
             const unitOnTop = game.units.find(unit => unit.x === factory.x && unit.y === factory.y && unit.id !== factory.id);
             if (unitOnTop) {
                 continue;
             }
-            if (money >= 7000) {
-                return new PurchaseUnitRequest(factory.id, UnitType.TANK);
-            } else {
-                return new PurchaseUnitRequest(factory.id, UnitType.INFANTRY);
+            let mostExpensive: typeof MovableUnit | undefined;
+            let mostExpensiveType: UnitTypePurchasable | undefined;
+            for (const unitType of factory.canBuild) {
+                const unit = UnitTypeMap[unitType] as typeof MovableUnit;
+                if (money >= unit.cost && (!mostExpensive || unit.cost > mostExpensive.cost)) {
+                    mostExpensive = unit;
+                    mostExpensiveType = unitType;
+                }
+            }
+            if (mostExpensiveType) {
+                return new PurchaseUnitRequest(factory.id, mostExpensiveType);
             }
         }
     }
@@ -154,7 +162,8 @@ export class Ai implements IClient {
     }
 
     public async moveTank(game: GameState): Promise<IEvent | undefined> {
-        const tank = game.units.find(unit => unit.type === UnitType.TANK && unit.movementPoints > 0 && unit.player === this.playerName);
+        const tanks = [UnitType.TANK, UnitType.ROCKET_TRUCK];
+        const tank = game.units.find(unit => tanks.indexOf(unit.type) !== -1 && unit.movementPoints > 0 && unit.player === this.playerName);
         if (!tank) {
             return;
         }

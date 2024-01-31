@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <map version="1.10" tiledversion="1.10.2" orientation="orthogonal" renderorder="right-down" width="40" height="40" tilewidth="16" tileheight="16" infinite="0" nextlayerid="7" nextobjectid="62">
  <editorsettings>
-  <export target="../browser/public/assets/test3.json" format="json"/>
+  <export target="map-default.json" format="json"/>
  </editorsettings>
- <tileset firstgid="1" source="Test.tsx"/>
+ <tileset firstgid="1" source="kenny-tiny-battle.tsx"/>
  <layer id="1" name="Map" width="40" height="40">
   <data encoding="csv">
 38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,38,

@@ -1,4 +1,4 @@
-import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, RocketTruck, Ship, Tank, Unit, UnitType, getDamageAmount, isBuilding, isMoveableUnit } from 'common/unit';
+import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, RocketTruck, Ship, Tank, Unit, UnitType, UnitTypePurchasable, getDamageAmount, isBuilding, isMoveableUnit } from 'common/unit';
 import { AttackUnitResponse, CaptureResponse, GameStateUpdate, MoveUnitResponse, WaitResponse } from 'common/events/turn';
 import { GameError } from './error';
 import { GameState, TileType } from 'common/events/game-list';
@@ -25,6 +25,7 @@ export class Game {
 
     constructor(
         public name: string,
+        public mapName: string,
     ) {
     }
 
@@ -49,7 +50,7 @@ export class Game {
         this.turn = 1;
         this.currentPlayer = this.players[0];
 
-        const tileMapData = await readFile('../browser/public/assets/test3.json', 'utf-8');
+        const tileMapData = await readFile(`../browser/public/maps/${this.mapName}/map.json`, 'utf-8');
         const tileMap: TileMap = JSON.parse(tileMapData);
         const layer = tileMap.layers.find(layer => layer.name === 'Data');
         if (!layer) {
@@ -134,7 +135,7 @@ export class Game {
     }
 
     public endTurn() {
-        console.log('--------------------------------')
+        console.log('--------------------------------');
         const currentPlayerIndex = this.players.indexOf(this.currentPlayer!);
         if (currentPlayerIndex === this.players.length - 1) {
             this.turn++;
@@ -260,7 +261,7 @@ export class Game {
         return new CaptureResponse(building.x, building.y, this.serialize());
     }
 
-    public buildUnit(buildingId: number, unitType: UnitType.INFANTRY | UnitType.TANK | UnitType.SHIP | UnitType.JET | UnitType.ANTI_TANK | UnitType.APC | UnitType.HELICOPTER | UnitType.LANDER): PurchaseUnitResponse {
+    public buildUnit(buildingId: number, unitType: UnitTypePurchasable): PurchaseUnitResponse {
         const { player, unit } = this.getPlayerUnit(buildingId);
         const unitsAvailable = {
             [UnitType.INFANTRY]: Infantry,

@@ -15,6 +15,7 @@
   },
   "scripts": {
     "lint": "eslint \"src/**/*.ts\" --fix",
-    "dev": "nodemon src/main.ts --watch ../common --watch ./src"
+    "dev": "nodemon src/main.ts --watch ../common --watch ./src",
+    "test": "nodemon src/test.ts --watch ../common --watch ./src"
   }
 }

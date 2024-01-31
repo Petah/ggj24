@@ -21,7 +21,7 @@
     "@rollup/plugin-alias": "^5.1.0",
     "@rollup/plugin-commonjs": "^25.0.7",
     "@rollup/plugin-replace": "^5.0.5",
-    "phaser": "^3.70.0",
+    "phaser": "git+https://github.com/phaserjs/phaser.git#master",
     "ws": "^8.16.0"
   }
 }
