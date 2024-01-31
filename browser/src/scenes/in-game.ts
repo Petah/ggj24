@@ -68,14 +68,14 @@ export class InGame extends Phaser.Scene {
         this.load.tilemapTiledJSON('map', 'assets/test3.json');
         this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 });
 
-        this.load.audio('steps', ['assets/steps.ogg']);
-        this.load.audio('jet', ['assets/jet.ogg']);
-        this.load.audio('helicopter', ['assets/helicopter.ogg']);
-        this.load.audio('tank', ['assets/tank.ogg']);
-        this.load.audio('backgroundMusic', ['assets/country-rock.mp3']);
-        this.load.audio('capture', ['assets/capture.mp3']);
-        this.load.audio('tankShot', ['assets/tank-shot.ogg']);
-        this.load.audio('machineGun', ['assets/machine-gun.ogg']);
+        this.load.audio('steps', ['sounds/steps.ogg']);
+        this.load.audio('jet', ['sounds/jet.ogg']);
+        this.load.audio('helicopter', ['sounds/helicopter.ogg']);
+        this.load.audio('tank', ['sounds/tank.ogg']);
+        this.load.audio('backgroundMusic', ['sounds/country-rock.mp3']);
+        this.load.audio('capture', ['sounds/capture.mp3']);
+        this.load.audio('tankShot', ['sounds/tank-shot.ogg']);
+        this.load.audio('machineGun', ['sounds/machine-gun.ogg']);
     }
 
     create() {
