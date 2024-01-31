@@ -21,5 +21,5 @@ export class PlayerJoinedEvent implements IEvent {
 
 export class CreateGameRequest implements IEvent {
     public type = EventType.CREATE_GAME_REQUEST;
-    constructor(public gameName: string, public mapName: string) { }
+    constructor(public gameName: string, public mapName: string, public playerName?: string) { }
 }

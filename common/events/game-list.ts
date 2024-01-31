@@ -1,21 +1,16 @@
 import { EventType, IEvent } from '../event';
-import { PlayerColor, Unit } from '../unit';
+import { Player } from '../player';
+import { Unit } from '../unit';
 
 export interface GameState {
     tick: number,
     name: string;
-    players: {
-        name: string;
-        color: PlayerColor;
-        money: number;
-        hasLost: boolean;
-    }[];
+    players: Player[];
     width: number;
     height: number;
     turn: number;
     currentPlayer?: string;
-    tiles?: TileType[][];
-    matrix?: number[][];
+    tiles: TileType[][];
     units: Unit[];
     started: boolean;
 }

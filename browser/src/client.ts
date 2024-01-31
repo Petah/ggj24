@@ -8,13 +8,21 @@ import { state } from './state';
 import { PurchaseUnitResponse } from 'common/events/unit-purchase';
 
 export class Client {
-    public ws: WebSocket;
+    private ws!: WebSocket;
+    private backoff: number = 0;
+    private maxBackoff: number = 1000 * 30;
+    private currentHost: string;
 
     constructor() {
-        const currentHost = window.location.host.replace(/:.*/, '');
-        this.ws = new WebSocket(`ws://${currentHost}:8080`);
+        this.currentHost = window.location.host.replace(/:.*/, '');
+        this.connect();
+    }
+
+    private connect() {
+        this.ws = new WebSocket(`ws://${this.currentHost}:8080`);
         this.ws.onopen = () => {
             logInfo('Connected to server');
+            this.backoff = 0;
 
             // @todo Make game list only request on menu screen
             this.send(new GameListRequest());
@@ -59,9 +67,17 @@ export class Client {
 
         this.ws.onclose = () => {
             logError('Disconnected from server');
+            // setTimeout(() => {
+            //     // window.location.reload();
+            // }, 3000);
+            // Try to reconnect
+            this.backoff += 1000;
+            if (this.backoff > this.maxBackoff) {
+                this.backoff = this.maxBackoff;
+            }
             setTimeout(() => {
-                // window.location.reload();
-            }, 3000);
+                this.connect();
+            }, this.backoff);
         };
 
         this.ws.onerror = error => {

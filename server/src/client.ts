@@ -1,13 +1,11 @@
 import WebSocket from 'ws';
 import { IEvent } from 'common/event';
-import { IClient } from 'common/client';
-
-export class DummyClient implements IClient {
-    public send(event: IEvent) {
-    }
-}
+import { ClientType, IClient } from 'common/client';
 
 export class WebSocketClient implements IClient {
+    public type = ClientType.WEBSOCKET;
+    public state: object = {};
+
     public constructor(private ws: WebSocket) {
     }
 

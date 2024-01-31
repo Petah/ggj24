@@ -43,5 +43,6 @@ module.exports = {
         "no-restricted-imports": "off",
         "@typescript-eslint/no-restricted-imports": ["error", { "patterns": ["src/*"] }],
         'semi': ['error', 'always'],
+        'eqeqeq': ['warn', 'always'],
     }
 };

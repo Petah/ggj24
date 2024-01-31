@@ -1,0 +1,58 @@
+{
+    "tick": 457,
+    "name": "Default Game",
+    "players": [
+        {
+            "clientType": "WebSocket",
+            "name": "Player1",
+            "color": "red",
+            "money": 1000,
+            "hasLost": false,
+            "state": {}
+        },
+        {
+            "clientType": "AI",
+            "name": "AI",
+            "color": "blue",
+            "money": 1000,
+            "hasLost": false,
+            "state": {}
+        }
+    ],
+    "width": 30,
+    "height": 20,
+    "turn": 1,
+    "currentPlayer": "Player1",
+    "tiles": [
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WWSSSSSSSSSSSSSSSSSSSSSSSSSSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSGGGGGGGGGGGGGGGGGGGGGGGGSWW",
+        "WWSSSSSSSSSSSSSSSSSSSSSSSSSSWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW",
+        "WWWWWWWWWWWWWWWWWWWWWWWWWWWWWW"
+    ],
+    "units": [],
+    "started": true,
+    "clientState": {
+        "AI": {
+            "tick": 456,
+            "thinking": true,
+            "maxTurns": 100
+        },
+        "Player1": {}
+    }
+}

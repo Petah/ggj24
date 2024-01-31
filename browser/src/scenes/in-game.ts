@@ -87,16 +87,12 @@ export class InGame extends Phaser.Scene {
 
         const map = this.make.tilemap({ key: 'map' });
         const tilesetName = map.tilesets[0].name;
-        console.log('tilesetName', tilesetName)
         // add the tileset image we are using
         const tileset = map.addTilesetImage(tilesetName, 'tiles') as Phaser.Tilemaps.Tileset;
 
         map.createLayer('Map', tileset);
-        // map.createLayer('Road', tileset);
-        // map.createLayer('Mountains', tileset);
-        // map.createLayer('Trees', tileset);
         this.cameras.main.setZoom(2).setScroll(map.widthInPixels / 2 - (window.innerWidth - 150) / 2, map.heightInPixels / 2 - window.innerHeight / 2);
-        // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
+        this.cameras.main.setBounds(-map.widthInPixels / 2, -map.heightInPixels / 2, map.widthInPixels + 300 * (1 / this.cameras.main.zoom) + map.widthInPixels, map.heightInPixels * 2)
 
 
         this.input.on('wheel', (pointer: any, gameObjects: any, deltaX: any, deltaY: any, deltaZ: any) => {
@@ -561,6 +557,7 @@ export class InGame extends Phaser.Scene {
         if (state.latestGameState && game.tick < state.latestGameState.tick) {
             return this.updateGameState(state.latestGameState);
         }
+        console.log('updateGameState', game)
         if (!state.latestGameState || game.tick > state.latestGameState.tick) {
             state.latestGameState = game;
         }
@@ -585,6 +582,7 @@ export class InGame extends Phaser.Scene {
 
         // Setup sprites
         const units = game?.units || [];
+        console.log('units', units)
         for (const unit of units) {
             const existingSprite = this.getUnitSprite(unit);
             const playerColor = game.players.find(player => player.name === unit.player)?.color || PlayerColor.NEUTRAL;
@@ -620,12 +618,18 @@ export class InGame extends Phaser.Scene {
         // Cull dead units
         for (const layer of [this.buildingLayer, this.unitLayer]) {
             const children = layer.getChildren();
-            for (const child of children) {
-                const unit = units.find(unit => unit.id === child.getData('unit'));
-                if (!unit) {
-                    child.destroy();
+            let foundUnit: boolean;
+            do {
+                foundUnit = false;
+                for (const child of children) {
+                    const unit = units.find(unit => unit.id === child.getData('unit'));
+                    if (!unit) {
+                        child.destroy();
+                        foundUnit = true;
+                        break;
+                    }
                 }
-            }
+            } while (foundUnit);
         }
 
         if (state.selectedUnit) {
@@ -727,23 +731,6 @@ export class InGame extends Phaser.Scene {
         const pointsX = event.path.map(point => point[0] * TILE_SIZE);
         const pointsY = event.path.map(point => point[1] * TILE_SIZE);
 
-        let movementSpeed = 4;
-        switch (unit.type) {
-            case UnitType.JET:
-                movementSpeed = 10;
-                break;
-            case UnitType.HELICOPTER:
-                movementSpeed = 7;
-                break;
-            case UnitType.APC:
-            case UnitType.ROCKET_TRUCK:
-            case UnitType.TANK:
-                movementSpeed = 5;
-                break;
-            default:
-                movementSpeed = 4;
-                break;
-        }
         this.moving.push({
             sprite,
             startX: unit.x,
@@ -752,7 +739,7 @@ export class InGame extends Phaser.Scene {
             endY: event.path[event.path.length - 1][1],
             pointsX,
             pointsY,
-            time: event.path.length * 1000 / movementSpeed,
+            time: event.path.length * 1000 / unit.maxMovementPoints,
             current: 0,
             game: event.game,
         });

@@ -1,9 +1,8 @@
 import { client } from '../client';
-import { GameButton } from '../button';
-import { PlayerColor, Tank, Unit, UnitType, UnitTypeMap } from 'common/unit';
+import { PlayerColor, Unit, UnitType, UnitTypeMap } from 'common/unit';
 import { isOurTurn, state } from '../state';
 import { Building, isBuilding, isMoveableUnit } from 'common/unit';
-import { CaptureRequest, EndTurn, ReloadGameState, StartGame } from 'common/events/turn';
+import { CaptureRequest, EndTurn, ReloadGameState, RestartGame, StartGame } from 'common/events/turn';
 import { Dialog } from '../dialog';
 import { UnitSprites } from '../unit-sprites';
 import { Ai } from 'common/ai';
@@ -54,13 +53,12 @@ export class UI extends Phaser.Scene {
     private debugText!: Phaser.GameObjects.Text;
     // private money!: Phaser.GameObjects.Text;
 
-    private startGameButton!: GameButton;
-    private endTurnButton!: GameButton;
+    private startGameButton!: IButton;
+    private endTurnButton!: IButton;
     private menuBackground!: Dialog;
     private purchasableUnits!: Phaser.GameObjects.Group;
     private purchaseCursor!: Phaser.GameObjects.Sprite;
-    private reloadGameStateButton!: GameButton;
-    private captureButton!: GameButton;
+    private captureButton!: IButton;
     private purchasableUnitList!: UnitType[];
     private selectedPurchaseListIndex = 0;
     private windowRed!: Dialog;
@@ -111,20 +109,17 @@ export class UI extends Phaser.Scene {
         }).setVisible(false);
 
         this.purchasableUnits = this.add.group();
-        this.startGameButton = new GameButton(this, 'Start Game', screenWidth - 280, screenHeight - 70, () => {
-            client.send(new StartGame());
-        });
-        this.endTurnButton = new GameButton(this, 'End Turn', screenWidth - 280, screenHeight - 70, () => {
-            client.send(new EndTurn());
-        });
-        this.reloadGameStateButton = new GameButton(this, 'Reload Game State', screenWidth - 280, screenHeight - 190, () => {
+        this.startGameButton = this.add.button(screenWidth - 280, screenHeight - 70, 'Start Game', () => client.send(new StartGame()));
+        this.endTurnButton = this.add.button(screenWidth - 280, screenHeight - 70, 'End Turn', () => client.send(new EndTurn()));
+        this.add.button(screenWidth - 280, screenHeight - 250, 'Restart Game', () => client.send(new RestartGame()));
+        this.add.button(screenWidth - 280, screenHeight - 190, 'Reload Game State', () => {
             if (client.ws.readyState !== WebSocket.OPEN) {
                 window.location.reload();
                 return;
             }
             client.send(new ReloadGameState());
         });
-        this.captureButton = new GameButton(this, 'Capture', screenWidth - 280, screenHeight - 130, () => {
+        this.captureButton = this.add.button(screenWidth - 280, screenHeight - 130, 'Capture', () => {
             if (state.selectedUnit) {
                 client.send(new CaptureRequest(state.selectedUnit.id, state.selectedUnit.x, state.selectedUnit.y));
             }
@@ -225,11 +220,11 @@ export class UI extends Phaser.Scene {
                     debugText.push(`Committed: ${state.selectedUnit.hasCommittedActions ? 'Yes' : 'No'}`);
                 }
 
-                (async () => {
-                    if (state.selectedUnit?.type === UnitType.TANK) {
-                        console.log(await this.ai.processTank(state.selectedUnit as Tank, state.game));
-                    }
-                })();
+                // (async () => {
+                //     if (state.selectedUnit?.type === UnitType.TANK) {
+                //         console.log(await this.ai.processTank(state.selectedUnit as Tank, state.game));
+                //     }
+                // })();
             }
         }
         this.debugText.setText(debugText.join('\n'));

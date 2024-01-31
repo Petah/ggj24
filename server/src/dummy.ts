@@ -1,11 +1,13 @@
-import { IClient } from 'common/client';
+import { ClientType, IClient } from 'common/client';
 import { EventType, IEvent } from 'common/event';
 import { EndTurn, GameStateUpdate } from 'common/events/turn';
 import { logError } from 'common/log';
 import { GameState } from 'common/events/game-list';
-import { Server } from '../server';
+import { Server } from './server';
 
 export class Dummy implements IClient {
+    public type = ClientType.DUMMY;
+    public state: object = {};
 
     public constructor(
         public playerName: string,

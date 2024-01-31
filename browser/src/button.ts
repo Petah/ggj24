@@ -1,20 +1,25 @@
-export class GameButton {
+export class GameButton extends Phaser.GameObjects.Container implements IButton {
     private nineSlice!: Phaser.GameObjects.NineSlice;
     private textObject!: Phaser.GameObjects.Text;
 
     public constructor(
-        public scene: Phaser.Scene,
-        public text: string,
-        public x: number,
-        public y: number,
-        public callback: () => void,
+        scene: Phaser.Scene,
+        x: number,
+        y: number,
+        text: string,
+        callback: () => void,
     ) {
+        super(scene, x, y);
         const height = 50;
         const width = 260;
         const padding = 20;
-        this.nineSlice = scene.add.nineslice(x, y, 'buttonGreen', 0, 16 * 3, 16 * 3, 16, 16, 16, 16).setOrigin(0).setOrigin(0);
+        this.nineSlice = scene.add.nineslice(0, 0, 'buttonGreen', 0, 16 * 3, 16 * 3, 16, 16, 16, 16)
+            .setOrigin(0)
+            .setSize(width, height)
+            .setInteractive()
+            .on('pointerdown', callback);
 
-        this.textObject = scene.add.text(x, y, this.text, {
+        this.textObject = scene.add.text(x, y, text, {
             fontSize: '24px',
             shadow: {
                 offsetX: 1,
@@ -23,13 +28,13 @@ export class GameButton {
                 stroke: true,
                 fill: true,
             },
-        }).setScale(1).setOrigin(0);
-        this.textObject.setPosition(x + (width - this.textObject.width) / 2, y + padding / 2);
+        })
+            .setScale(1)
+            .setOrigin(0);
+        this.textObject.setPosition((width - this.textObject.width) / 2, padding / 2);
 
-
-        this.nineSlice.setSize(width, height)
-        this.nineSlice.setInteractive();
-        this.nineSlice.on('pointerdown', callback);
+        this.add([this.nineSlice, this.textObject]);
+        // scene.add.existing(this);
     }
 
     public setVisible(visible: boolean) {

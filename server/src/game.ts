@@ -1,16 +1,21 @@
 import { APC, Airport, AntiTank, Building, City, Dock, Factory, HQ, Helicopter, Infantry, Jet, Lander, MovableUnit, PlayerColor, PlayerColors, RocketTruck, Ship, Tank, Unit, UnitType, UnitTypePurchasable, getDamageAmount, isBuilding, isMoveableUnit } from 'common/unit';
-import { AttackUnitResponse, CaptureResponse, GameStateUpdate, MoveUnitResponse, WaitResponse } from 'common/events/turn';
+import { AttackUnitResponse, CaptureResponse, MoveUnitResponse, WaitResponse } from 'common/events/turn';
 import { GameError } from './error';
 import { GameState, TileType } from 'common/events/game-list';
 import { generateId } from './id';
-import { IClient } from 'common/client';
+import { getPathFinder } from 'common/map';
+import { ClientType, IClient } from 'common/client';
 import { IEvent } from 'common/event';
 import { logError, logInfo } from 'common/log';
-import { Player } from './player';
+import { Player } from 'common/player';
 import { PurchaseUnitResponse } from 'common/events/unit-purchase';
-import { readFile } from 'fs/promises';
-import { TILE_SIZE, getPathFinder } from 'common/map';
+import { readFile, writeFile } from 'fs/promises';
 import { TileMap, TileSet } from './tiled';
+
+type SaveGameState = Omit<GameState, 'tiles'> & {
+    tiles: string[];
+    clientState: { [playerName: string]: object };
+}
 
 export class Game {
     public players: Player[] = [];
@@ -22,6 +27,7 @@ export class Game {
     public tiles: TileType[][] = [];
     public mapWidth: number = 0;
     public mapHeight: number = 0;
+    public clientState: { [playerName: string]: object } = {};
 
     constructor(
         public name: string,
@@ -32,23 +38,34 @@ export class Game {
     public addPlayer(playerName: string, client: IClient) {
         const existingPlayer = this.players.find(player => player.name === playerName);
         if (existingPlayer) {
-            existingPlayer.client = client;
+            logInfo('Reconnecting player', playerName);
+            existingPlayer.clientType = client.type;
+            if (this.clientState[playerName]) {
+                client.state = this.clientState[playerName];
+            }
         } else {
             if (this.players.length >= 4) {
                 throw new GameError('Game is full');
             }
             const nextColor = PlayerColors.find(color => !this.players.find(player => player.color === color)) as PlayerColor;
-            this.players.push(new Player(playerName, client, nextColor));
+            this.players.push(new Player(client.type, playerName, nextColor));
+            logInfo('Adding player', playerName, nextColor);
         }
     }
 
-    public async start() {
-        if (this.started) {
+    public async start(restart: boolean = false) {
+        if (this.started && !restart) {
             throw new GameError('Game already started');
         }
         this.started = true;
         this.turn = 1;
         this.currentPlayer = this.players[0];
+        this.units = [];
+
+        for (const player of this.players) {
+            player.money = 1000;
+            player.hasLost = false;
+        }
 
         // @todo validate file name
         const tileMapData = await readFile(`../browser/public/maps/${this.mapName}.json`, 'utf-8');
@@ -57,11 +74,13 @@ export class Game {
         const tiles: TileType[][] = [];
         for (const layer of tileMap.layers) {
             for (let y = 0; y < tileMap.height; y++) {
-                const row: TileType[] = [];
+                if (!tiles[y]) {
+                    tiles[y] = [];
+                }
                 for (let x = 0; x < tileMap.width; x++) {
                     const tileId = layer.data[y * tileMap.width + x] - tileMap.tilesets[0].firstgid;
                     if (tileId === -1) {
-                        row.push(TileType.WATER);
+                        // row.push(TileType.WATER);
                         continue;
                     }
                     const tile = tileSet.tiles.find(t => t.id === tileId);
@@ -71,25 +90,25 @@ export class Game {
 
                     switch (tileType) {
                         case 'water':
-                            row.push(TileType.WATER);
+                            tiles[y][x] = TileType.WATER;
                             break;
                         case 'road':
-                            row.push(TileType.ROAD);
+                            tiles[y][x] = TileType.ROAD;
                             break;
                         case 'grass':
-                            row.push(TileType.GRASS);
+                            tiles[y][x] = TileType.GRASS;
                             break;
                         case 'mountain':
-                            row.push(TileType.MOUNTAIN);
+                            tiles[y][x] = TileType.MOUNTAIN;
                             break;
                         case 'river':
-                            row.push(TileType.RIVER);
+                            tiles[y][x] = TileType.RIVER;
                             break;
                         case 'forest':
-                            row.push(TileType.FOREST);
+                            tiles[y][x] = TileType.FOREST;
                             break;
                         case 'shore':
-                            row.push(TileType.SHORE);
+                            tiles[y][x] = TileType.SHORE;
                             break;
 
                         case 'hq':
@@ -129,7 +148,13 @@ export class Game {
                             logError('Tile not found', x, y, tileId, tile);
                     }
                 }
-                tiles.push(row);
+            }
+        }
+        for (let y = 0; y < tileMap.height; y++) {
+            for (let x = 0; x < tileMap.width; x++) {
+                if (!tiles[y][x]) {
+                    tiles[y][x] = TileType.WATER;
+                }
             }
         }
         this.mapWidth = tileMap.width;
@@ -137,6 +162,10 @@ export class Game {
         this.tiles = tiles;
 
         this.setupTurn(this.currentPlayer);
+    }
+
+    public restart() {
+        this.start(true);
     }
 
     public endTurn() {
@@ -155,14 +184,14 @@ export class Game {
 
     private setupTurn(player: Player) {
         // Give players money
-        const buildings = this.units.filter((unit: Unit) => unit instanceof Building && unit.player === player.name && unit.income) as Building[];
+        const buildings = this.units.filter((unit: Unit) => isBuilding(unit) && unit.player === player.name && unit.income) as Building[];
         const income = buildings.map(building => building.income).reduce((total, income) => total + income, 0);
         player.money += income;
         logInfo('Player money', player.name, player.money);
 
         // Set movement points
         for (const unit of this.units) {
-            if (unit instanceof MovableUnit && unit.player === player.name) {
+            if (isMoveableUnit(unit) && unit.player === player.name) {
                 unit.movementPoints = unit.maxMovementPoints;
                 unit.hasCommittedActions = false;
             }
@@ -171,7 +200,7 @@ export class Game {
 
     public moveUnit(unitId: number, x: number, y: number): IEvent {
         const { unit } = this.getPlayerUnit(unitId);
-        if (!(unit instanceof MovableUnit)) {
+        if (!(isMoveableUnit(unit))) {
             throw new GameError('Unit is not movable');
         }
         if (unit.movementPoints <= 0) {
@@ -204,7 +233,7 @@ export class Game {
         unit.movementPoints -= path.length;
 
         // Refresh capture points if moving off of building
-        const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && u instanceof Building) as Building | undefined;
+        const buildingAtPosition = this.units.find(u => unit.x === u.x && unit.y === u.y && isBuilding(u)) as Building | undefined;
         if (buildingAtPosition) {
             buildingAtPosition.capturePoints = buildingAtPosition?.maxCapturePoints;
         }
@@ -214,9 +243,13 @@ export class Game {
 
     public captureBuilding(unitId: number, x: number, y: number): IEvent {
         const { unit } = this.getPlayerUnit(unitId) as { unit: MovableUnit; player: Player };
-        const building = this.units.find(unit => unit.x === x && unit.y === y && unit instanceof Building) as Building;
-        const originalOwner = building.player;
-        if (building.player == unit.player) {
+        const building = this.units.find(unit => unit.x === x && unit.y === y && isBuilding(unit)) as Building;
+        // @todo helper getters
+        // const { unit } = this.getPlayerMovableUnitAt(unitId) as { unit: MovableUnit; player: Player };
+        // const { building } = this.getBuildingAt(...);
+        // @todo assert correct player
+        const currentOwner = this.players.find(player => player.name === building.player);
+        if (currentOwner?.name === unit.player) {
             throw new GameError('Cannot capture own buildings');
         }
 
@@ -233,37 +266,33 @@ export class Game {
 
         if (building.capturePoints <= 0) {
             building.player = unit.player;
-            if (originalOwner
-                && building.type == UnitType.HQ
-                && building.capturePoints <= 0
-            ) {
-                this.units = this.units.filter(unit => {
-                    if (!isBuilding(unit) && unit.player == originalOwner) {
-                        return false;
-                    } else {
-                        return true;
-                    }
-                });
-                for (const item of this.units) {
-                    if (item.player == originalOwner) {
-                        if (item instanceof Building) {
-                            item.capturePoints = 20;
-                            item.player = undefined;
-                        }
-                    }
-                }
-                const player = this.players.find(player => player.name === originalOwner);
-                if (player) {
-                    player.hasLost = true;
-                }
-            }
             building.capturePoints = 20;
+            if (currentOwner && building.type === UnitType.HQ) {
+                // Player lost
+                this.playerLost(currentOwner);
+            }
         }
 
         unit.hasCommittedActions = true;
         unit.movementPoints = 0;
 
         return new CaptureResponse(building.x, building.y, this.serialize());
+    }
+
+    private playerLost(player: Player) {
+        let i = this.units.length;
+        while (i--) {
+            const unit = this.units[i];
+            if (isBuilding(unit) && unit.player === player.name) {
+                unit.capturePoints = 20;
+                unit.player = undefined;
+            } else {
+                if (unit.player === player.name) {
+                    this.units.splice(i, 1);
+                }
+            }
+        }
+        player.hasLost = true;
     }
 
     public buildUnit(buildingId: number, unitType: UnitTypePurchasable): PurchaseUnitResponse {
@@ -304,7 +333,7 @@ export class Game {
 
     public attackUnit(unitId: number, x: number, y: number): IEvent {
         const { unit } = this.getPlayerUnit(unitId);
-        if (!(unit instanceof MovableUnit)) {
+        if (!(isMoveableUnit(unit))) {
             throw new GameError('Unit is not movable');
         }
         // @todo allow attacking with 0 if in range and has not made action
@@ -318,13 +347,13 @@ export class Game {
         if (unitAtPosition.player === unit.player) {
             throw new GameError('Cannot attack own units');
         }
-        if (!(unitAtPosition instanceof MovableUnit)) {
+        if (!isMoveableUnit(unitAtPosition)) {
             throw new GameError('Cannot attack buildings');
         }
-        // if (unitAtPosition instanceof MovableUnit && unitAtPosition.movementPoints <= 0) {
+        // if (isMoveableUnit(unitAtPosition) && unitAtPosition.movementPoints <= 0) {
         //     throw new GameError('Unit cannot move');
         // }
-        // if (unitAtPosition instanceof MovableUnit && unitAtPosition.hasCommittedActions) {
+        // if (isMoveableUnit(unitAtPosition) && unitAtPosition.hasCommittedActions) {
         //     throw new GameError('Unit already committed actions');
         // }
         unit.movementPoints = 0;
@@ -338,7 +367,7 @@ export class Game {
 
     public wait(unitId: number): IEvent {
         const { unit } = this.getPlayerUnit(unitId);
-        if (!(unit instanceof MovableUnit)) {
+        if (!(isMoveableUnit(unit))) {
             throw new GameError('Unit is not movable');
         }
         unit.movementPoints = 0;
@@ -368,27 +397,11 @@ export class Game {
         }
     }
 
-    public broadcast(event: IEvent) {
-        logInfo('Broadcasting event to game', this.name, event.type);
-        for (const player of this.players) {
-            player.client?.send(event);
-        }
-    }
-
-    public broadcastGameState(): GameStateUpdate {
-        return new GameStateUpdate(this.serialize());
-    }
-
     public serialize(): GameState {
         return {
             tick: this.tick++,
             name: this.name,
-            players: this.players.map(player => ({
-                name: player.name,
-                color: player.color,
-                money: player.money,
-                hasLost: player.hasLost,
-            })),
+            players: this.players,
             width: this.mapWidth,
             height: this.mapHeight,
             turn: this.turn,
@@ -397,5 +410,46 @@ export class Game {
             units: this.units,
             started: this.started,
         };
+    }
+
+    public async saveGameState(clients: { [playerName: string]: IClient }) {
+        const jsonFile = `./games/${this.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.json`;
+        const clientState = {};
+        for (const playerName in clients) {
+            clientState[playerName] = clients[playerName].state;
+        }
+        const gameState: SaveGameState = {
+            ...this.serialize(),
+            tiles: this.tiles.map(row => row.join('')),
+            clientState,
+        };
+        const gameStateString = JSON.stringify(gameState, null, 4);
+        logInfo('Saving game state', jsonFile, gameStateString.length);
+        await writeFile(jsonFile, gameStateString);
+    }
+
+    public async loadGameState(): Promise<boolean> {
+        let gameState: SaveGameState;
+        try {
+            const jsonFile = `./games/${this.name.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.json`;
+            logInfo('Loading game state', jsonFile);
+            const gameStateString = await readFile(jsonFile, 'utf-8');
+            gameState = JSON.parse(gameStateString) as SaveGameState;
+        } catch (error) {
+            logError('Error loading game state', error);
+            return false;
+        }
+        this.tick = gameState.tick;
+        this.name = gameState.name;
+        this.players = gameState.players;
+        this.mapWidth = gameState.width;
+        this.mapHeight = gameState.height;
+        this.turn = gameState.turn;
+        this.currentPlayer = this.players.find(player => player.name === gameState.currentPlayer);
+        this.tiles = gameState.tiles.map(row => row.split('')) as TileType[][];
+        this.units = gameState.units;
+        this.started = gameState.started;
+        this.clientState = gameState.clientState;
+        return true;
     }
 }

@@ -20,6 +20,7 @@ export enum EventType {
     CREATE_GAME_REQUEST = 'create_game_request',
     WAIT_REQUEST = 'wait_request',
     WAIT_RESPONSE = 'wait_response',
+    RESTART_GAME = 'restart_game',
 }
 
 export interface IEvent {

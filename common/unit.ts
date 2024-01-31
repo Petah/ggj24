@@ -176,7 +176,8 @@ export abstract class Unit {
     ) { }
 }
 
-export abstract class MovableUnit extends Unit {
+export abstract class
+MovableUnit extends Unit {
     public static readonly cost: number;
     public maxHealth: number = 100;
     public health: number = 100;
@@ -318,9 +319,7 @@ export class HQ extends Building {
     public readonly type = UnitType.HQ;
 }
 
-export const UnitTypeMap: {
-    [key in UnitType]: typeof Unit;
-} = {
+export const UnitTypeMap = {
     [UnitType.INFANTRY]: Infantry,
     [UnitType.TANK]: Tank,
     [UnitType.SHIP]: Ship,

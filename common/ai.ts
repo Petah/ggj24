@@ -1,4 +1,4 @@
-import { IClient } from './client';
+import { ClientType, IClient } from './client';
 import { EventType, IEvent } from './event';
 import { CaptureRequest, CaptureResponse, EndTurn, GameStateUpdate, MoveUnitRequest, MoveUnitResponse, WaitRequest, WaitResponse } from './events/turn';
 import { logError, logInfo } from './log';
@@ -9,15 +9,26 @@ import { PurchaseUnitRequest, PurchaseUnitResponse } from './events/unit-purchas
 import { Path } from './pf/finders/AStarFinder';
 import { IServer } from './server';
 
+interface AiState {
+    tick: number;
+    thinking: boolean;
+    maxTurns: number;
+}
+
 export class Ai implements IClient {
-    private tick: number = 0;
-    private thinking: boolean = false;
+    public type = ClientType.AI;
+    public state: AiState = {
+        tick: 0,
+        thinking: false,
+        maxTurns: 1000000,
+    };
 
     public constructor(
         public playerName: string,
         private server?: IServer,
-        private maxTurns = Infinity,
+        state: Partial<AiState> = {},
     ) {
+        this.state = { ...this.state, ...state };
     }
 
     public async send(event: IEvent) {
@@ -49,20 +60,20 @@ export class Ai implements IClient {
     }
 
     public async handleGameStateUpdate({ type, game }: { type: EventType, game: GameState }): Promise<IEvent | undefined> {
-        if (this.tick > game.tick) {
+        if (this.state.tick > game.tick) {
             return;
         }
-        if (this.tick !== game.tick) {
-            this.tick = game.tick;
-            this.thinking = true;
+        if (this.state.tick !== game.tick) {
+            this.state.tick = game.tick;
+            this.state.thinking = true;
         }
 
         if (!this.isOurTurn(game)) {
             return;
         }
-        console.log('AI', type, this.playerName, 'turn', game.turn, game.currentPlayer, 'units', game.units.length);
+        console.log('AI', type, this.playerName, 'turn', game.turn, game.currentPlayer, 'units', game.units.length, this.state);
 
-        if (game.turn > this.maxTurns) {
+        if (game.turn > this.state.maxTurns) {
             logInfo('AI', this.playerName, 'turn', game.turn, 'max turns reached');
             return;
         }
@@ -81,7 +92,7 @@ export class Ai implements IClient {
             return event;
         }
 
-        this.thinking = false;
+        this.state.thinking = false;
 
         return new EndTurn();
     }
@@ -162,7 +173,7 @@ export class Ai implements IClient {
     }
 
     public async moveTank(game: GameState): Promise<IEvent | undefined> {
-        const tanks = [UnitType.TANK, UnitType.ROCKET_TRUCK];
+        const tanks = [UnitType.TANK, UnitType.ROCKET_TRUCK, UnitType.JET, UnitType.HELICOPTER];
         const tank = game.units.find(unit => tanks.indexOf(unit.type) !== -1 && unit.movementPoints > 0 && unit.player === this.playerName);
         if (!tank) {
             return;
