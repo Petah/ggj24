@@ -27,6 +27,7 @@ export enum TileType {
     RIVER = '~',
     MOUNTAIN = 'M',
     FOREST = 'F',
+    SHORE = 'S',
 }
 
 export class GameListRequest implements IEvent {

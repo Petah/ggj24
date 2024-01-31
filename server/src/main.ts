@@ -6,4 +6,4 @@ const dummyClient = new DummyClient();
 
 export const server = new Server();
 server.startWebSocketServer();
-server.handleEvent(dummyClient, new CreateGameRequest('Test Game'));
+server.handleEvent(dummyClient, new CreateGameRequest('Test Game', 'map-debug'));

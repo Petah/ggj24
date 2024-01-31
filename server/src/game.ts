@@ -10,7 +10,7 @@ import { Player } from './player';
 import { PurchaseUnitResponse } from 'common/events/unit-purchase';
 import { readFile } from 'fs/promises';
 import { TILE_SIZE, getPathFinder } from 'common/map';
-import { TileMap } from './tiled';
+import { TileMap, TileSet } from './tiled';
 
 export class Game {
     public players: Player[] = [];
@@ -50,81 +50,86 @@ export class Game {
         this.turn = 1;
         this.currentPlayer = this.players[0];
 
-        const tileMapData = await readFile(`../browser/public/maps/${this.mapName}/map.json`, 'utf-8');
+        // @todo validate file name
+        const tileMapData = await readFile(`../browser/public/maps/${this.mapName}.json`, 'utf-8');
         const tileMap: TileMap = JSON.parse(tileMapData);
-        const layer = tileMap.layers.find(layer => layer.name === 'Data');
-        if (!layer) {
-            throw new Error('Map layer not found');
-        }
+        const tileSet = tileMap.tilesets[0] as TileSet;
         const tiles: TileType[][] = [];
-        for (let y = 0; y < tileMap.height; y++) {
-            const row: TileType[] = [];
-            for (let x = 0; x < tileMap.width; x++) {
-                const tile = layer.data[y * tileMap.width + x];
-                switch (tile) {
-                    case 0:
+        for (const layer of tileMap.layers) {
+            for (let y = 0; y < tileMap.height; y++) {
+                const row: TileType[] = [];
+                for (let x = 0; x < tileMap.width; x++) {
+                    const tileId = layer.data[y * tileMap.width + x] - tileMap.tilesets[0].firstgid;
+                    if (tileId === -1) {
                         row.push(TileType.WATER);
-                        break;
-                    case 181:
-                        row.push(TileType.ROAD);
-                        break;
-                    case 182:
-                        row.push(TileType.GRASS);
-                        break;
-                    case 183:
-                        row.push(TileType.MOUNTAIN);
-                        break;
-                    case 184:
-                        row.push(TileType.RIVER);
-                        break;
-                    case 185:
-                        row.push(TileType.FOREST);
-                        break;
-                    default:
-                        logError('Tile not found', x, y, tile);
+                        continue;
+                    }
+                    const tile = tileSet.tiles.find(t => t.id === tileId);
+                    const tileType = tile?.properties?.find(property => property.name === 'type')?.value;
+                    const color = tile?.properties?.find(property => property.name === 'color')?.value;
+                    const player = this.players.find(player => player.color === color);
+
+                    switch (tileType) {
+                        case 'water':
+                            row.push(TileType.WATER);
+                            break;
+                        case 'road':
+                            row.push(TileType.ROAD);
+                            break;
+                        case 'grass':
+                            row.push(TileType.GRASS);
+                            break;
+                        case 'mountain':
+                            row.push(TileType.MOUNTAIN);
+                            break;
+                        case 'river':
+                            row.push(TileType.RIVER);
+                            break;
+                        case 'forest':
+                            row.push(TileType.FOREST);
+                            break;
+                        case 'shore':
+                            row.push(TileType.SHORE);
+                            break;
+
+                        case 'hq':
+                            this.units.push(new HQ(generateId(), x, y, player?.name));
+                            break;
+                        case 'city':
+                            this.units.push(new City(generateId(), x, y, player?.name));
+                            break;
+                        case 'dock':
+                            this.units.push(new Dock(generateId(), x, y, player?.name));
+                            break;
+                        case 'factory':
+                            this.units.push(new Factory(generateId(), x, y, player?.name));
+                            break;
+                        case 'airport':
+                            this.units.push(new Airport(generateId(), x, y, player?.name));
+                            break;
+                        case 'infantry':
+                            this.units.push(new Infantry(generateId(), x, y, player?.name));
+                        case 'antiTank':
+                            this.units.push(new AntiTank(generateId(), x, y, player?.name));
+                            break;
+                        case 'tank':
+                            this.units.push(new Tank(generateId(), x, y, player?.name));
+                            break;
+                        case 'rocketTruck':
+                            this.units.push(new RocketTruck(generateId(), x, y, player?.name));
+                            break;
+                        case 'jet':
+                            this.units.push(new Jet(generateId(), x, y, player?.name));
+                            break;
+                        case 'helicopter':
+                            this.units.push(new Helicopter(generateId(), x, y, player?.name));
+                            break;
+
+                        default:
+                            logError('Tile not found', x, y, tileId, tile);
+                    }
                 }
-            }
-            // @ts-ignore
-            tiles.push(row);
-        }
-        const objectLayer = tileMap.layers.find(layer => layer.name === 'Towns');
-        for (const gameObject of objectLayer?.objects || []) {
-            const owner = gameObject.properties?.find(property => property.name === 'owner')?.value as PlayerColor;
-            const player = this.players.find(player => player.color === owner);
-
-            const x = Math.round(gameObject.x / TILE_SIZE);
-            const y = Math.round(gameObject.y / TILE_SIZE) - 1;
-            if (x < 0 || x >= tileMap.width || y < 0 || y >= tileMap.height) {
-                logError('Object out of bounds', gameObject, x, y);
-                continue;
-            }
-
-            let unit: Unit | undefined;
-            switch (gameObject.type) {
-                case UnitType.HQ:
-                    unit = new HQ(generateId(), x, y, player?.name);
-                    break;
-                case UnitType.CITY:
-                    unit = new City(generateId(), x, y, player?.name);
-                    break;
-                case UnitType.DOCK:
-                    unit = new Dock(generateId(), x, y, player?.name);
-                    break;
-                case UnitType.FACTORY:
-                    unit = new Factory(generateId(), x, y, player?.name);
-                    break;
-                case UnitType.INFANTRY:
-                    unit = new Infantry(generateId(), x, y, player?.name);
-                    break;
-                case UnitType.AIRPORT:
-                    unit = new Airport(generateId(), x, y, player?.name);
-                    break;
-                default:
-                    logError('Unknown game object type', gameObject.type);
-                    break;
-            }
-            if (unit) {
-                this.units.push(unit);
+                tiles.push(row);
             }
         }
         this.mapWidth = tileMap.width;

@@ -64,8 +64,8 @@ export class InGame extends Phaser.Scene {
         this.load.image('fog', 'assets/fog.png');
         this.load.spritesheet('explosion', 'assets/explosion.png', { frameWidth: 20, frameHeight: 20 });
         this.load.spritesheet('uiTiles1', 'assets/UIpackSheet_transparent.png', { frameWidth: 16, frameHeight: 16, spacing: 2 });
-        this.load.spritesheet('tiles2', 'assets/tilemap_packed.png', { frameWidth: 16, frameHeight: 16 });
-        this.load.tilemapTiledJSON('map', 'assets/test3.json');
+        this.load.spritesheet('kennyTinyBattle', 'maps/assets/kenny-tiny-battle.png', { frameWidth: 16, frameHeight: 16 });
+        this.load.tilemapTiledJSON('map', 'maps/map-debug.json');
         this.load.spritesheet('bigCursor', 'assets/big_cursor.png', { frameWidth: 200, frameHeight: 32 });
 
         this.load.audio('steps', ['sounds/steps.ogg']);
@@ -83,17 +83,18 @@ export class InGame extends Phaser.Scene {
         this.scene.launch('UI');
         this.ui = this.scene.manager.getScene('UI') as UI;
 
-        this.add.tileSprite(-1000, -1000, 2000, 2000, 'tiles2', 37).setOrigin(0, 0);
+        this.add.tileSprite(-1000, -1000, 2000, 2000, 'kennyTinyBattle', 37).setOrigin(0, 0);
 
         const map = this.make.tilemap({ key: 'map' });
         const tilesetName = map.tilesets[0].name;
+        console.log('tilesetName', tilesetName)
         // add the tileset image we are using
         const tileset = map.addTilesetImage(tilesetName, 'tiles') as Phaser.Tilemaps.Tileset;
 
         map.createLayer('Map', tileset);
-        map.createLayer('Road', tileset);
-        map.createLayer('Mountains', tileset);
-        map.createLayer('Trees', tileset);
+        // map.createLayer('Road', tileset);
+        // map.createLayer('Mountains', tileset);
+        // map.createLayer('Trees', tileset);
         this.cameras.main.setZoom(2).setScroll(map.widthInPixels / 2 - (window.innerWidth - 150) / 2, map.heightInPixels / 2 - window.innerHeight / 2);
         // this.cameras.main.setBounds(0, 0, map.widthInPixels + 300 * (1 / this.cameras.main.zoom), map.heightInPixels)
 
@@ -231,13 +232,13 @@ export class InGame extends Phaser.Scene {
         this.unitLayer = this.add.layer();
 
         this.cursorLayer = this.add.layer();
-        this.cursorLayer.add(this.cursorSprite = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 61, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.cursorSprite = this.make.sprite({ x: 0, y: 0, key: 'kennyTinyBattle', frame: 61, origin: 0 }, false).setVisible(false));
         this.cursorLayer.add(this.selectedArrow = this.make.sprite({ x: 0, y: 0, key: 'uiTiles1', frame: 715, origin: 0 }, false).setVisible(false));
-        this.cursorLayer.add(this.healthSprite = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 61, origin: 0 }, false).setVisible(false));
-        this.cursorLayer.add(this.captureSprite = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 194, origin: 0 }, false).setVisible(false));
-        this.cursorLayer.add(this.healthNumber = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 181, origin: 0 }, false).setVisible(false));
-        this.cursorLayer.add(this.captureNumberOne = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 181, origin: 0 }, false).setVisible(false));
-        this.cursorLayer.add(this.captureNumberTwo = this.make.sprite({ x: 0, y: 0, key: 'tiles2', frame: 181, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.healthSprite = this.make.sprite({ x: 0, y: 0, key: 'kennyTinyBattle', frame: 61, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.captureSprite = this.make.sprite({ x: 0, y: 0, key: 'kennyTinyBattle', frame: 194, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.healthNumber = this.make.sprite({ x: 0, y: 0, key: 'kennyTinyBattle', frame: 181, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.captureNumberOne = this.make.sprite({ x: 0, y: 0, key: 'kennyTinyBattle', frame: 181, origin: 0 }, false).setVisible(false));
+        this.cursorLayer.add(this.captureNumberTwo = this.make.sprite({ x: 0, y: 0, key: 'kennyTinyBattle', frame: 181, origin: 0 }, false).setVisible(false));
 
         this.anims.create({
             key: 'explosion',
@@ -247,28 +248,28 @@ export class InGame extends Phaser.Scene {
 
         this.anims.create({
             key: 'greenCapture',
-            frames: this.anims.generateFrameNumbers('tiles2', { start: 34, end: 35 }),
+            frames: this.anims.generateFrameNumbers('kennyTinyBattle', { start: 34, end: 35 }),
             frameRate: 8,
             repeat: 5,
         });
 
         this.anims.create({
             key: 'redCapture',
-            frames: this.anims.generateFrameNumbers('tiles2', { start: 70, end: 71 }),
+            frames: this.anims.generateFrameNumbers('kennyTinyBattle', { start: 70, end: 71 }),
             frameRate: 8,
             repeat: 5,
         });
 
         this.anims.create({
             key: 'blueCapture',
-            frames: this.anims.generateFrameNumbers('tiles2', { start: 52, end: 53 }),
+            frames: this.anims.generateFrameNumbers('kennyTinyBattle', { start: 52, end: 53 }),
             frameRate: 8,
             repeat: 5,
         });
 
         this.anims.create({
             key: 'yellowCapture',
-            frames: this.anims.generateFrameNumbers('tiles2', { start: 88, end: 89 }),
+            frames: this.anims.generateFrameNumbers('kennyTinyBattle', { start: 88, end: 89 }),
             frameRate: 8,
             repeat: 5,
         });
@@ -599,15 +600,15 @@ export class InGame extends Phaser.Scene {
                 const sprite = this.make.sprite({
                     x: unit.x * TILE_SIZE,
                     y: unit.y * TILE_SIZE,
-                    key: 'tiles2',
+                    key: 'kennyTinyBattle',
                     frame,
                     origin: 0,
                 }, false);
                 sprite.setData('unit', unit.id);
+                sprite.setFlipX(unit.x > game.width / 2);
                 this.tintSprite(sprite, unit);
                 if (isMoveableUnit(unit)) {
                     this.unitLayer.add(sprite);
-
                 } else if (isBuilding(unit)) {
                     this.buildingLayer.add(sprite);
                 } else {

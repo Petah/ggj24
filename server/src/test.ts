@@ -6,9 +6,9 @@ import { StartGame } from 'common/events/turn';
 
 (async () => {
     const server = new Server();
-    const ai1 = new Ai('AI 1', server, 16);
+    const ai1 = new Ai('AI 1', server, 1);
     const dummy = new Dummy('Dummy', server);
-    await server.handleEvent(dummy, new CreateGameRequest('Test Game'));
+    await server.handleEvent(dummy, new CreateGameRequest('Test Game', 'map-debug'));
     await server.handleEvent(dummy, new JoinGameRequest(dummy.playerName, 'Test Game'));
     await server.handleEvent(ai1, new JoinGameRequest(ai1.playerName, 'Test Game'));
     await server.handleEvent(dummy, new StartGame());

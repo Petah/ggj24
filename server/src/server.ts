@@ -151,7 +151,7 @@ export class Server implements IServer {
     }
 
     private handleCreateGameRequest(client: IClient, event: CreateGameRequest) {
-        const game = new Game(event.gameName);
+        const game = new Game(event.gameName, event.mapName);
         this.gameList.addGame(game);
     }
 

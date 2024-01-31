@@ -8,24 +8,14 @@
         "."
     ],
     "properties": [
+        {
+            "name": "type",
+            "propertytype": "",
+            "type": "string",
+            "value": ""
+        }
     ],
     "propertyTypes": [
-        {
-            "id": 1,
-            "name": "tileType",
-            "storageType": "string",
-            "type": "enum",
-            "values": [
-                "water",
-                "shore",
-                "grass",
-                "forest",
-                "road",
-                "mountain",
-                "river"
-            ],
-            "valuesAsFlags": false
-        },
         {
             "color": "#ffa0a0a4",
             "drawFill": true,
@@ -50,6 +40,22 @@
                 "wangset",
                 "project"
             ]
+        },
+        {
+            "id": 1,
+            "name": "tileType",
+            "storageType": "string",
+            "type": "enum",
+            "values": [
+                "water",
+                "shore",
+                "grass",
+                "forest",
+                "road",
+                "mountain",
+                "river"
+            ],
+            "valuesAsFlags": false
         }
     ]
 }

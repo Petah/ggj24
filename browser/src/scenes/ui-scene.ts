@@ -88,7 +88,6 @@ export class UI extends Phaser.Scene {
         this.load.image('avatarGreen', 'assets/avatar-green.png');
         this.load.image('windowRed', 'assets/window-red.png');
         this.load.image('windowBlue', 'assets/window-blue.png');
-        this.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js');
     }
 
     create() {
@@ -101,7 +100,7 @@ export class UI extends Phaser.Scene {
         this.avatarRed = this.add.sprite(screenWidth - 225, 40, 'avatarRed').setScale(1.5).setOrigin(0, 0);
         this.avatarBlue = this.add.sprite(screenWidth - 225, 40, 'avatarBlue').setScale(1.5).setOrigin(0, 0).setVisible(false);
 
-        this.selectedUnitSprite = this.add.sprite(screenWidth - 100, 450, 'tiles2', UnitSprites[PlayerColor.RED][UnitType.TANK]).setScale(4).setOrigin(0).setVisible(false);
+        this.selectedUnitSprite = this.add.sprite(screenWidth - 100, 450, 'kennyTinyBattle', UnitSprites[PlayerColor.RED][UnitType.TANK]).setScale(4).setOrigin(0).setVisible(false);
         this.selectedUnitName = this.add.text(screenWidth - 280, 480, 'Tank', {
             ...textConfig,
             font: '32px',
@@ -258,7 +257,7 @@ export class UI extends Phaser.Scene {
             const tempSprite = this.add.sprite(
                 x,
                 y,
-                'tiles2',
+                'kennyTinyBattle',
                 UnitSprites[playerColor][purchasableUnit]
             );
             tempSprite.setOrigin(0, 0);
